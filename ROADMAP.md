@@ -306,7 +306,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 
 | # | Decision | Status | Blocks |
 | :--- | :--- | :--- | :--- |
-| D1 | EVM target and OZ version | Open | #6 |
+| D1 | EVM target and OZ version | **Decided: Solidity 0.8.24, `evmVersion` `cancun`, OpenZeppelin 5.6.1** | — |
 | D2 | `MAX_PLATFORM_FEE_BP`, `HOOK_GAS_LIMIT` | Open | #7, #9 |
 | D3 | Job duration bounds; evaluator window bounds; safety margin | Open | #6, #14 |
 | D4 | Budget range | **Decided: 1–1,000 USD per job, fixed constant** | — |

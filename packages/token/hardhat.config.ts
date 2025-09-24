@@ -79,7 +79,7 @@ const config = {
                         enabled: true,
                         runs: 2000,
                     },
-                    evmVersion: "shanghai",
+                    evmVersion: "cancun",
                 },
             },
         ],
@@ -89,6 +89,7 @@ const config = {
         hardhat: {
             accounts: getTestAccounts(),
             chainId: 31337,
+            hardfork: "cancun",
             gas: 12000000,
             gasPrice: 8000000000,
             blockGasLimit: 12000000,

@@ -79,8 +79,8 @@ const config = {
                         enabled: true,
                         runs: 2000,
                     },
-                    // Kept until issue #2 confirms the Polygon PoS / Amoy target.
-                    evmVersion: "shanghai",
+                    // D1: Polygon PoS / Amoy Cancun subset. See docs/EVM_TARGET.md.
+                    evmVersion: "cancun",
                 },
             },
         ],
@@ -90,6 +90,7 @@ const config = {
         hardhat: {
             accounts: getTestAccounts(),
             chainId: 31337,
+            hardfork: "cancun",
             gas: 12000000,
             gasPrice: 8000000000,
             blockGasLimit: 12000000,

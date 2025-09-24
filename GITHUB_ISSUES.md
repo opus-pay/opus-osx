@@ -26,6 +26,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **해결 내용:**
   - 루트 워크스페이스에 `packages/*`와 `apps/*`를 넣었다. `@opus/contracts`, `@opus/sdk`, `@opus/keeper`, `@opus/pay`가 생긴다. `@opus/token`은 그대로 둔다.
   - Hardhat, typechain, OpenZeppelin `^5.0.2`는 이전 저장소 설정을 재사용한다. `evmVersion`은 #2 전까지 `shanghai`로 둔다.
+  - **정정:** #2에서 `evmVersion`을 `cancun`으로 확정하고 OpenZeppelin을 `5.6.1`로 고정했다. `shanghai`는 임시였다.
   - `BootstrapProbe`가 OZ `ReentrancyGuard`와 `SafeERC20`이 컴파일되는지 확인한다. 코어가 들어오면 지운다.
   - 네트워크 env 샘플과 Ledger 서명(`*_ADDRESS`) 테스트를 복구했다.
   - CI는 기존 워크플로를 쓴다. 모든 워크스페이스에 `build`, `test`, `lint`, `formatting:*`, `coverage` 스크립트가 있다.
@@ -35,11 +36,17 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #1
 * **Description:** Choose `evmVersion` from primary sources. The archived repository's note ("Polygon lacks PUSH0, so use `shanghai`") was self-contradictory, since `shanghai` emits PUSH0.
 * **Tasks:**
-  - [ ] Check official Polygon PoS and Amoy hardfork documentation for supported opcodes
-  - [ ] Set `evmVersion` and Solidity version; pin `pragma`
-  - [ ] Confirm OpenZeppelin `EIP712`, `Nonces`, `ReentrancyGuard`, `SafeERC20` compile and run for that target
-  - [ ] Write `packages/contracts/docs/EVM_TARGET.md` with sources
+  - [x] Check official Polygon PoS and Amoy hardfork documentation for supported opcodes
+  - [x] Set `evmVersion` and Solidity version; pin `pragma`
+  - [x] Confirm OpenZeppelin `EIP712`, `Nonces`, `ReentrancyGuard`, `SafeERC20` compile and run for that target
+  - [x] Write `packages/contracts/docs/EVM_TARGET.md` with sources
 * **Acceptance:** Decision D1 recorded; a smoke contract deploys and runs on Amoy.
+
+* **해결 내용:**
+  - 공식 PIP와 네트워크 업그레이드 표로 확인했다. Agra(PIP-28/PIP-23)가 PUSH0을 켰고, Napoli(PIP-33/PIP-31)가 Cancun 서브셋(`MCOPY`, `TLOAD`/`TSTORE`)을 Amoy·메인넷에 켰다. 이전 저장소의 "PUSH0이 없으니 shanghai" 설명은 모순이다. `shanghai`가 PUSH0을 낸다.
+  - D1: `evmVersion = cancun`, Solidity `0.8.24` 고정, OpenZeppelin `5.6.1` 고정. Hardhat 네트워크 hardfork도 `cancun`이다. `prague`는 solc 0.8.24에 없고, Bhilai/Pectra는 이 컴파일러가 쓰는 새 opcode를 요구하지 않는다.
+  - `BootstrapProbe`가 `EIP712`, `Nonces`, `ReentrancyGuard`, `SafeERC20`을 실행하고 Cancun `MCOPY`·transient storage를 호출한다. `yarn contracts deploy:amoy`가 이 컨트랙트를 배포한 뒤 같은 스모크를 돌린다.
+  - 이 환경에는 Amoy 배포 키가 없어 테스트넷 방송은 하지 않았다. 키를 채운 뒤 `deploy:amoy`를 한 번 실행하면 된다. 로컬 Hardhat에서는 스모크가 통과한다.
 
 #### [Issue #3] ERC-8183 conformance map and verbatim interfaces
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #1
