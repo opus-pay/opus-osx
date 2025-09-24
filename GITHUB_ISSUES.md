@@ -223,7 +223,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - [x] `timeoutNoSubmission` (anyone, after submit window) → `reject`
   - [x] `approve` (client) → `complete`, allowed at any time after submission: during review, after objection, during arbitration or a Court vote
   - [x] `withdrawAsProvider` (provider) → `reject` and refund, allowed at any time after funding, including after submission and during a dispute
-  - [ ] Concession during a dispute counts as losing: the arbiter or Court is paid from the conceding party's deposit (#53)
+  - [x] Concession during a dispute counts as losing: the arbiter or Court is paid from the conceding party's deposit (#53)
   - [x] `object(evidenceHash)` (client, within review) → escalated
   - [x] `extendReview(seconds)` (client, once, within max extension)
   - [x] `finalize` (anyone, review ended, auto-complete mode) → `complete`
@@ -266,14 +266,18 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #53] Dispute deposits: loser pays the arbiter
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #15, D18
 * **Tasks:**
-  - [ ] On objection or escalation, both parties must post the dispute deposit within a deposit window; the objecting party posts with the objection
-  - [ ] Confirmation mode (D22): the client posts its deposit at configure; it is returned if the job ends without a dispute, so a silent client is never treated as a non-payer
-  - [ ] A party that does not post in time loses; the ruling is applied immediately
-  - [ ] Arbiter's ruling: loser's deposit to the arbiter, winner's deposit returned
-  - [ ] No ruling in time: both deposits returned, default outcome applied
-  - [ ] Concession during a dispute: conceding party's deposit to the arbiter, the other returned
-  - [ ] Tests for every combination; arbiter pay identical for either ruling
+  - [x] On objection or escalation, both parties must post the dispute deposit within a deposit window; the objecting party posts with the objection
+  - [x] Confirmation mode (D22): the client posts its deposit at configure; it is returned if the job ends without a dispute, so a silent client is never treated as a non-payer
+  - [x] A party that does not post in time loses; the ruling is applied immediately
+  - [x] Arbiter's ruling: loser's deposit to the arbiter, winner's deposit returned
+  - [x] No ruling in time: both deposits returned, default outcome applied
+  - [x] Concession during a dispute: conceding party's deposit to the arbiter, the other returned
+  - [x] Tests for every combination; arbiter pay identical for either ruling
 * **Acceptance:** I-1 and I-2 hold for deposits; frivolous objections cost the objector.
+
+* **해결 내용:**
+  - 보증금이 0이면 기존 #15 경로 그대로다. 보증금이 있으면 이의와 함께 의뢰인이 내고, 수행자는 `postDeposit`으로 맞춘 뒤에야 중재가 열린다.
+  - 확인 필요 설정은 설정 때 의뢰인 보증금을 미리 받는다 (D22). 패자 보증금은 중재자에게, 승자 것은 반환한다. 양쪽 판정에서 중재자 수취액은 같다.
 
 #### [Issue #54] Arbiter interface and external arbitration adapter
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #53

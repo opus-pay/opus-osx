@@ -54,6 +54,7 @@ interface IOpusEvaluator {
     );
     event ResolvedByDefault(address indexed instance, uint256 indexed jobId, bool completed);
     event Conceded(address indexed instance, uint256 indexed jobId, address indexed by);
+    event DepositPosted(address indexed instance, uint256 indexed jobId, address indexed party, uint256 amount);
     event TipPaid(address indexed instance, uint256 indexed jobId, address indexed to, uint256 amount);
     event FeePaid(address indexed instance, uint256 indexed jobId, address indexed operator, uint256 amount);
     event Swept(address indexed instance, uint256 indexed jobId, address indexed to, uint256 amount);
@@ -80,6 +81,10 @@ interface IOpusEvaluator {
 
     function resolveByDefault(address instance, uint256 jobId) external;
 
+    function postDeposit(address instance, uint256 jobId) external;
+
+    function resolveMissingDeposit(address instance, uint256 jobId) external;
+
     function sweep(address instance, uint256 jobId) external;
 
     function withdraw(address token, address to) external;
@@ -97,6 +102,12 @@ interface IOpusEvaluator {
     function disputeDeadlineOf(address instance, uint256 jobId) external view returns (uint64 deadline);
 
     function feeHeld(address instance, uint256 jobId) external view returns (uint256 amount);
+
+    function depositDeadlineOf(address instance, uint256 jobId) external view returns (uint64 deadline);
+
+    function clientDepositOf(address instance, uint256 jobId) external view returns (uint256 amount);
+
+    function providerDepositOf(address instance, uint256 jobId) external view returns (uint256 amount);
 
     function claimable(address token, address account) external view returns (uint256 amount);
 }
