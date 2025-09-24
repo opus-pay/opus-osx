@@ -1,15 +1,14 @@
 import "@nomiclabs/hardhat-ethers";
 
-import { deployBootstrapProbe } from "../../src/deploy/bootstrapProbe";
+import { addProtocolDeployers } from "../../src/deploy/protocol";
 import { Deployments } from "../../src/Deployments";
 
 async function main() {
     const deployments = new Deployments("amoy");
     await deployments.initAccounts();
     await deployments.loadContractInfo();
-    deployments.addDeployer(deployBootstrapProbe);
+    await addProtocolDeployers(deployments, "amoy");
     await deployments.doDeploy();
-    deployments.saveContractInfo();
 }
 
 main().catch((error) => {

@@ -11,7 +11,20 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 * No protocol fee; evaluators are paid the same whatever the outcome
 * No token at launch
 
-> Status: toolchain and EVM target are set (issues #1–#2). Not deployed. ERC-8183 is a draft standard.
+> Status: contracts through #21 are on `main`. Amoy addresses land after #22 (`packages/contracts/deploy/amoy/addresses.json`). ERC-8183 is a draft standard.
+
+## Amoy (issue #22)
+
+After `yarn contracts deploy:amoy` and `yarn workspace @opus/contracts verify:amoy`, public addresses are written here.
+
+| Contract | Address |
+| :--- | :--- |
+| `OpusForwarder` | _pending_ |
+| `OpusACPFactory` | _pending_ |
+| Reference USDC instance (treasury 0, fee 0) | _pending_ |
+| `OptimisticEvaluator` | _pending_ |
+
+Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com). No admin roles are granted after deploy.
 
 ## Documents
 

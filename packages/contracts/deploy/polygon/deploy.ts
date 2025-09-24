@@ -1,13 +1,7 @@
 import "@nomiclabs/hardhat-ethers";
 
-import { Deployments } from "../../src/Deployments";
-
 async function main() {
-    const deployments = new Deployments("polygon");
-    await deployments.initAccounts();
-    await deployments.loadContractInfo();
-    // #22 will add forwarder → factory → USDC instance → OptimisticEvaluator.
-    deployments.saveContractInfo();
+    throw new Error("Polygon mainnet deploy waits for the audit (M8). Use Amoy.");
 }
 
 main().catch((error) => {
