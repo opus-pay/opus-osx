@@ -256,9 +256,12 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #17] Budget lock modes
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #14
 * **Tasks:**
-  - [ ] Modes: none / lock after the provider's `setBudget` / lock from creation
-  - [ ] Implemented in `beforeAction(setBudget)`; core unchanged
+  - [x] Modes: none / lock after the provider's `setBudget` / lock from creation
+  - [x] Implemented in `beforeAction(setBudget)`; core unchanged
 * **Acceptance:** Standard behaviour unchanged for jobs without the hook.
+
+* **해결 내용:**
+  - 훅이 없는 작업의 `setBudget`은 그대로다. `FromCreation`은 설정 이후 변경을 막는다. `AfterProviderSetBudget`은 수행자가 있는 상태에서 예산이 한 번 더 바뀌면 잠근다.
 
 #### [Issue #53] Dispute deposits: loser pays the arbiter
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #15, D18
