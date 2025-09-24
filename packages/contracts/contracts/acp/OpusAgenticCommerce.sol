@@ -258,7 +258,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         if (job.budget != expectedBudget) revert BudgetMismatch(job.budget, expectedBudget);
         if (block.timestamp >= job.expiredAt) revert WrongStatus();
 
-        _callHook(job.hook, true, jobId, optParams);
+        _callHookWithSelector(job.hook, true, jobId, IAgenticCommerce.fund.selector, optParams);
         job.status = JobStatus.Funded;
 
         uint256 beforeBal = token.balanceOf(address(this));
@@ -267,7 +267,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         if (received != job.budget) revert UnexpectedFundedAmount(received, job.budget);
 
         emit JobFunded(jobId, job.client, job.budget);
-        _callHook(job.hook, false, jobId, optParams);
+        _callHookWithSelector(job.hook, false, jobId, IAgenticCommerce.fund.selector, optParams);
     }
 
     function _normalized(uint256 amount) private view returns (uint256) {
@@ -284,15 +284,25 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     }
 
     function _callHook(address hook, bool before, uint256 jobId, bytes memory data) private {
+        _callHookWithSelector(hook, before, jobId, msg.sig, data);
+    }
+
+    function _callHookWithSelector(
+        address hook,
+        bool before,
+        uint256 jobId,
+        bytes4 selector,
+        bytes memory data
+    ) private {
         if (hook == address(0)) return;
         bytes memory payload = abi.encodeWithSelector(
             before ? IACPHook.beforeAction.selector : IACPHook.afterAction.selector,
             jobId,
-            msg.sig,
+            selector,
             data
         );
         (bool ok, ) = hook.call{ gas: PLACEHOLDER_HOOK_GAS_LIMIT }(payload);
-        if (!ok) revert HookFailed(msg.sig, before);
+        if (!ok) revert HookFailed(selector, before);
     }
 
     function _pay(address to, uint256 amount) private {

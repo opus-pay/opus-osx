@@ -203,13 +203,18 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #14] `OptimisticEvaluator`: configuration and hook
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #9
 * **Tasks:**
-  - [ ] `configure(instance, jobId, Config)` by the job's client while Open; requires `job.evaluator == address(this)`
-  - [ ] Config: submit window, review window, max extension, on-silence mode, arbiter (address or Court contract), dispute window, default outcome, evaluation fee, evaluation operator, keeper tip, dispute deposit, budget lock mode
-  - [ ] Validation: arbiter ≠ client and ≠ provider; windows within bounds (D3)
-  - [ ] As hook: `beforeAction(fund)` requires config, records fund time, enforces deadline fit (submit + review + max extension + deposit window + dispute window + margin ≤ `expiredAt`); `beforeAction(submit)` enforces submit window; `afterAction(submit)` records submit time
-  - [ ] Evaluation fee ≤ the preset's cap relative to budget (D18)
-  - [ ] Config immutable after fund
+  - [x] `configure(instance, jobId, Config)` by the job's client while Open; requires `job.evaluator == address(this)`
+  - [x] Config: submit window, review window, max extension, on-silence mode, arbiter (address or Court contract), dispute window, default outcome, evaluation fee, evaluation operator, keeper tip, dispute deposit, budget lock mode
+  - [x] Validation: arbiter ≠ client and ≠ provider; windows within bounds (D3)
+  - [x] As hook: `beforeAction(fund)` requires config, records fund time, enforces deadline fit (submit + review + max extension + deposit window + dispute window + margin ≤ `expiredAt`); `beforeAction(submit)` enforces submit window; `afterAction(submit)` records submit time
+  - [x] Evaluation fee ≤ the preset's cap relative to budget (D18)
+  - [x] Config immutable after fund
 * **Acceptance:** Misconfigured jobs cannot be funded; I-5 covered.
+
+* **해결 내용:**
+  - `OptimisticEvaluator`가 작업의 평가자이자 훅이다. 설정은 Open일 때만 바꿀 수 있고, 예치 후에는 고정된다 (I-5).
+  - D3 창 상수는 `PLACEHOLDER_MIN_WINDOW = 1 hours`, `PLACEHOLDER_MAX_WINDOW = 180 days`, `PLACEHOLDER_SAFETY_MARGIN = 1 hours`. D18 수수료 상한은 `PLACEHOLDER_MAX_EVALUATION_FEE_BP = 10_000` (예산을 넘지 않음).
+  - 설정이 없거나 기한이 맞지 않으면 `fund`가 실패한다. `fundWithPermit`도 표준 `fund` 훅 셀렉터를 쓴다.
 
 #### [Issue #15] `OptimisticEvaluator`: flow and voluntary concession
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #14
