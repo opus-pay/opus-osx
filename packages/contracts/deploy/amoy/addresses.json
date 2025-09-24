@@ -1,0 +1,9 @@
+{
+  "network": "amoy",
+  "chainId": 80002,
+  "forwarder": "0x2042172c8b638f1720A1c468726dbd167d62E63f",
+  "factory": "0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca",
+  "usdc": "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
+  "instance": "0x7632d054BfE635A1f0394fbcd74678B6567213Fd",
+  "evaluator": "0x65819d9199144a66ec17ad39da6bebabc3eef585"
+}

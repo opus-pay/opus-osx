@@ -13,7 +13,7 @@
         "coverage:check": "ts-node scripts/checkCoverage.ts",
         "check:no-admin": "ts-node scripts/checkNoAdmin.ts",
         "check:deploy": "hardhat run scripts/checkDeploy.ts",
-        "verify:amoy": "ENV_NETWORK=amoy hardhat run scripts/verifyProtocol.ts --network amoy",
+        "verify:amoy": "node scripts/useSoliditylangList.js && ENV_NETWORK=amoy hardhat run scripts/verifyProtocol.ts --network amoy",
         "node": "hardhat node",
         "deploy:localhost": "hardhat run deploy/localhost/deploy.ts --network localhost",
         "deploy:amoy": "ENV_NETWORK=amoy hardhat run deploy/amoy/deploy.ts --network amoy",

@@ -101,8 +101,11 @@ const config = {
             accounts: getAccounts(),
         },
         amoy: {
-            url: process.env.AMOY_URL || "https://rpc-amoy.polygon.technology",
+            url: process.env.AMOY_URL || "https://polygon-amoy.drpc.org",
             chainId: 80002,
+            // Amoy rejects a tip under 25 gwei. dRPC's eth_gasPrice is ~400 gwei, which
+            // prices one deploy at ~0.5 POL. Pin the chain minimum so the quote is not used.
+            gasPrice: 25_000_000_000,
             ...liveNetworkAccounts(),
         },
         polygon: {
@@ -121,7 +124,7 @@ const config = {
                 network: "amoy",
                 chainId: 80002,
                 urls: {
-                    apiURL: "https://api-amoy.polygonscan.com/api",
+                    apiURL: "https://api.etherscan.io/v2/api?chainid=80002",
                     browserURL: "https://amoy.polygonscan.com",
                 },
             },

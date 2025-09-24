@@ -11,20 +11,18 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 * No protocol fee; evaluators are paid the same whatever the outcome
 * No token at launch
 
-> Status: contracts through #21 are on `main`. Amoy addresses land after #22 (`packages/contracts/deploy/amoy/addresses.json`). ERC-8183 is a draft standard.
+> Status: contracts through #22 are deployed and verified on Polygon Amoy. ERC-8183 is a draft standard.
 
 ## Amoy (issue #22)
 
-After `yarn contracts deploy:amoy` and `yarn workspace @opus/contracts verify:amoy`, public addresses are written here.
+Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The reference instance lists Circle Amoy USDC `0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`, with treasury `0` and fee `0`. No admin roles are granted after deploy.
 
 | Contract | Address |
 | :--- | :--- |
-| `OpusForwarder` | _pending_ |
-| `OpusACPFactory` | _pending_ |
-| Reference USDC instance (treasury 0, fee 0) | _pending_ |
-| `OptimisticEvaluator` | _pending_ |
-
-Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com). No admin roles are granted after deploy.
+| `OpusForwarder` | [`0x2042172c8b638f1720A1c468726dbd167d62E63f`](https://amoy.polygonscan.com/address/0x2042172c8b638f1720A1c468726dbd167d62E63f#code) |
+| `OpusACPFactory` | [`0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca`](https://amoy.polygonscan.com/address/0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca#code) |
+| Reference USDC instance | [`0x7632d054BfE635A1f0394fbcd74678B6567213Fd`](https://amoy.polygonscan.com/address/0x7632d054BfE635A1f0394fbcd74678B6567213Fd#code) |
+| `OptimisticEvaluator` | [`0x65819d9199144a66ec17ad39da6bebabc3eef585`](https://amoy.polygonscan.com/address/0x65819d9199144a66ec17ad39da6bebabc3eef585#code) |
 
 ## Documents
 
