@@ -40,7 +40,7 @@ describe("Settlement (#7)", () => {
 
         const token = await deployUsdc();
         const core = await deployCore(token.address, 6, treasury.address, 333);
-        const budget = 1000;
+        const budget = 1_000000;
         const jobId = await fundJob(core, token, client, provider, evaluator, budget);
         await core.connect(provider).submit(jobId, ethers.constants.HashZero, EMPTY);
         await core.connect(evaluator).complete(jobId, ethers.constants.HashZero, EMPTY);

@@ -150,12 +150,16 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #6
 * **Description:** Decided in D4. Every job's budget must be between 1 and 1,000 USD. Fixed for the life of the deployment.
 * **Tasks:**
-  - [ ] Constants `MIN_BUDGET_USD = 1` and `MAX_BUDGET_USD = 1_000`, compared in normalized 18-decimal units so 6- and 18-decimal stablecoins behave the same
-  - [ ] Check in `fund` (the budget that is actually escrowed); also reject out-of-range values in `setBudget` so bad quotes fail early
-  - [ ] Custom errors `BudgetBelowMinimum`, `BudgetAboveMaximum`
-  - [ ] Boundary tests: 0.999999, 1, 1,000, 1,000.000001 USD for both 6- and 18-decimal mocks
-  - [ ] SDK milestone helper splits work above 1,000 USD into several jobs
+  - [x] Constants `MIN_BUDGET_USD = 1` and `MAX_BUDGET_USD = 1_000`, compared in normalized 18-decimal units so 6- and 18-decimal stablecoins behave the same
+  - [x] Check in `fund` (the budget that is actually escrowed); also reject out-of-range values in `setBudget` so bad quotes fail early
+  - [x] Custom errors `BudgetBelowMinimum`, `BudgetAboveMaximum`
+  - [x] Boundary tests: 0.999999, 1, 1,000, 1,000.000001 USD for both 6- and 18-decimal mocks
+  - [x] SDK milestone helper splits work above 1,000 USD into several jobs
 * **Acceptance:** No function can change the range; boundary tests pass.
+
+* **해결 내용:**
+  - 예산을 18자리로 정규화해 1~1,000달러만 허용한다. `setBudget`과 `fund`에서 검사한다. 범위는 상수라 바꿀 수 없다.
+  - `@opus/sdk`의 `splitBudgetUsd`가 1,000달러를 넘는 일을 여러 작업으로 나눈다.
 
 #### [Issue #11] `OpusACPFactory` and fixed stablecoin list
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #7

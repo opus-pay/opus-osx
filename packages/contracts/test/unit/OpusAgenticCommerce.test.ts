@@ -142,22 +142,22 @@ describe("OpusAgenticCommerce (#6)", () => {
     describe("setBudget", () => {
         it("lets the client or the provider set the budget while Open", async () => {
             const jobId = await createOpen();
-            await expect(core.connect(client).setBudget(jobId, 10, EMPTY))
+            await expect(core.connect(client).setBudget(jobId, 1_000000, EMPTY))
                 .to.emit(core, "BudgetSet")
-                .withArgs(jobId, 10);
-            await expect(core.connect(provider).setBudget(jobId, 20, EMPTY))
+                .withArgs(jobId, 1_000000);
+            await expect(core.connect(provider).setBudget(jobId, 2_000000, EMPTY))
                 .to.emit(core, "BudgetSet")
-                .withArgs(jobId, 20);
+                .withArgs(jobId, 2_000000);
         });
 
         it("reverts for a stranger or after funding", async () => {
             const jobId = await createOpen();
-            await expect(core.connect(stranger).setBudget(jobId, 10, EMPTY)).to.be.revertedWithCustomError(
+            await expect(core.connect(stranger).setBudget(jobId, 1_000000, EMPTY)).to.be.revertedWithCustomError(
                 core,
                 "Unauthorized"
             );
             const funded = await fundJob(core, token, client, provider, evaluator);
-            await expect(core.connect(client).setBudget(funded, 1, EMPTY)).to.be.revertedWithCustomError(
+            await expect(core.connect(client).setBudget(funded, 1_000000, EMPTY)).to.be.revertedWithCustomError(
                 core,
                 "WrongStatus"
             );

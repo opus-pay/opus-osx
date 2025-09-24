@@ -19,6 +19,8 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     uint256 public constant PLACEHOLDER_MAX_JOB_DURATION = 180 days;
 
     uint256 public constant EVALUATOR_FEE_BP = 0;
+    uint256 public constant MIN_BUDGET_USD = 1;
+    uint256 public constant MAX_BUDGET_USD = 1_000;
 
     /// @dev D2 — replace after the fee-cap decision. Suggested 1,000 (10%) and 300,000 gas.
     uint256 public constant PLACEHOLDER_MAX_PLATFORM_FEE_BP = 1_000;
@@ -49,6 +51,8 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     error FeesTooHigh(uint256 feeBP);
     error NothingToWithdraw();
     error HookFailed(bytes4 selector, bool before);
+    error BudgetBelowMinimum(uint256 amount);
+    error BudgetAboveMaximum(uint256 amount);
 
     constructor(
         address token_,
@@ -117,6 +121,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         if (job.status != JobStatus.Open) revert WrongStatus();
         address caller = _msgSender();
         if (caller != job.client && caller != job.provider) revert Unauthorized();
+        _requireBudgetRange(amount);
         bytes memory data = abi.encode(amount, optParams);
         _callHook(job.hook, true, jobId, data);
         job.budget = amount;
@@ -131,6 +136,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         if (_msgSender() != job.client) revert Unauthorized();
         if (job.provider == address(0)) revert ProviderNotSet();
         if (job.budget == 0) revert ZeroBudget();
+        _requireBudgetRange(job.budget);
         if (job.budget != expectedBudget) revert BudgetMismatch(job.budget, expectedBudget);
         if (block.timestamp >= job.expiredAt) revert WrongStatus();
 
@@ -239,6 +245,19 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     function _job(uint256 jobId) private view returns (Job storage job) {
         job = _jobs[jobId];
         if (job.client == address(0)) revert InvalidJob();
+    }
+
+    function _normalized(uint256 amount) private view returns (uint256) {
+        if (tokenDecimals == 18) return amount;
+        return amount * (10 ** (18 - tokenDecimals));
+    }
+
+    function _requireBudgetRange(uint256 amount) private view {
+        uint256 normalized = _normalized(amount);
+        uint256 minAmount = MIN_BUDGET_USD * 1e18;
+        uint256 maxAmount = MAX_BUDGET_USD * 1e18;
+        if (normalized < minAmount) revert BudgetBelowMinimum(amount);
+        if (normalized > maxAmount) revert BudgetAboveMaximum(amount);
     }
 
     function _callHook(address hook, bool before, uint256 jobId, bytes memory data) private {
