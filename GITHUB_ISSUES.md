@@ -255,6 +255,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - 설정 때 평가 수수료를 작업 토큰으로 예치한다. 종결되면 이미 낸 팁을 뺀 나머지를 운영자에게 보낸다. complete와 reject의 운영자 수취액은 같다.
   - 기한이 된 `timeoutNoSubmission` / `finalize` / `escalateOnSilence` / `resolveByDefault` 호출자가 팁을 받는다. 작업당 최대 2회. `claimRefund` 뒤에는 `sweep`이 남은 수수료를 의뢰인에게 돌려준다.
   - Amoy에서 제3자 키퍼가 팁을 받는 확인은 배포(#22)에서 한다.
+  - **정정:** `resolveMissingDeposit`도 기한이 된 처리 함수라 팁을 준다 (작업당 최대 2회에 포함).
 
 #### [Issue #17] Budget lock modes
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #14
@@ -452,11 +453,11 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 #### [Issue #67] Corridor, service entity, terms, prohibited requests
 * **Type:** `Legal` / **Priority:** `P0` / **Depends on:** #43, D25
 * **Tasks:**
-  - [ ] Choose the first corridor (e.g. United States → Korea)
+  - [ ] Choose the first corridor: cross-border (e.g. United States → Korea) or domestic (e.g. a Korean provincial city ↔ Seoul)
   - [ ] Entity that operates the errand service, separate from protocol maintenance
   - [ ] Terms of service for clients and providers; privacy policy
   - [ ] Prohibited requests list (illegal goods, harassment, surveillance of people, etc.) and filming rules
-  - [ ] Legal check of the corridor: stablecoin handling, platform work, consumer protection
+  - [ ] Legal check of the corridor: stablecoin handling, platform work, consumer protection; for a domestic corridor, domestic virtual-asset rules and a won ↔ USDC on/off-ramp
 * **Acceptance:** Terms and policy published before the pilot.
 
 #### [Issue #68] Machine-readable request schema
@@ -536,7 +537,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 #### [Issue #35] Errand pilot in the first corridor
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #34, #67–#74
 * **Tasks:**
-  - [ ] Recruit 10–20 clients (e.g. people abroad with family in the destination) and 5–10 verified providers in one city
+  - [ ] Recruit 10–20 clients (e.g. people abroad with family in the destination, or people outside a large city who need something done there) and 5–10 verified providers in one city
   - [ ] Run real filming and purchasing errands (testnet with test funds first; small real amounts only after audit)
   - [ ] Interview each user: current workaround, trust concerns, price they would pay, friction with money in and out
 * **Acceptance:** Written findings; backlog re-prioritized.

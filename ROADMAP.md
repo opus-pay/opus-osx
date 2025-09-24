@@ -72,15 +72,15 @@ No role grants. No post-deploy configuration calls.
 ## B.2 Evaluator
 * **Q7. Window bounds** for submit, review, extension, dispute, and the safety margin before `expiredAt`. → **D3**
 * **Q8. Default arbiter** recommended by the SDK: none, an external arbitration service, or a rule-only default. → **D10**
-* **Q9. Budget lock modes:** none / lock after the provider's quote / lock from creation. Confirm all three are needed.
+* **Q9. Budget lock modes:** none / lock after the first quote / no changes after configuration. The standard's hook data does not name the caller, so "after the provider's quote" cannot be enforced; mode 1 locks after the first quote made once a provider is set. Confirm all three are needed.
 * **Q9a. Evaluation economics.** Default flat evaluation fee per preset (with a cap relative to budget so a 1 USD job is not charged more than its value), keeper tip size, dispute deposit size (flat or a share of budget), deposit deadline, and how a provider without stablecoin posts a deposit. → **D18**
 
 ## B.3 Products
 * **Q10. Payment link custody of drafts.** Where unsigned link drafts live (local only vs a small server).
 * **Q11. Notifications.** Email, Telegram, or webhook first.
 * **Q12. Test runner isolation (M13).** Container sandbox vs hosted CI; what the signed result contains; how anyone can reproduce it.
-* **Q22. First corridor.** For example United States → Korea, or United States → Japan. Decides on/off-ramp partners, provider recruiting, and legal review. → **D25**
-* **Q23. On- and off-ramp partners.** Card/bank to USDC for clients; USDC to local currency for providers; licensed in the corridor's countries. → **D26**
+* **Q22. First corridor.** Cross-border (for example United States → Korea) or domestic, between a Korean region and a large city (for example a provincial city ↔ Seoul). A domestic corridor removes currency exchange and cross-border rules and can start sooner; it still needs a won ↔ USDC on/off-ramp and a reason for users to prefer stablecoin escrow over won payments. Decides on/off-ramp partners, provider recruiting, and legal review. → **D25**
+* **Q23. On- and off-ramp partners.** Card/bank to USDC for clients; USDC to local currency for providers; licensed in the corridor's countries. Funded by equity investment (D29). → **D26**
 * **Q24. Wallet onboarding.** Email-login embedded wallets, smart accounts, or plain wallets plus relayer. → **D27**
 * **Q25. Request schema.** Fields for each request type (filming, purchasing, later care), completion criteria, required proof; versioning.
 
@@ -328,10 +328,11 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D22 | Client deposit in confirmation mode | **Decided: posted up front at configuration, returned if no dispute** | #53 |
 | D23 | Service metadata registration method | Open | #62 |
 | D24 | Portal role | **Decided: directory of services only; no matching, no custody, no special rights** | — |
-| D25 | First errand corridor | **Deferred** — decide before starting #67 (about week 9); development until then does not depend on it | #67 |
+| D25 | First errand corridor | **Deferred** — cross-border or domestic (region ↔ large city) both allowed; decide before starting #67 (about week 9); development until then does not depend on it | #67 |
 | D26 | On- and off-ramp partners | Open | #72 |
 | D27 | Wallet onboarding approach | Open | #73 |
 | D28 | Business focus | **Decided: cross-border errands first; AI assistants as the growth path on the same standard** | — |
+| D29 | Money in and out | **Decided: OPUS and its services never hold licences for card, bank, or exchange flows. Equity funding pays for integrations with licensed partners (card/bank on-ramps, exchanges for cash-out, later won stablecoin issuers and payment gateways). Until then, pilots use users who already buy USDC on exchanges** | #43, #72, D26 |
 
 ---
 
