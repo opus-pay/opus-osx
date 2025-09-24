@@ -122,11 +122,15 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #7
 * **Description:** A frozen address must not block settlement.
 * **Tasks:**
-  - [ ] Single internal `_pay(to, amount)`; state updated before transfer
-  - [ ] On transfer failure (revert or `false`), credit `claimable[to]`, emit an event, do not revert
-  - [ ] `withdraw(address to)` lets the owner pull to any address
-  - [ ] Blacklist-mock tests for provider, client, and treasury
+  - [x] Single internal `_pay(to, amount)`; state updated before transfer
+  - [x] On transfer failure (revert or `false`), credit `claimable[to]`, emit an event, do not revert
+  - [x] `withdraw(address to)` lets the owner pull to any address
+  - [x] Blacklist-mock tests for provider, client, and treasury
 * **Acceptance:** I-2 includes claimables; settlement completes with a frozen party.
+
+* **해결 내용:**
+  - 상태 변경 후 `_pay`가 전송을 시도한다. 실패하면 `claimable`에 기록하고 `PayoutDeferred`를 낸다. 작업은 종결된다.
+  - 동결된 수행자·의뢰인·수수료 수취처 목을 테스트한다. `withdraw`는 본인 지연 지급을 아무 주소로 보낸다.
 
 #### [Issue #9] Hooks with gas cap
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #6
