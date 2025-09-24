@@ -283,6 +283,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - 보증금이 0이면 기존 #15 경로 그대로다. 보증금이 있으면 이의와 함께 의뢰인이 내고, 수행자는 `postDeposit`으로 맞춘 뒤에야 중재가 열린다.
   - 확인 필요 설정은 설정 때 의뢰인 보증금을 미리 받는다 (D22). 패자 보증금은 중재자에게, 승자 것은 반환한다. 양쪽 판정에서 중재자 수취액은 같다.
   - **정정:** `resolveMissingDeposit`이 미납 쪽을 승자로 두고 있었다. 지금은 미납 쪽이 진다. 의뢰인만 냈으면 환불, 수행자만 냈으면 지급. 기한은 `reviewEnd + depositWindow` / `+ disputeWindow`이다.
+  - **정정:** 확인 필요 설정(`autoCompleteOnSilence == false`)은 중재자 없이 설정할 수 없다. `_validateConfig`가 `ConfirmationNeedsArbiter`로 거절한다.
 
 #### [Issue #54] Arbiter interface and external arbitration adapter
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #53
