@@ -1,7 +1,7 @@
 {
     "name": "@opus/sdk",
     "version": "0.1.0",
-    "description": "OPUS TypeScript SDK (viem). Skeleton until issue #23.",
+    "description": "OPUS TypeScript SDK (viem). Apps, the keeper, and the relayer talk to the contracts through this package.",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
@@ -19,6 +19,9 @@
     },
     "author": "opus-pay",
     "license": "SEE LICENSE IN LICENSE.md",
+    "dependencies": {
+        "viem": "^2.37.5"
+    },
     "devDependencies": {
         "@types/chai": "^4.3.11",
         "@types/mocha": "^10.0.6",

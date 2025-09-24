@@ -380,20 +380,25 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #22
 * **Description:** The only way apps (`apps/*`), the keeper, and the relayer talk to the contracts. Addresses come from `packages/contracts/deploy/<network>/addresses.json`; ABIs and types come from typechain output only.
 * **Tasks:**
-  - [ ] viem; accepts a `WalletClient` / `PublicClient`, never private keys; network config for Amoy and local Hardhat
-  - [ ] Standard flow helpers: `createJob`, `setProvider`, `quote` (`setBudget`), `fund(expectedBudget)`, `fundWithPermit`, `submit`
-  - [ ] Evaluator helpers: `configure` / `configureWithPermit`, `approve`, `object`, `extendReview`, `withdrawAsProvider`, `postDeposit` / `postDepositWithPermit`, triggers (`timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveMissingDeposit`, `resolveByDefault`), `sweep`
-  - [ ] Token approvals: budget to the instance; evaluation fee (+ deposit in confirmation mode) to the evaluator; permit path when the token supports it
-  - [ ] Presets (AI→AI, AI→person, person→any, small/no arbiter) that always pass contract validation: person→any = confirmation mode **with an arbiter**; no-arbiter presets = auto-complete and `disputeDeposit = 0`. Arbiter (D10) and amounts (D18) are required parameters or `PLACEHOLDER_` defaults, never guessed
-  - [ ] Deadline helper: minimum `expiredAt` = now + all windows + safety margin, so `fund` does not revert with `DeadlineDoesNotFit`
-  - [ ] Budget helpers: 1–1,000 USD range per token decimals; reuse `splitBudgetUsd` for linked milestone jobs
-  - [ ] Status helper: for a job and a wallet, return the current phase, the next deadline, and the actions that wallet may take now (used by apps and the keeper)
-  - [ ] Safety checks: provider may start only if funded amount equals agreed amount; warn when evaluator = client or arbiter = a party; check `evaluator == hook == OptimisticEvaluator` before `configure`; `description` must be a hash or URI (helper hashes a request document)
-  - [ ] Deferred payouts: read `claimable` and `withdraw` on both the instance and the evaluator
-  - [ ] Forwarder helper: build and sign `OpusForwarder` EIP-712 requests (used by the relayer in #25)
-  - [ ] Event decoders and custom-error decoding into readable messages
-  - [ ] Tests against a local Hardhat node for every helper
+  - [x] viem; accepts a `WalletClient` / `PublicClient`, never private keys; network config for Amoy and local Hardhat
+  - [x] Standard flow helpers: `createJob`, `setProvider`, `quote` (`setBudget`), `fund(expectedBudget)`, `fundWithPermit`, `submit`
+  - [x] Evaluator helpers: `configure` / `configureWithPermit`, `approve`, `object`, `extendReview`, `withdrawAsProvider`, `postDeposit` / `postDepositWithPermit`, triggers (`timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveMissingDeposit`, `resolveByDefault`), `sweep`
+  - [x] Token approvals: budget to the instance; evaluation fee (+ deposit in confirmation mode) to the evaluator; permit path when the token supports it
+  - [x] Presets (AI→AI, AI→person, person→any, small/no arbiter) that always pass contract validation: person→any = confirmation mode **with an arbiter**; no-arbiter presets = auto-complete and `disputeDeposit = 0`. Arbiter (D10) and amounts (D18) are required parameters or `PLACEHOLDER_` defaults, never guessed
+  - [x] Deadline helper: minimum `expiredAt` = now + all windows + safety margin, so `fund` does not revert with `DeadlineDoesNotFit`
+  - [x] Budget helpers: 1–1,000 USD range per token decimals; reuse `splitBudgetUsd` for linked milestone jobs
+  - [x] Status helper: for a job and a wallet, return the current phase, the next deadline, and the actions that wallet may take now (used by apps and the keeper)
+  - [x] Safety checks: provider may start only if funded amount equals agreed amount; warn when evaluator = client or arbiter = a party; check `evaluator == hook == OptimisticEvaluator` before `configure`; `description` must be a hash or URI (helper hashes a request document)
+  - [x] Deferred payouts: read `claimable` and `withdraw` on both the instance and the evaluator
+  - [x] Forwarder helper: build and sign `OpusForwarder` EIP-712 requests (used by the relayer in #25)
+  - [x] Event decoders and custom-error decoding into readable messages
+  - [x] Tests against a local Hardhat node for every helper
 * **Acceptance:** Example scripts run on Amoy: (1) create → configure → fund → submit → approve; (2) expiry → `claimRefund` → `sweep` returns the evaluation fee. Transaction hashes recorded in the resolution note.
+
+* **해결 내용:**
+  - `@opus/sdk`의 `Opus`가 viem `PublicClient`와 `WalletClient`만 받는다. 개인키는 받지 않는다. 주소는 `deploy/<network>/addresses.json`, 호출 ABI는 인터페이스와 같은 `parseAbi`이며 컴파일된 셀렉터와 테스트로 맞춘다.
+  - 표준 흐름, 평가자, 승인·permit, 프리셋, 만료 시각, 예산, 상태, 안전 검사, 지연 지급, 전달자 EIP-712, 이벤트·커스텀 오류 해석을 넣었다. 중재자(D10)와 금액(D18)은 인자가 없으면 `PLACEHOLDER_`다. 사람→누구나 프리셋은 중재자가 있어야 하고, 중재자 없는 프리셋은 자동 완료에 분쟁 보증금 0이다.
+  - 로컬 Hardhat에서 두 수용 흐름(승인, 만료 후 `claimRefund`·`sweep`)과 나머지 헬퍼를 검증했다. Amoy 예시 서명은 `packages/sdk/examples/amoy.ts`에 있으나, 라이브 서명이 없어 트랜잭션 해시는 아직 없다.
 
 #### [Issue #24] Keeper
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #23
