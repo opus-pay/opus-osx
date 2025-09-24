@@ -1,12 +1,13 @@
 {
     "name": "@opus/keeper",
     "version": "0.1.0",
-    "description": "OPUS deadline keeper. Skeleton until issue #24.",
+    "description": "OPUS deadline keeper. Calls due evaluator triggers and collects the tip.",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "clean": "rm -rf dist",
+        "start": "ts-node src/cli.ts",
         "test": "mocha --require ts-node/register 'test/**/*.ts'",
         "coverage": "yarn test",
         "lint": "tsc -p tsconfig.json --noEmit",
@@ -19,6 +20,10 @@
     },
     "author": "opus-pay",
     "license": "SEE LICENSE IN LICENSE.md",
+    "dependencies": {
+        "@opus/sdk": "0.1.0",
+        "viem": "^2.37.5"
+    },
     "devDependencies": {
         "@types/chai": "^4.3.11",
         "@types/mocha": "^10.0.6",
