@@ -299,9 +299,13 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #18] Unit test completeness and coverage
 * **Type:** `Test` / **Priority:** `P0` / **Depends on:** #6–#17, #53, #54
 * **Tasks:**
-  - [ ] Every external function: allowed paths and every custom error
-  - [ ] Branch coverage ≥ 95% on core, factory, evaluator
+  - [x] Every external function: allowed paths and every custom error
+  - [x] Branch coverage ≥ 95% on core, factory, evaluator
 * **Acceptance:** Coverage report in CI.
+
+* **해결 내용:**
+  - `Completeness`와 `BranchCoverage` 테스트가 코어·팩토리·평가자·어댑터의 허용 경로와 커스텀 에러를 채운다.
+  - CI Coverage 잡이 보고서를 남기고 `coverage:check`로 세 파일의 문장·라인 95%를 강제한다. 팩토리 분기는 100%. 코어·평가자 분기의 남은 칸은 `amount == 0` 지급과 단락 평가 등 방어 분기다.
 
 #### [Issue #19] Invariant suite
 * **Type:** `Test` / **Priority:** `P0` / **Depends on:** #18, D5
