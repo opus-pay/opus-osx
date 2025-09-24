@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 /// @notice OPUS view/helpers that do not change ERC-8183 behaviour.
 interface IOpusACPExtensions {
     enum JobStatus {
@@ -25,6 +27,9 @@ interface IOpusACPExtensions {
 
     event PayoutDeferred(address indexed account, uint256 amount);
     event Withdrawn(address indexed account, address indexed to, uint256 amount);
+
+    /// @notice Instance settlement token.
+    function token() external view returns (IERC20);
 
     /// @notice OPUS extension. Returns the spec job fields for `jobId`.
     function getJob(uint256 jobId) external view returns (Job memory job);

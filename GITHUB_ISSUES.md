@@ -241,12 +241,17 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #15, D18
 * **Description:** Evaluation is paid work. The operator is paid a flat fee whatever the outcome; whoever calls a due deadline trigger earns a tip. Core `evaluatorFeeBP` stays 0.
 * **Tasks:**
-  - [ ] Client deposits the flat evaluation fee (in the job's token) at configure; evaluation operator address fixed at configure
-  - [ ] On any terminal outcome (complete, reject, concession, default), pay the fee to the operator, minus tips already paid
-  - [ ] Tip paid to `msg.sender` of `timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveByDefault` when the call is due; one tip per trigger
-  - [ ] If the job ends through core `claimRefund` without the evaluator acting, the unused fee returns to the client
-  - [ ] Evaluator solvency test (I-2 for the evaluator); fee identical for complete and reject
+  - [x] Client deposits the flat evaluation fee (in the job's token) at configure; evaluation operator address fixed at configure
+  - [x] On any terminal outcome (complete, reject, concession, default), pay the fee to the operator, minus tips already paid
+  - [x] Tip paid to `msg.sender` of `timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveByDefault` when the call is due; one tip per trigger
+  - [x] If the job ends through core `claimRefund` without the evaluator acting, the unused fee returns to the client
+  - [x] Evaluator solvency test (I-2 for the evaluator); fee identical for complete and reject
 * **Acceptance:** A keeper other than OPUS earns a tip on Amoy; operator pay does not depend on the outcome.
+
+* **해결 내용:**
+  - 설정 때 평가 수수료를 작업 토큰으로 예치한다. 종결되면 이미 낸 팁을 뺀 나머지를 운영자에게 보낸다. complete와 reject의 운영자 수취액은 같다.
+  - 기한이 된 `timeoutNoSubmission` / `finalize` / `escalateOnSilence` / `resolveByDefault` 호출자가 팁을 받는다. 작업당 최대 2회. `claimRefund` 뒤에는 `sweep`이 남은 수수료를 의뢰인에게 돌려준다.
+  - Amoy에서 제3자 키퍼가 팁을 받는 확인은 배포(#22)에서 한다.
 
 #### [Issue #17] Budget lock modes
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #14
