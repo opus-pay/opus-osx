@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 
 import { defaultExpiry, deployCore, deployUsdc, DESC, EMPTY, testWallets } from "../helpers/acp";
-import { deployEvaluator, openConfiguredJob } from "../helpers/evaluator";
+import { defaultConfig, deployEvaluator, openConfiguredJob } from "../helpers/evaluator";
 
 describe("OptimisticEvaluator budget lock (#17)", () => {
     const wallets = testWallets();
@@ -34,21 +34,19 @@ describe("OptimisticEvaluator budget lock (#17)", () => {
         expect((await core.getJob(jobId)).budget).to.equal(90_000000);
     });
 
-    it("locks after the next setBudget once a provider and budget exist", async () => {
+    it("locks on the first setBudget after the provider is set", async () => {
         const { token, core, evaluator } = await setup();
-        const jobId = await openConfiguredJob(
-            core,
-            evaluator,
-            token,
-            client,
-            provider.address,
-            operator.address,
-            100_000000,
-            { budgetLock: 1 }
-        );
-        await core.connect(provider).setBudget(jobId, 80_000000, EMPTY);
-        expect((await core.getJob(jobId)).budget).to.equal(80_000000);
-        await expect(core.connect(client).setBudget(jobId, 90_000000, EMPTY)).to.be.revertedWithCustomError(
+        const expiredAt = await defaultExpiry();
+        await core
+            .connect(client)
+            .createJob(ethers.constants.AddressZero, evaluator.address, expiredAt, DESC, evaluator.address);
+        await evaluator.connect(client).configure(core.address, 1, defaultConfig(operator.address, { budgetLock: 1 }));
+        await core.connect(client).setBudget(1, 40_000000, EMPTY);
+        expect((await core.getJob(1)).budget).to.equal(40_000000);
+        await core.connect(client).setProvider(1, provider.address, EMPTY);
+        await core.connect(provider).setBudget(1, 80_000000, EMPTY);
+        expect((await core.getJob(1)).budget).to.equal(80_000000);
+        await expect(core.connect(client).setBudget(1, 90_000000, EMPTY)).to.be.revertedWithCustomError(
             core,
             "HookFailed"
         );

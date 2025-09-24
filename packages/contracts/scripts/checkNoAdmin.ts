@@ -33,7 +33,6 @@ const ARTIFACTS = [
     "artifacts/contracts/acp/OpusAgenticCommerce.sol/OpusAgenticCommerce.json",
     "artifacts/contracts/acp/OpusACPFactory.sol/OpusACPFactory.json",
     "artifacts/contracts/evaluators/OptimisticEvaluator.sol/OptimisticEvaluator.json",
-    "artifacts/contracts/evaluators/KlerosArbiterAdapter.sol/KlerosArbiterAdapter.json",
     "artifacts/contracts/forwarder/OpusForwarder.sol/OpusForwarder.json",
 ];
 

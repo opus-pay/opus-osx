@@ -5,7 +5,7 @@ pragma solidity 0.8.24;
 interface IOpusEvaluator {
     enum BudgetLock {
         None,
-        AfterProviderSetBudget,
+        AfterProviderSetBudget, // first setBudget after the provider is set
         FromCreation
     }
 
@@ -63,6 +63,16 @@ interface IOpusEvaluator {
 
     function configure(address instance, uint256 jobId, Config calldata cfg) external;
 
+    function configureWithPermit(
+        address instance,
+        uint256 jobId,
+        Config calldata cfg,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
+
     function timeoutNoSubmission(address instance, uint256 jobId) external;
 
     function approve(address instance, uint256 jobId) external;
@@ -82,6 +92,15 @@ interface IOpusEvaluator {
     function resolveByDefault(address instance, uint256 jobId) external;
 
     function postDeposit(address instance, uint256 jobId) external;
+
+    function postDepositWithPermit(
+        address instance,
+        uint256 jobId,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
 
     function resolveMissingDeposit(address instance, uint256 jobId) external;
 

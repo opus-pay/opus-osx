@@ -209,12 +209,16 @@ describe("ERC-8183 conformance (#20)", () => {
 
     it("S26 / H8: role checks use _msgSender and the forwarder is immutable", async () => {
         const { core, forwarder } = await instanceWithExtensions();
+        const ev = await deployEvaluator(forwarder.address);
         expect(await core.isTrustedForwarder(forwarder.address)).to.equal(true);
+        expect(await ev.isTrustedForwarder(forwarder.address)).to.equal(true);
         expect(core.interface.functions["setTrustedForwarder(address)"]).to.equal(undefined);
+        expect(ev.interface.functions["setTrustedForwarder(address)"]).to.equal(undefined);
     });
 
     it("H1–H3: listed events include reason/deliverable and anyone may claimRefund", async () => {
         const { core } = await instanceWithExtensions();
+        expect(core.interface.getEvent("JobCreated").inputs.map((i) => i.name)).to.include("hook");
         expect(core.interface.getEvent("JobSubmitted").inputs.map((i) => i.name)).to.include("deliverable");
         expect(core.interface.getEvent("JobCompleted").inputs.map((i) => i.name)).to.include("reason");
         expect(core.interface.getEvent("JobRejected").inputs.map((i) => i.name)).to.include("reason");

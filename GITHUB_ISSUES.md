@@ -63,6 +63,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - ERC-8183 초안을 2026-09-26에 읽었다. Created 2026-02-25. `ethereum/ERCs` 커밋 `a078cab5` (2026-03-13).
   - D11: `fund(uint256 jobId, uint256 expectedBudget, bytes calldata optParams)`. 명세와 hook-contracts 셀렉터를 따른다. 같은 페이지의 참조 구현은 `expectedBudget`을 빠뜨린다.
   - `IAgenticCommerce`, `IACPHook`와 적합성 표는 `packages/contracts/docs/ERC8183_CONFORMANCE.md`에 있다. 참조 구현의 관리자·UUPS·훅 화이트리스트는 복사하지 않는다.
+  - **정정:** 현재 명세 인터페이스의 `JobCreated`에는 `hook`이 있다. 이벤트에 넣었다. SHOULD 목록은 아직 이 필드를 생략한다.
 
 #### [Issue #4] Test mock tokens and hostile hooks
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #1
@@ -185,6 +186,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **해결 내용:**
   - D14 = 도입. `OpusForwarder`는 OpenZeppelin `ERC2771Forwarder`다. 인스턴스는 생성 시 이 주소를 고정하고 역할 검사에 `_msgSender()`를 쓴다.
   - 위조·만료·재사용·다른 체인 서명은 실패한다. 중계자가 서명자 대신 표준 흐름을 제출한다.
+  - **정정:** 평가자도 같은 전달자를 신뢰하고 `_msgSender()`를 쓴다. `configureWithPermit` / `postDepositWithPermit`으로 수수료·증거금도 permit이 된다.
 
 #### [Issue #13] USDC permit funding path
 * **Type:** `Feature` / **Priority:** `P2` / **Depends on:** #6, D15
@@ -236,6 +238,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **해결 내용:**
   - 제출 기한·검토·이의·중재·기본 판정과 의뢰인 승인·수행자 포기를 평가자가 표준 `complete`/`reject`로 종결한다 (I-4, I-9).
   - 분쟁 중 양보의 보증금 처리는 #53에서 이어서 한다.
+  - **정정:** 증거금·분쟁 기한은 호출 시각이 아니라 `reviewEnd`에서 계산한다. `rule`은 `disputeDeadline`과 같은 초에 거부되어 `resolveByDefault`만 남는다.
 
 #### [Issue #16] Evaluation fee and keeper tips
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #15, D18
@@ -262,6 +265,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 
 * **해결 내용:**
   - 훅이 없는 작업의 `setBudget`은 그대로다. `FromCreation`은 설정 이후 변경을 막는다. `AfterProviderSetBudget`은 수행자가 있는 상태에서 예산이 한 번 더 바뀌면 잠근다.
+  - **정정:** 표준 훅 데이터에 호출자가 없어 수행자 본인 견적인지 알 수 없다. 모드 1은 "수행자 지정 후 첫 `setBudget`에서 잠금"으로 다시 정의했다.
 
 #### [Issue #53] Dispute deposits: loser pays the arbiter
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #15, D18
@@ -278,6 +282,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **해결 내용:**
   - 보증금이 0이면 기존 #15 경로 그대로다. 보증금이 있으면 이의와 함께 의뢰인이 내고, 수행자는 `postDeposit`으로 맞춘 뒤에야 중재가 열린다.
   - 확인 필요 설정은 설정 때 의뢰인 보증금을 미리 받는다 (D22). 패자 보증금은 중재자에게, 승자 것은 반환한다. 양쪽 판정에서 중재자 수취액은 같다.
+  - **정정:** `resolveMissingDeposit`이 미납 쪽을 승자로 두고 있었다. 지금은 미납 쪽이 진다. 의뢰인만 냈으면 환불, 수행자만 냈으면 지급. 기한은 `reviewEnd + depositWindow` / `+ disputeWindow`이다.
 
 #### [Issue #54] Arbiter interface and external arbitration adapter
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #53
@@ -291,6 +296,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **해결 내용:**
   - 평가자는 중재자를 호출하지 않는다. `CaseOpened` 이후 EOA·컨트랙트·어댑터가 `rule`을 부른다.
   - Polygon에 있고 패자 부담 모델이 맞는 Kleros를 어댑터로 골랐다. 중재자 주소는 생성자에 넣으며 D10 기본 중재자는 아직 정하지 않는다.
+  - **정정:** 어댑터는 `createDispute`를 부르지 않고 인출도 없어 배포·감사 범위에서 뺐다. `IOpusArbiter`와 EOA·모의 중재자만 남긴다. D10 전까지 `contracts/experimental/`에 둔다.
 
 ---
 
@@ -306,6 +312,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **해결 내용:**
   - `Completeness`와 `BranchCoverage` 테스트가 코어·팩토리·평가자·어댑터의 허용 경로와 커스텀 에러를 채운다.
   - CI Coverage 잡이 보고서를 남기고 `coverage:check`로 세 파일의 문장·라인 95%를 강제한다. 팩토리 분기는 100%. 코어·평가자 분기의 남은 칸은 `amount == 0` 지급과 단락 평가 등 방어 분기다.
+  - **정정:** 분기 95%는 istanbul이 단락 평가와 `amount == 0` 가드를 세어 핵심 88.8%, 평가자 약 82%가 현재 도달값이다. 방어 분기를 지우지 않고 이 바닥에 고정했다.
 
 #### [Issue #19] Invariant suite
 * **Type:** `Test` / **Priority:** `P0` / **Depends on:** #18, D5
@@ -322,6 +329,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **해결 내용:**
   - Hardhat 핸들러가 고정 시드(1)로 매 호출 후 I-2를 대조하고, 종결된 작업은 다시 바뀌지 않는지 본다 (I-7). D5 Foundry 병행은 아직 열어둠.
   - I-4는 권한 없는 호출만으로 최대 창 작업을 종결한다. I-9는 승인·포기가 상대에게 유리함을 단정한다. 야간 워크플로가 시드를 기록한 채 1만 회를 돌린다.
+  - **정정:** 무작위 행동에 `object`·`postDeposit`·`resolveMissingDeposit`·`rule`·`resolveByDefault`·`sweep`·`withdraw`를 넣었다. I-4에 확인 모드와 중재 대기도 추가했다.
 
 #### [Issue #20] ERC-8183 conformance suite
 * **Type:** `Test` / **Priority:** `P0` / **Depends on:** #3, #18

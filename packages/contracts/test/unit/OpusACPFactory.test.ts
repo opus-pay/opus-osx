@@ -49,9 +49,10 @@ describe("OpusACPFactory (#11)", () => {
         await expect(
             factory.createInstance(client.address, ethers.constants.AddressZero, 0)
         ).to.be.revertedWithCustomError(factory, "TokenNotListed");
+        const coreFactory = await ethers.getContractFactory("OpusAgenticCommerce");
         await expect(
             factory.createInstance(usdc.address, ethers.constants.AddressZero, 10)
-        ).to.be.revertedWithCustomError(await ethers.getContractFactory("OpusAgenticCommerce"), "InvalidFeeConfig");
+        ).to.be.revertedWithCustomError(coreFactory, "InvalidFeeConfig");
     });
 
     it("lets anyone use a created instance for the standard flow", async () => {

@@ -8,9 +8,9 @@ type FileCoverage = {
 };
 
 const FILES: { path: string; stmt: number; line: number; branch: number }[] = [
-    { path: "contracts/acp/OpusAgenticCommerce.sol", stmt: 95, line: 95, branch: 85 },
+    { path: "contracts/acp/OpusAgenticCommerce.sol", stmt: 95, line: 95, branch: 88 },
     { path: "contracts/acp/OpusACPFactory.sol", stmt: 95, line: 95, branch: 95 },
-    { path: "contracts/evaluators/OptimisticEvaluator.sol", stmt: 95, line: 95, branch: 75 },
+    { path: "contracts/evaluators/OptimisticEvaluator.sol", stmt: 95, line: 95, branch: 82 },
 ];
 
 function ratio(hit: number, total: number): number {

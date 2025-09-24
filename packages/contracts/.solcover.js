@@ -9,5 +9,6 @@ module.exports = {
         "acp/IOpusACPExtensions.sol",
         "evaluators/IOpusEvaluator.sol",
         "evaluators/IOpusArbiter.sol",
+        "experimental",
     ],
 };

@@ -2,8 +2,10 @@
 pragma solidity 0.8.24;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import { IACPHook } from "../acp/IACPHook.sol";
@@ -12,7 +14,7 @@ import { IOpusACPExtensions } from "../acp/IOpusACPExtensions.sol";
 import { IOpusEvaluator } from "./IOpusEvaluator.sol";
 
 /// @notice Shared optimistic evaluator and hook. Per-job state is keyed by (instance, jobId).
-contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
+contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
     /// @dev D3 — replace after the window-bound decision. Suggested 1 hour / 180 days / 1 hour.
     uint32 public constant PLACEHOLDER_MIN_WINDOW = 1 hours;
@@ -77,24 +79,29 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     error NothingToWithdraw();
     error NothingToSweep();
     error BudgetLocked();
+    error InvalidDepositConfig();
+
+    constructor(address trustedForwarder_) ERC2771Context(trustedForwarder_) {}
 
     /// @inheritdoc IOpusEvaluator
     function configure(address instance, uint256 jobId, Config calldata cfg) external nonReentrant {
-        if (instance == address(0)) revert ZeroAddress();
-        IOpusACPExtensions.Job memory job = IOpusACPExtensions(instance).getJob(jobId);
-        if (job.status != IOpusACPExtensions.JobStatus.Open) revert WrongStatus();
-        if (msg.sender != job.client) revert Unauthorized();
-        if (job.evaluator != address(this) || job.hook != address(this)) revert NotEvaluator();
-        Case storage c = _cases[instance][jobId];
-        if (c.fundedAt != 0) revert ConfigFrozen();
-        _validateConfig(cfg, job);
+        _configure(instance, jobId, cfg);
+    }
+
+    /// @inheritdoc IOpusEvaluator
+    function configureWithPermit(
+        address instance,
+        uint256 jobId,
+        Config calldata cfg,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external nonReentrant {
         address token = address(IOpusACPExtensions(instance).token());
-        uint128 prepaid = cfg.autoCompleteOnSilence ? uint128(0) : cfg.disputeDeposit;
-        _rebalanceHolds(c, token, msg.sender, cfg.evaluationFee, prepaid);
-        c.config = cfg;
-        c.token = token;
-        c.configured = true;
-        emit Configured(instance, jobId, msg.sender);
+        uint256 pull = uint256(cfg.evaluationFee) + (cfg.autoCompleteOnSilence ? 0 : uint256(cfg.disputeDeposit));
+        _tryPermit(token, _msgSender(), pull, deadline, v, r, s);
+        _configure(instance, jobId, cfg);
     }
 
     /// @inheritdoc IOpusEvaluator
@@ -110,7 +117,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     function approve(address instance, uint256 jobId) external nonReentrant {
         Case storage c = _requireOpenCase(instance, jobId);
         IOpusACPExtensions.Job memory job = IOpusACPExtensions(instance).getJob(jobId);
-        if (msg.sender != job.client) revert Unauthorized();
+        if (_msgSender() != job.client) revert Unauthorized();
         if (c.submittedAt == 0) revert WrongStatus();
         uint8 loser = c.phase == Phase.ArbiterPending ? 1 : 0;
         if (c.phase == Phase.Escalated || c.phase == Phase.ArbiterPending) {
@@ -123,7 +130,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     function withdrawAsProvider(address instance, uint256 jobId) external nonReentrant {
         Case storage c = _requireOpenCase(instance, jobId);
         IOpusACPExtensions.Job memory job = IOpusACPExtensions(instance).getJob(jobId);
-        if (msg.sender != job.provider) revert Unauthorized();
+        if (_msgSender() != job.provider) revert Unauthorized();
         if (c.fundedAt == 0) revert WrongStatus();
         uint8 loser = c.phase == Phase.ArbiterPending ? 2 : 0;
         if (c.phase == Phase.Escalated || c.phase == Phase.ArbiterPending) {
@@ -136,7 +143,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     function object(address instance, uint256 jobId, bytes32 evidenceHash) external nonReentrant {
         Case storage c = _requireOpenCase(instance, jobId);
         IOpusACPExtensions.Job memory job = IOpusACPExtensions(instance).getJob(jobId);
-        if (msg.sender != job.client) revert Unauthorized();
+        if (_msgSender() != job.client) revert Unauthorized();
         if (c.phase != Phase.Submitted) revert WrongStatus();
         if (block.timestamp >= _reviewEnd(c)) revert ReviewEnded();
         c.evidenceHash = evidenceHash;
@@ -149,7 +156,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     function extendReview(address instance, uint256 jobId, uint32 secondsExtended) external nonReentrant {
         Case storage c = _requireOpenCase(instance, jobId);
         IOpusACPExtensions.Job memory job = IOpusACPExtensions(instance).getJob(jobId);
-        if (msg.sender != job.client) revert Unauthorized();
+        if (_msgSender() != job.client) revert Unauthorized();
         if (c.phase != Phase.Submitted) revert WrongStatus();
         if (c.extended) revert AlreadyExtended();
         if (secondsExtended == 0 || secondsExtended > c.config.maxExtension) revert ExtensionTooLarge(secondsExtended);
@@ -183,8 +190,8 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     function rule(address instance, uint256 jobId, bool completed, bytes32 reasonHash) external nonReentrant {
         Case storage c = _requireOpenCase(instance, jobId);
         if (c.phase != Phase.ArbiterPending) revert WrongStatus();
-        if (msg.sender != c.config.arbiter) revert Unauthorized();
-        if (block.timestamp > c.disputeDeadline) revert ReviewEnded();
+        if (_msgSender() != c.config.arbiter) revert Unauthorized();
+        if (block.timestamp >= c.disputeDeadline) revert ReviewEnded();
         emit Ruled(instance, jobId, msg.sender, completed, reasonHash);
         if (completed) {
             _complete(instance, jobId, c, reasonHash, 1);
@@ -216,22 +223,22 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     function postDeposit(address instance, uint256 jobId) external nonReentrant {
         Case storage c = _requireOpenCase(instance, jobId);
         IOpusACPExtensions.Job memory job = IOpusACPExtensions(instance).getJob(jobId);
-        if (c.phase != Phase.Escalated) revert WrongStatus();
-        if (c.config.disputeDeposit == 0) revert WrongStatus();
-        if (block.timestamp > c.depositDeadline) revert ReviewEnded();
-        if (msg.sender == job.client) {
-            if (c.clientPosted) revert WrongStatus();
-            _pullDeposit(c, job.client, true);
-        } else if (msg.sender == job.provider) {
-            if (c.providerPosted) revert WrongStatus();
-            _pullDeposit(c, job.provider, false);
-        } else {
-            revert Unauthorized();
-        }
-        emit DepositPosted(instance, jobId, msg.sender, c.config.disputeDeposit);
-        if (c.clientPosted && c.providerPosted) {
-            _openCase(instance, jobId, c, c.evidenceHash);
-        }
+        _postDeposit(instance, jobId, job, c);
+    }
+
+    /// @inheritdoc IOpusEvaluator
+    function postDepositWithPermit(
+        address instance,
+        uint256 jobId,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external nonReentrant {
+        Case storage c = _requireOpenCase(instance, jobId);
+        IOpusACPExtensions.Job memory job = IOpusACPExtensions(instance).getJob(jobId);
+        _tryPermit(c.token, _msgSender(), c.config.disputeDeposit, deadline, v, r, s);
+        _postDeposit(instance, jobId, job, c);
     }
 
     /// @inheritdoc IOpusEvaluator
@@ -240,10 +247,12 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
         if (c.phase != Phase.Escalated || c.config.disputeDeposit == 0) revert WrongStatus();
         if (block.timestamp < c.depositDeadline) revert TooEarly();
         if (c.clientPosted && c.providerPosted) revert WrongStatus();
+        _payTip(instance, jobId, c);
+        // Missing side loses: client posted / provider silent → reject; provider posted / client silent → complete.
         if (c.clientPosted && !c.providerPosted) {
-            _complete(instance, jobId, c, REASON_DEFAULT, 0);
-        } else if (!c.clientPosted && c.providerPosted) {
             _reject(instance, jobId, c, REASON_DEFAULT, 0);
+        } else if (!c.clientPosted && c.providerPosted) {
+            _complete(instance, jobId, c, REASON_DEFAULT, 0);
         } else if (c.config.defaultComplete) {
             _complete(instance, jobId, c, REASON_DEFAULT, 0);
         } else {
@@ -278,11 +287,12 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     /// @inheritdoc IOpusEvaluator
     function withdraw(address token, address to) external nonReentrant {
         if (to == address(0)) revert ZeroAddress();
-        uint256 amount = _claimable[token][msg.sender];
+        address owner = _msgSender();
+        uint256 amount = _claimable[token][owner];
         if (amount == 0) revert NothingToWithdraw();
-        _claimable[token][msg.sender] = 0;
+        _claimable[token][owner] = 0;
         IERC20(token).safeTransfer(to, amount);
-        emit Withdrawn(token, msg.sender, to, amount);
+        emit Withdrawn(token, owner, to, amount);
     }
 
     /// @inheritdoc IACPHook
@@ -292,7 +302,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
         }
 
         Case storage c = _cases[msg.sender][jobId];
-        IOpusACPExtensions.Job memory job = IOpusACPExtensions(msg.sender).getJob(jobId);
+        IOpusACPExtensions.JobView memory job = IOpusACPExtensions(msg.sender).getJobView(jobId);
 
         if (selector == IAgenticCommerce.setBudget.selector) {
             _beforeSetBudget(c, job);
@@ -408,13 +418,14 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
             interfaceId == type(IERC165).interfaceId;
     }
 
-    function _beforeSetBudget(Case storage c, IOpusACPExtensions.Job memory job) private {
+    function _beforeSetBudget(Case storage c, IOpusACPExtensions.JobView memory job) private {
         if (!c.configured) return;
         uint8 lock = c.config.budgetLock;
         if (lock == uint8(BudgetLock.FromCreation)) revert BudgetLocked();
         if (lock == uint8(BudgetLock.AfterProviderSetBudget)) {
             if (c.budgetLocked) revert BudgetLocked();
-            if (job.budget != 0 && job.provider != address(0)) {
+            // First setBudget after the provider is set locks when that call completes.
+            if (job.provider != address(0)) {
                 c.lockBudgetAfter = true;
             }
         }
@@ -427,6 +438,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     }
 
     function _escalate(address instance, uint256 jobId, Case storage c, bytes32 evidenceHash) private {
+        _scheduleDeadlines(c);
         if (c.config.arbiter == address(0)) {
             c.phase = Phase.Escalated;
             emit Escalated(instance, jobId);
@@ -437,18 +449,74 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
             return;
         }
         c.phase = Phase.Escalated;
-        c.depositDeadline = uint64(block.timestamp + uint256(c.config.depositWindow));
         emit Escalated(instance, jobId);
     }
 
     function _openCase(address instance, uint256 jobId, Case storage c, bytes32 evidenceHash) private {
         bool firstEscalation = c.phase != Phase.Escalated;
         c.phase = Phase.ArbiterPending;
-        c.disputeDeadline = uint64(block.timestamp + uint256(c.config.disputeWindow));
+        _scheduleDeadlines(c);
         if (firstEscalation) emit Escalated(instance, jobId);
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = evidenceHash;
         emit CaseOpened(instance, jobId, c.config.arbiter, c.disputeDeadline, hashes);
+    }
+
+    function _scheduleDeadlines(Case storage c) private {
+        uint256 review = _reviewEnd(c);
+        c.depositDeadline = uint64(review + uint256(c.config.depositWindow));
+        c.disputeDeadline = uint64(review + uint256(c.config.depositWindow) + uint256(c.config.disputeWindow));
+    }
+
+    function _configure(address instance, uint256 jobId, Config calldata cfg) private {
+        if (instance == address(0)) revert ZeroAddress();
+        IOpusACPExtensions.Job memory job = IOpusACPExtensions(instance).getJob(jobId);
+        if (job.status != IOpusACPExtensions.JobStatus.Open) revert WrongStatus();
+        if (_msgSender() != job.client) revert Unauthorized();
+        if (job.evaluator != address(this) || job.hook != address(this)) revert NotEvaluator();
+        Case storage c = _cases[instance][jobId];
+        if (c.fundedAt != 0) revert ConfigFrozen();
+        _validateConfig(cfg, job);
+        address token = address(IOpusACPExtensions(instance).token());
+        uint128 prepaid = cfg.autoCompleteOnSilence ? uint128(0) : cfg.disputeDeposit;
+        _rebalanceHolds(c, token, _msgSender(), cfg.evaluationFee, prepaid);
+        c.config = cfg;
+        c.token = token;
+        c.configured = true;
+        emit Configured(instance, jobId, _msgSender());
+    }
+
+    function _postDeposit(address instance, uint256 jobId, IOpusACPExtensions.Job memory job, Case storage c) private {
+        if (c.phase != Phase.Escalated) revert WrongStatus();
+        if (c.config.disputeDeposit == 0) revert WrongStatus();
+        if (block.timestamp > c.depositDeadline) revert ReviewEnded();
+        address caller = _msgSender();
+        if (caller == job.client) {
+            if (c.clientPosted) revert WrongStatus();
+            _pullDeposit(c, job.client, true);
+        } else if (caller == job.provider) {
+            if (c.providerPosted) revert WrongStatus();
+            _pullDeposit(c, job.provider, false);
+        } else {
+            revert Unauthorized();
+        }
+        emit DepositPosted(instance, jobId, caller, c.config.disputeDeposit);
+        if (c.clientPosted && c.providerPosted) {
+            _openCase(instance, jobId, c, c.evidenceHash);
+        }
+    }
+
+    function _tryPermit(
+        address token,
+        address owner,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) private {
+        if (value == 0) return;
+        try IERC20Permit(token).permit(owner, address(this), value, deadline, v, r, s) {} catch {}
     }
 
     function _complete(address instance, uint256 jobId, Case storage c, bytes32 reason, uint8 loser) private {
@@ -546,8 +614,9 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
         if (tip == 0 || c.tipsPaid >= MAX_TIPS || c.feeHeld < tip) return;
         c.feeHeld -= uint128(tip);
         c.tipsPaid += 1;
-        _pay(c.token, msg.sender, tip);
-        emit TipPaid(instance, jobId, msg.sender, tip);
+        address keeper = _msgSender();
+        _pay(c.token, keeper, tip);
+        emit TipPaid(instance, jobId, keeper, tip);
     }
 
     function _settleFee(address instance, uint256 jobId, Case storage c) private {
@@ -581,6 +650,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
         if (cfg.budgetLock > uint8(BudgetLock.FromCreation)) revert InvalidBudgetLock();
         if (cfg.evaluationFee > 0 && cfg.operator == address(0)) revert InvalidFeeConfig();
         if (uint256(cfg.keeperTip) * MAX_TIPS > cfg.evaluationFee) revert InvalidFeeConfig();
+        if (cfg.disputeDeposit > 0 && cfg.arbiter == address(0)) revert InvalidDepositConfig();
         _requireArbiterNotParty(cfg.arbiter, job.client, job.provider);
         if (job.budget > 0) {
             uint256 cap = _feeCap(job.budget);

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.24;
 
-import { IOpusArbiter } from "./IOpusArbiter.sol";
-import { IOpusEvaluator } from "./IOpusEvaluator.sol";
+import { IOpusArbiter } from "../evaluators/IOpusArbiter.sol";
+import { IOpusEvaluator } from "../evaluators/IOpusEvaluator.sol";
 
-/// @notice Maps a Kleros-style `IArbitrable.rule(disputeId, ruling)` onto `OptimisticEvaluator.rule`.
-/// @dev Kleros is live on Polygon PoS and charges the loser in the protocol's own token, which matches
-///      OPUS "loser pays the arbiter". The arbitrator address is constructor-injected (D10 still open).
-///      Ruling 1 → complete, ruling 2 → reject, ruling 0 → defaultComplete from the job config.
+/// @notice Experimental sketch only. Out of deploy and audit scope until D10.
+/// @dev Does not call Kleros `createDispute`. Anyone can `bind` a dispute id, including 0
+///      (which later looks unbound). The adapter has no withdraw, so a loser's deposit sent
+///      here would be stuck. Kleros fees are native coin paid at createDispute, not the
+///      protocol token. Do not set this address as a job arbiter.
 contract KlerosArbiterAdapter is IOpusArbiter {
     address public immutable arbitrator;
 
