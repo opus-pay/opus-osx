@@ -67,11 +67,15 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #4] Test mock tokens and hostile hooks
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #1
 * **Tasks:**
-  - [ ] Port permit, reentrant, and fee-on-transfer ERC-20 mocks
-  - [ ] Add a blacklisting ERC-20 mock (transfer to a listed address fails)
-  - [ ] Add hostile hooks: always reverts, burns all gas, re-enters the core
-  - [ ] Exclude `mocks/` from solhint and slither
+  - [x] Port permit, reentrant, and fee-on-transfer ERC-20 mocks
+  - [x] Add a blacklisting ERC-20 mock (transfer to a listed address fails)
+  - [x] Add hostile hooks: always reverts, burns all gas, re-enters the core
+  - [x] Exclude `mocks/` from solhint and slither
 * **Acceptance:** Mocks used by at least one test each.
+
+* **해결 내용:**
+  - `MockPermitToken`, `MockFeeOnTransferToken`, `MockBlacklistToken`, `MockReentrantToken`과 훅 `HookAlwaysRevert`, `HookGasBurn`, `HookReenter`를 `contracts/mocks/`에 두었다.
+  - `test/unit/Mocks.test.ts`가 각 목을 한 번씩 쓴다. solhint ignore와 slither `filter_paths`는 이미 `mocks/`를 뺀다.
 
 #### [Issue #5] Keep the whitepapers in sync
 * **Type:** `Docs` / **Priority:** `P1` / **Depends on:** #3
