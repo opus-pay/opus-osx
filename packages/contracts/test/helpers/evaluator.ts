@@ -47,9 +47,11 @@ export async function openConfiguredJob(
     const jobId = receipt.events?.find((e) => e.event === "JobCreated")?.args?.jobId.toNumber() as number;
     await core.connect(client).setBudget(jobId, budget, EMPTY);
     const fee = Number(configOverrides.evaluationFee ?? 0);
-    if (fee > 0) {
-        await token.mint(client.address, fee);
-        await token.connect(client).approve(evaluator.address, fee);
+    const prepaid = configOverrides.autoCompleteOnSilence === false ? Number(configOverrides.disputeDeposit ?? 0) : 0;
+    const extra = fee + prepaid;
+    if (extra > 0) {
+        await token.mint(client.address, extra);
+        await token.connect(client).approve(evaluator.address, extra);
     }
     await evaluator.connect(client).configure(core.address, jobId, defaultConfig(operator, configOverrides));
     await token.mint(client.address, budget);
