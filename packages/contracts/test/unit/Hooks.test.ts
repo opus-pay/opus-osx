@@ -17,12 +17,18 @@ describe("Hooks (#9)", () => {
         const revertHook = (await (await ethers.getContractFactory("HookAlwaysRevert")).deploy()) as HookAlwaysRevert;
         await revertHook.deployed();
         await core.connect(client).createJob(provider.address, evaluator.address, expiredAt, DESC, revertHook.address);
-        await expect(core.connect(client).setBudget(1, 1, EMPTY)).to.be.revertedWithCustomError(core, "HookFailed");
+        await expect(core.connect(client).setBudget(1, 1_000000, EMPTY)).to.be.revertedWithCustomError(
+            core,
+            "HookFailed"
+        );
 
         const burn = (await (await ethers.getContractFactory("HookGasBurn")).deploy()) as HookGasBurn;
         await burn.deployed();
         await core.connect(client).createJob(provider.address, evaluator.address, expiredAt, DESC, burn.address);
-        await expect(core.connect(client).setBudget(2, 1, EMPTY)).to.be.revertedWithCustomError(core, "HookFailed");
+        await expect(core.connect(client).setBudget(2, 1_000000, EMPTY)).to.be.revertedWithCustomError(
+            core,
+            "HookFailed"
+        );
     });
 
     it("stops a hook that re-enters the core", async () => {
@@ -38,7 +44,10 @@ describe("Hooks (#9)", () => {
 
         const expiredAt = await defaultExpiry();
         await core.connect(client).createJob(provider.address, evaluator.address, expiredAt, DESC, hook.address);
-        await expect(core.connect(client).setBudget(1, 1, EMPTY)).to.be.revertedWithCustomError(core, "HookFailed");
+        await expect(core.connect(client).setBudget(1, 1_000000, EMPTY)).to.be.revertedWithCustomError(
+            core,
+            "HookFailed"
+        );
     });
 
     it("lets claimRefund finish after expiry when later hooks revert (I-4)", async () => {
