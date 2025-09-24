@@ -378,35 +378,49 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 
 #### [Issue #23] TypeScript SDK
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #22
+* **Description:** The only way apps (`apps/*`), the keeper, and the relayer talk to the contracts. Addresses come from `packages/contracts/deploy/<network>/addresses.json`; ABIs and types come from typechain output only.
 * **Tasks:**
-  - [ ] viem; types from typechain/ABI only; accepts a `WalletClient`, never private keys
-  - [ ] Standard flow helpers: create, set provider, quote, fund with expected budget, submit, complete/reject
-  - [ ] Evaluator helpers and presets (AI→AI, AI→person, person→any, small/no arbiter); default arbiter per D10
-  - [ ] Safety checks: start work only if funded amount equals agreed amount; warn when evaluator = client; description as hash/URI only
-  - [ ] Milestone helper: N linked jobs
-  - [ ] Event decoders
-* **Acceptance:** Example scripts run the full flow on Amoy.
+  - [ ] viem; accepts a `WalletClient` / `PublicClient`, never private keys; network config for Amoy and local Hardhat
+  - [ ] Standard flow helpers: `createJob`, `setProvider`, `quote` (`setBudget`), `fund(expectedBudget)`, `fundWithPermit`, `submit`
+  - [ ] Evaluator helpers: `configure` / `configureWithPermit`, `approve`, `object`, `extendReview`, `withdrawAsProvider`, `postDeposit` / `postDepositWithPermit`, triggers (`timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveMissingDeposit`, `resolveByDefault`), `sweep`
+  - [ ] Token approvals: budget to the instance; evaluation fee (+ deposit in confirmation mode) to the evaluator; permit path when the token supports it
+  - [ ] Presets (AI→AI, AI→person, person→any, small/no arbiter) that always pass contract validation: person→any = confirmation mode **with an arbiter**; no-arbiter presets = auto-complete and `disputeDeposit = 0`. Arbiter (D10) and amounts (D18) are required parameters or `PLACEHOLDER_` defaults, never guessed
+  - [ ] Deadline helper: minimum `expiredAt` = now + all windows + safety margin, so `fund` does not revert with `DeadlineDoesNotFit`
+  - [ ] Budget helpers: 1–1,000 USD range per token decimals; reuse `splitBudgetUsd` for linked milestone jobs
+  - [ ] Status helper: for a job and a wallet, return the current phase, the next deadline, and the actions that wallet may take now (used by apps and the keeper)
+  - [ ] Safety checks: provider may start only if funded amount equals agreed amount; warn when evaluator = client or arbiter = a party; check `evaluator == hook == OptimisticEvaluator` before `configure`; `description` must be a hash or URI (helper hashes a request document)
+  - [ ] Deferred payouts: read `claimable` and `withdraw` on both the instance and the evaluator
+  - [ ] Forwarder helper: build and sign `OpusForwarder` EIP-712 requests (used by the relayer in #25)
+  - [ ] Event decoders and custom-error decoding into readable messages
+  - [ ] Tests against a local Hardhat node for every helper
+* **Acceptance:** Example scripts run on Amoy: (1) create → configure → fund → submit → approve; (2) expiry → `claimRefund` → `sweep` returns the evaluation fee. Transaction hashes recorded in the resolution note.
 
 #### [Issue #24] Keeper
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #23
 * **Tasks:**
-  - [ ] Watch jobs using `OptimisticEvaluator`
-  - [ ] Call `timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveByDefault` when due, and collect the tips
-  - [ ] Alert when a job gets within a margin of `expiredAt` without resolution
-* **Acceptance:** A job with no activity after submission completes automatically on Amoy.
+  - [ ] Watch jobs whose evaluator is `OptimisticEvaluator`, using the SDK status helper (no deadline logic of its own)
+  - [ ] Call `timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveMissingDeposit`, `resolveByDefault` when due, and collect the tips
+  - [ ] Deadlines come from the evaluator's scheduled times (`reviewEnd`, `depositDeadlineOf`, `disputeDeadlineOf`); never assume call time
+  - [ ] Runs from its own hot wallet with a small POL balance, separate from the deployer; key from env, never committed
+  - [ ] Gas price floor for Amoy (25 gwei, see #22) and retry with backoff
+  - [ ] Alert when a job gets within a margin of `expiredAt` without resolution, or when the keeper's POL balance is low
+* **Acceptance:** On Amoy: (1) a job with no activity after submission completes automatically; (2) a job whose submit window passed is rejected by the keeper, which is not the deployer and receives the tip. Transaction hashes recorded here, and #16's Amoy acceptance ticked with them.
 
 #### [Issue #25] Relayer
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #12, #23
 * **Description:** Required for the errand service: clients and providers must never need to buy POL.
 * **Tasks:**
-  - [ ] Accept signed forwarder requests; submit and pay gas
+  - [ ] Accept `OpusForwarder` requests signed with the SDK forwarder helper; submit and pay gas
+  - [ ] Only relay calls whose target is a known OPUS instance, the factory, or the evaluator (from `addresses.json`); reject anything else so the gas wallet cannot be drained
   - [ ] Per-integrator budget and rate limits
-* **Acceptance:** Payment link flow works for a wallet with zero POL.
+  - [ ] Screen signer addresses against applicable sanctions lists before relaying (whitepaper §13.2)
+  - [ ] Gas price floor and nonce management for the relayer wallet; key from env
+* **Acceptance:** A wallet with zero POL completes the payment-link flow through the relayer on Amoy (also satisfies #12's acceptance).
 
 #### [Issue #26] Indexing
 * **Type:** `Task` / **Priority:** `P1` / **Depends on:** #22
 * **Tasks:**
-  - [ ] Hosted indexer (subgraph or equivalent) for jobs, evaluator state, instances
+  - [ ] Hosted indexer (subgraph or equivalent) for instances (`InstanceCreated`), jobs (all ERC-8183 events), and evaluator events (`Configured`, `Escalated`, `CaseOpened`, `DepositPosted`, `Ruled`, `TipPaid`, `FeePaid`, `Swept`)
   - [ ] Queries used by the payment link app and keeper
 * **Acceptance:** Job status pages load from the index, not from raw logs.
 
@@ -420,7 +434,9 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - [ ] Either party drafts terms: counterparty address, amount, deadlines, evaluator preset, hash of the agreement made elsewhere
   - [ ] Shareable link with expiry
   - [ ] Counterparty view: terms in plain language ("paid automatically 3 days after submission unless you object"), prominent address display
-  - [ ] Client creates the job and funds; provider quotes via `setBudget` or the amount is locked from creation
+  - [ ] Client creates the job, configures the evaluator from an SDK preset, and funds; either the provider quotes via `setBudget` (budget lock mode 1 locks the first quote), or the client sets the amount before `configure` and uses lock mode 2
+  - [ ] Expiry set with the SDK deadline helper; approvals or permits for budget and evaluation fee handled in one step for the user
+  - [ ] Where link drafts are stored (Q10) decided and documented
 * **Acceptance:** Two wallets reach `Funded` from one shared link.
 
 #### [Issue #28] Payment link: submit, review, object, status
@@ -428,13 +444,14 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Tasks:**
   - [ ] Provider uploads deliverable or proof off-chain; hash submitted
   - [ ] Client approve / object / extend buttons with countdowns
-  - [ ] Status page for both parties; withdraw deferred payouts
+  - [ ] Dispute path: provider sees the deposit deadline and posts the deposit (`postDeposit` / permit); both see the arbiter's deadline and the ruling
+  - [ ] Status page for both parties from the SDK status helper; withdraw deferred payouts from the instance and the evaluator
 * **Acceptance:** A real paid job completes on Amoy between two people.
 
 #### [Issue #29] Notifications
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #28
 * **Tasks:**
-  - [ ] Notify on funding, submission, review deadline approaching, auto-completion imminent, escalation, ruling
+  - [ ] Notify on funding, submission, review deadline approaching, auto-completion imminent, escalation, **deposit deadline approaching for the party that has not posted** (missing it loses the job), ruling
   - [ ] Channel per Q11 (email, Telegram, or webhook)
 * **Acceptance:** No party misses a deadline in the pilot without having been notified.
 
@@ -506,6 +523,8 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Client: buy USDC by card or bank transfer through a licensed partner, delivered to the client's wallet
   - [ ] Provider: convert USDC to local currency through a licensed partner
   - [ ] Show all fees and exchange rates before the client funds
+  - [ ] Partners are integrated under their licences, funded by investment (D29); OPUS and the service never hold or exchange funds
+  - [ ] Until partners are in place: guide for users who buy USDC on an exchange and withdraw to their wallet (travel-rule registration), and for providers who sell USDC on an exchange
 * **Acceptance:** A pilot client with no crypto funds a job by card; a provider receives local currency.
 
 #### [Issue #73] Wallet onboarding and gasless use
@@ -547,7 +566,8 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 #### [Issue #36] Polygon grant application
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #22, #34
 * **Tasks:**
-  - [ ] Milestones tied to #22 (Amoy), #35 (pilot), #42 (mainnet)
+  - [ ] Milestones tied to #22 (Amoy, done: verified addresses in README), #35 (pilot), #42 (mainnet)
+  - [ ] Check which Polygon funding programme is open at the time (grants moved to funds and programme directors in 2025)
   - [ ] Budget focused on the external audit
   - [ ] Rule for converting POL to USDC on receipt
 * **Acceptance:** Application submitted.
@@ -575,12 +595,14 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 * **Tasks:**
   - [ ] Trust assumptions: evaluator, arbiter, verifier, relayer, keeper, stablecoin issuers
   - [ ] Attack list and mitigations; invariant list; test and coverage report
+  - [ ] Revisit #18: raise branch coverage toward 95% or list each uncovered branch with a reason (unreachable guards removed, short-circuit branches tested)
+  - [ ] Confirm the nightly invariant run really completes 10,000 actions (mocha timeout)
 * **Acceptance:** Pack ready to send to auditors.
 
 #### [Issue #40] External audit
 * **Type:** `Security` / **Priority:** `P0` / **Depends on:** #39, funding
 * **Tasks:**
-  - [ ] Scope: core, factory, forwarder (if any), `OptimisticEvaluator` (including fees, tips, deposits), `TestRunnerEvaluator`, arbiter adapter
+  - [ ] Scope: core, factory, forwarder, `OptimisticEvaluator` (including fees, tips, deposits, permit paths). `TestRunnerEvaluator` and any arbiter adapter are audited separately when they are built (the Kleros adapter is in `contracts/experimental/` and out of scope)
   - [ ] Fix findings; publish the report
 * **Acceptance:** No open high or medium findings.
 
@@ -591,7 +613,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 #### [Issue #42] Mainnet deployment
 * **Type:** `Release` / **Priority:** `P0` / **Depends on:** #40, ERC-8183 interface stable
 * **Tasks:**
-  - [ ] Deploy and verify on Polygon; budget range 1–1,000 USD enforced
+  - [ ] Deploy and verify on Polygon (`POLYGON_USDC` and any other stablecoins injected per D8); budget range 1–1,000 USD enforced; D2, D3, D18 placeholders replaced with decided values first
   - [ ] Public page: addresses, stablecoin list, budget range, "no admin, no protocol fee" statement
 * **Acceptance:** First mainnet job completed.
 
@@ -604,6 +626,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 * **Tasks:**
   - [ ] Protocol maintenance vs team-run services as separate entities
   - [ ] Jurisdiction chosen with counsel; where decisions are actually made
+  - [ ] Needed before equity investment and before any contract with payment or exchange partners (D29)
 * **Acceptance:** Structure decided before any third-party integration or investment agreement.
 
 #### [Issue #44] Legal review before third-party integration
@@ -619,7 +642,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 #### [Issue #45] License decision
 * **Type:** `Legal` / **Priority:** `P1` / **Depends on:** —
 * **Tasks:**
-  - [ ] MIT (suggested for a public-standard implementation with no protocol fee) vs BSL (D7)
+  - [ ] MIT (suggested for a public-standard implementation with no protocol fee) vs BSL (D7). `LICENSE.md` is currently BUSL-1.1 (MIT from 2030-01-01); if BUSL stays, fix its "Licensed Work" text, which still describes the previous project
 * **Acceptance:** `LICENSE` file matches the decision before the first public release.
 
 ---
