@@ -19,6 +19,9 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
 
     uint256 public constant EVALUATOR_FEE_BP = 0;
 
+    /// @dev D2 — replace after the fee-cap decision. Suggested 1,000 (10%).
+    uint256 public constant PLACEHOLDER_MAX_PLATFORM_FEE_BP = 1_000;
+
     IERC20 public immutable token;
     uint8 public immutable tokenDecimals;
     address public immutable platformTreasury;
@@ -39,6 +42,8 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     error ProviderNotSet();
     error BudgetMismatch(uint256 actual, uint256 expected);
     error UnexpectedFundedAmount(uint256 received, uint256 expected);
+    error InvalidFeeConfig();
+    error FeesTooHigh(uint256 feeBP);
 
     constructor(
         address token_,
@@ -50,6 +55,8 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     ) ERC2771Context(trustedForwarder_) {
         if (token_ == address(0)) revert ZeroAddress();
         if (tokenDecimals_ != 6 && tokenDecimals_ != 18) revert InvalidTokenDecimals(tokenDecimals_);
+        if ((platformTreasury_ == address(0)) != (platformFeeBP_ == 0)) revert InvalidFeeConfig();
+        if (platformFeeBP_ > PLACEHOLDER_MAX_PLATFORM_FEE_BP) revert FeesTooHigh(platformFeeBP_);
         token = IERC20(token_);
         tokenDecimals = tokenDecimals_;
         platformTreasury = platformTreasury_;
@@ -142,11 +149,16 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         if (_msgSender() != job.evaluator) revert Unauthorized();
         job.status = JobStatus.Completed;
         uint256 amount = job.budget;
-        if (amount > 0) {
-            token.safeTransfer(job.provider, amount);
+        uint256 fee = (amount * platformFeeBP) / 10_000;
+        uint256 toProvider = amount - fee;
+        if (fee > 0) {
+            token.safeTransfer(platformTreasury, fee);
+        }
+        if (toProvider > 0) {
+            token.safeTransfer(job.provider, toProvider);
         }
         emit JobCompleted(jobId, job.evaluator, reason);
-        emit PaymentReleased(jobId, job.provider, amount);
+        emit PaymentReleased(jobId, job.provider, toProvider);
     }
 
     /// @inheritdoc IAgenticCommerce
