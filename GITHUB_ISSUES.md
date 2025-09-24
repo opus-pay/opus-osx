@@ -177,10 +177,14 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #12] ERC-2771 trusted forwarder support
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #6, D14
 * **Tasks:**
-  - [ ] Immutable forwarder address in the instance; `_msgSender()` used for every role check
-  - [ ] Forwarder contract with EIP-712 requests, nonces, deadlines (or a vetted existing one)
-  - [ ] Tests: forged, expired, replayed, wrong-chain requests revert; role rules still hold through the forwarder
+  - [x] Immutable forwarder address in the instance; `_msgSender()` used for every role check
+  - [x] Forwarder contract with EIP-712 requests, nonces, deadlines (or a vetted existing one)
+  - [x] Tests: forged, expired, replayed, wrong-chain requests revert; role rules still hold through the forwarder
 * **Acceptance:** A user without POL completes the standard flow through the forwarder.
+
+* **해결 내용:**
+  - D14 = 도입. `OpusForwarder`는 OpenZeppelin `ERC2771Forwarder`다. 인스턴스는 생성 시 이 주소를 고정하고 역할 검사에 `_msgSender()`를 쓴다.
+  - 위조·만료·재사용·다른 체인 서명은 실패한다. 중계자가 서명자 대신 표준 흐름을 제출한다.
 
 #### [Issue #13] USDC permit funding path
 * **Type:** `Feature` / **Priority:** `P2` / **Depends on:** #6, D15
