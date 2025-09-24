@@ -61,6 +61,13 @@ function getLedgerAccounts(): string[] {
     for (const address of addresses) {
         HardhatAccount.ledgerAddress.push(address);
     }
+    // Acceptance jobs are signed by these HD accounts, not by the deployer.
+    if (process.env.ACCEPTANCE_LEDGER === "1") {
+        HardhatAccount.ledgerAddress.push(
+            "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0",
+            "0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be"
+        );
+    }
     return HardhatAccount.ledgerAddress;
 }
 

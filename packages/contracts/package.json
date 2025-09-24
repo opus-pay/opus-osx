@@ -17,6 +17,7 @@
         "node": "hardhat node",
         "deploy:localhost": "hardhat run deploy/localhost/deploy.ts --network localhost",
         "deploy:amoy": "ENV_NETWORK=amoy hardhat run deploy/amoy/deploy.ts --network amoy",
+        "acceptance:amoy": "ACCEPTANCE_LEDGER=1 ENV_NETWORK=amoy hardhat run scripts/amoyAcceptance.ts --network amoy",
         "deploy:polygon": "ENV_NETWORK=polygon hardhat run deploy/polygon/deploy.ts --network polygon",
         "lint": "solhint 'contracts/**/*.sol'",
         "formatting:check": "prettier '**/*.{json,sol,ts,js}' -c",
