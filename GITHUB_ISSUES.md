@@ -310,14 +310,18 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #19] Invariant suite
 * **Type:** `Test` / **Priority:** `P0` / **Depends on:** #18, D5
 * **Tasks:**
-  - [ ] Randomized action handler over core and evaluator; check I-1 and I-2 after every call
-  - [ ] Fixed-seed run in CI; nightly random-seed run ≥ 10,000 actions with seeds logged
-  - [ ] Liveness test: maximum windows, only permissionless calls; every job terminates (I-4)
-  - [ ] Terminal jobs never change (I-7)
-  - [ ] Concession always ends the job in the other party's favour (I-9)
-  - [ ] Evaluator balance equals held fees and deposits after every action (I-2)
-  - [ ] Failed seeds kept as regression tests
+  - [x] Randomized action handler over core and evaluator; check I-1 and I-2 after every call
+  - [x] Fixed-seed run in CI; nightly random-seed run ≥ 10,000 actions with seeds logged
+  - [x] Liveness test: maximum windows, only permissionless calls; every job terminates (I-4)
+  - [x] Terminal jobs never change (I-7)
+  - [x] Concession always ends the job in the other party's favour (I-9)
+  - [x] Evaluator balance equals held fees and deposits after every action (I-2)
+  - [x] Failed seeds kept as regression tests
 * **Acceptance:** Suite runs in CI and nightly.
+
+* **해결 내용:**
+  - Hardhat 핸들러가 고정 시드(1)로 매 호출 후 I-2를 대조하고, 종결된 작업은 다시 바뀌지 않는지 본다 (I-7). D5 Foundry 병행은 아직 열어둠.
+  - I-4는 권한 없는 호출만으로 최대 창 작업을 종결한다. I-9는 승인·포기가 상대에게 유리함을 단정한다. 야간 워크플로가 시드를 기록한 채 1만 회를 돌린다.
 
 #### [Issue #20] ERC-8183 conformance suite
 * **Type:** `Test` / **Priority:** `P0` / **Depends on:** #3, #18
