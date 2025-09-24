@@ -255,6 +255,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - 설정 때 평가 수수료를 작업 토큰으로 예치한다. 종결되면 이미 낸 팁을 뺀 나머지를 운영자에게 보낸다. complete와 reject의 운영자 수취액은 같다.
   - 기한이 된 `timeoutNoSubmission` / `finalize` / `escalateOnSilence` / `resolveByDefault` 호출자가 팁을 받는다. 작업당 최대 2회. `claimRefund` 뒤에는 `sweep`이 남은 수수료를 의뢰인에게 돌려준다.
   - Amoy에서 제3자 키퍼가 팁을 받는 확인은 배포(#22)에서 한다.
+  - **정정:** 그 확인은 #22 배포에 포함되지 않았다. #24 키퍼의 Amoy 수용 기준과 함께 트랜잭션 해시를 남긴다.
   - **정정:** `resolveMissingDeposit`도 기한이 된 처리 함수라 팁을 준다 (작업당 최대 2회에 포함).
 
 #### [Issue #17] Budget lock modes
@@ -403,13 +404,18 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #24] Keeper
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #23
 * **Tasks:**
-  - [ ] Watch jobs whose evaluator is `OptimisticEvaluator`, using the SDK status helper (no deadline logic of its own)
-  - [ ] Call `timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveMissingDeposit`, `resolveByDefault` when due, and collect the tips
-  - [ ] Deadlines come from the evaluator's scheduled times (`reviewEnd`, `depositDeadlineOf`, `disputeDeadlineOf`); never assume call time
-  - [ ] Runs from its own hot wallet with a small POL balance, separate from the deployer; key from env, never committed
-  - [ ] Gas price floor for Amoy (25 gwei, see #22) and retry with backoff
-  - [ ] Alert when a job gets within a margin of `expiredAt` without resolution, or when the keeper's POL balance is low
+  - [x] Watch jobs whose evaluator is `OptimisticEvaluator`, using the SDK status helper (no deadline logic of its own)
+  - [x] Call `timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveMissingDeposit`, `resolveByDefault` when due, and collect the tips
+  - [x] Deadlines come from the evaluator's scheduled times (`reviewEnd`, `depositDeadlineOf`, `disputeDeadlineOf`); never assume call time
+  - [x] Runs from its own hot wallet with a small POL balance, separate from the deployer; key from env, never committed
+  - [x] Gas price floor for Amoy (25 gwei, see #22) and retry with backoff
+  - [x] Alert when a job gets within a margin of `expiredAt` without resolution, or when the keeper's POL balance is low
 * **Acceptance:** On Amoy: (1) a job with no activity after submission completes automatically; (2) a job whose submit window passed is rejected by the keeper, which is not the deployer and receives the tip. Transaction hashes recorded here, and #16's Amoy acceptance ticked with them.
+
+* **해결 내용:**
+  - `@opus/keeper`는 인스턴스의 작업을 돌며 `Opus.status`가 돌려준 기한 처리만 호출한다. 기한을 따로 계산하지 않는다. 호출은 SDK를 통하므로 Amoy 가스는 25 gwei 바닥을 쓴다. 전송 실패는 기다렸다가 다시 시도하고, 컨트랙트가 거절한 호출은 다시 보내지 않는다.
+  - 키는 `KEEPER_PRIVATE_KEY`에서만 읽는다. 샘플은 `packages/keeper/env/.env.sample`이고 실제 키는 커밋하지 않는다. 배포자 주소와 같으면 시작을 거부한다. POL 잔고가 낮거나, 예치·제출 상태의 작업이 만료 여유 안에 들어오면 경고한다.
+  - 로컬 Hardhat에서 침묵한 제출은 `finalize`로 완료되고, 제출 기한을 넘긴 작업은 `timeoutNoSubmission`으로 거절된다. 팁은 배포자가 아닌 키퍼 주소가 받는다. Amoy 트랜잭션 해시와 #16 수용 기준은 라이브 실행 후에 남긴다.
 
 #### [Issue #25] Relayer
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #12, #23
