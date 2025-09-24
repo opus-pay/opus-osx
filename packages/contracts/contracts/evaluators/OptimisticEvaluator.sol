@@ -80,6 +80,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
     error NothingToSweep();
     error BudgetLocked();
     error InvalidDepositConfig();
+    error ConfirmationNeedsArbiter();
 
     constructor(address trustedForwarder_) ERC2771Context(trustedForwarder_) {}
 
@@ -650,6 +651,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
         if (cfg.budgetLock > uint8(BudgetLock.FromCreation)) revert InvalidBudgetLock();
         if (cfg.evaluationFee > 0 && cfg.operator == address(0)) revert InvalidFeeConfig();
         if (uint256(cfg.keeperTip) * MAX_TIPS > cfg.evaluationFee) revert InvalidFeeConfig();
+        if (!cfg.autoCompleteOnSilence && cfg.arbiter == address(0)) revert ConfirmationNeedsArbiter();
         if (cfg.disputeDeposit > 0 && cfg.arbiter == address(0)) revert InvalidDepositConfig();
         _requireArbiterNotParty(cfg.arbiter, job.client, job.provider);
         if (job.budget > 0) {

@@ -55,6 +55,16 @@ describe("OptimisticEvaluator configure and hook (#14)", () => {
         );
     });
 
+    it("rejects confirmation mode without an arbiter", async () => {
+        const { token, core, evaluator } = await setup();
+        await openConfiguredJob(core, evaluator, token, client, provider.address, operator.address);
+        await expect(
+            evaluator
+                .connect(client)
+                .configure(core.address, 1, defaultConfig(operator.address, { autoCompleteOnSilence: false }))
+        ).to.be.revertedWithCustomError(evaluator, "ConfirmationNeedsArbiter");
+    });
+
     it("rejects an arbiter who is the client or the provider", async () => {
         const { token, core, evaluator } = await setup();
         await openConfiguredJob(core, evaluator, token, client, provider.address, operator.address);
