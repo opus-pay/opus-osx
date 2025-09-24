@@ -244,10 +244,28 @@ describe("OptimisticEvaluator flow and concession (#15)", () => {
         );
         await ruled.evaluator.connect(client).object(ruled.core.address, rId, ethers.utils.id("e"));
         const deadline = (await ruled.evaluator.disputeDeadlineOf(ruled.core.address, rId)).toNumber();
-        await time.setNextBlockTimestamp(deadline);
+        await time.setNextBlockTimestamp(deadline - 1);
         await expect(
             ruled.evaluator.connect(arbiter).rule(ruled.core.address, rId, true, ethers.utils.id("win"))
         ).to.emit(ruled.core, "JobCompleted");
+
+        const atDeadline = await setup();
+        const aId = await submitConfiguredJob(
+            atDeadline.core,
+            atDeadline.evaluator,
+            atDeadline.token,
+            client,
+            provider,
+            operator.address,
+            100_000000,
+            { arbiter: arbiter.address }
+        );
+        await atDeadline.evaluator.connect(client).object(atDeadline.core.address, aId, ethers.utils.id("e"));
+        const sameSecond = (await atDeadline.evaluator.disputeDeadlineOf(atDeadline.core.address, aId)).toNumber();
+        await time.setNextBlockTimestamp(sameSecond);
+        await expect(
+            atDeadline.evaluator.connect(arbiter).rule(atDeadline.core.address, aId, true, ethers.utils.id("late"))
+        ).to.be.revertedWithCustomError(atDeadline.evaluator, "ReviewEnded");
 
         const def = await setup();
         const dId = await submitConfiguredJob(

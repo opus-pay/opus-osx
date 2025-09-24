@@ -141,4 +141,28 @@ describe("OpusForwarder (#12)", () => {
         await forwarder.connect(relayer).execute(ok);
         await expect(forwarder.connect(relayer).execute(ok)).to.be.reverted;
     });
+
+    it("lets a relayer configure and approve through the evaluator (I-3)", async () => {
+        const { defaultConfig, deployEvaluator } = await import("../helpers/evaluator");
+        const { forwarder, token, core } = await deployPair();
+        const ev = await deployEvaluator(forwarder.address);
+        const expiredAt = await defaultExpiry();
+        await core.connect(client).createJob(provider.address, ev.address, expiredAt, DESC, ev.address);
+        await core.connect(client).setBudget(1, 100_000000, EMPTY);
+        const cfg = defaultConfig(wallets[8].address);
+        const configureData = ev.interface.encodeFunctionData("configure", [core.address, 1, cfg]);
+        const deadline = (await time.latest()) + 3600;
+        await forwarder
+            .connect(relayer)
+            .execute(await signRequest(forwarder, client, ev.address, configureData, deadline));
+        await token.mint(client.address, 100_000000);
+        await token.connect(client).approve(core.address, 100_000000);
+        await core.connect(client).fund(1, 100_000000, EMPTY);
+        await core.connect(provider).submit(1, ethers.constants.HashZero, EMPTY);
+        const approveData = ev.interface.encodeFunctionData("approve", [core.address, 1]);
+        await forwarder
+            .connect(relayer)
+            .execute(await signRequest(forwarder, client, ev.address, approveData, deadline));
+        expect((await core.getJob(1)).status).to.equal(3);
+    });
 });

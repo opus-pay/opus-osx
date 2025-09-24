@@ -133,7 +133,7 @@ describe("Branch coverage fillers (#18)", () => {
             ev,
             "ReviewEnded"
         );
-        await expect(ev.connect(stranger).resolveMissingDeposit(core.address, jobId)).to.emit(core, "JobCompleted");
+        await expect(ev.connect(stranger).resolveMissingDeposit(core.address, jobId)).to.emit(core, "JobRejected");
 
         const job2 = await openConfiguredJob(core, ev, token, client, provider.address, operator.address, 100_000000, {
             autoCompleteOnSilence: false,

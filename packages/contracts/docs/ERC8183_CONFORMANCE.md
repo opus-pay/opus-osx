@@ -59,7 +59,7 @@ The specification function list and the “optional provider” section require 
 
 | # | Rule | How OPUS meets it |
 | :--- | :--- | :--- |
-| H1 | Emit the listed job events | **standard** |
+| H1 | Emit the listed job events | **standard**. `JobCreated` includes `hook` to match the current specification interface (the SHOULD list still omits it). |
 | H2 | Events include `reason` / `deliverable` | **standard** |
 | H3 | `claimRefund` callable by anyone | **standard** |
 | H4 | Hook gas limit | **stricter** fixed `PLACEHOLDER_HOOK_GAS_LIMIT` (D2, #9) |

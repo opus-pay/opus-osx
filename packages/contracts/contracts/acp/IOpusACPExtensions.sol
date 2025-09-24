@@ -25,6 +25,17 @@ interface IOpusACPExtensions {
         address hook;
     }
 
+    /// @notice Job fields without `description`, for hook-gas-limited reads.
+    struct JobView {
+        address client;
+        address provider;
+        address evaluator;
+        uint256 budget;
+        uint256 expiredAt;
+        JobStatus status;
+        address hook;
+    }
+
     event PayoutDeferred(address indexed account, uint256 amount);
     event Withdrawn(address indexed account, address indexed to, uint256 amount);
 
@@ -33,6 +44,9 @@ interface IOpusACPExtensions {
 
     /// @notice OPUS extension. Returns the spec job fields for `jobId`.
     function getJob(uint256 jobId) external view returns (Job memory job);
+
+    /// @notice OPUS extension. Same as `getJob` without copying `description`.
+    function getJobView(uint256 jobId) external view returns (JobView memory job);
 
     /// @notice OPUS extension. Pull `claimable[msg.sender]` to `to`.
     function withdraw(address to) external;

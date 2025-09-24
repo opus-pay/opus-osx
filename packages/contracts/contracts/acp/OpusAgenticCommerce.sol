@@ -11,7 +11,7 @@ import { IACPHook } from "./IACPHook.sol";
 import { IAgenticCommerce } from "./IAgenticCommerce.sol";
 import { IOpusACPExtensions } from "./IOpusACPExtensions.sol";
 
-/// @notice ERC-8183 job escrow. No admin. Fees, hooks, and deferred payouts land in later issues.
+/// @notice ERC-8183 job escrow. No admin, no protocol fee, deferred payouts, and optional ERC-2771.
 contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -100,7 +100,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
             status: JobStatus.Open,
             hook: hook
         });
-        emit JobCreated(jobId, _msgSender(), provider, evaluator, expiredAt);
+        emit JobCreated(jobId, _msgSender(), provider, evaluator, expiredAt, hook);
     }
 
     /// @inheritdoc IAgenticCommerce
@@ -241,6 +241,20 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     /// @inheritdoc IOpusACPExtensions
     function getJob(uint256 jobId) external view returns (Job memory) {
         return _job(jobId);
+    }
+
+    /// @inheritdoc IOpusACPExtensions
+    function getJobView(uint256 jobId) external view returns (JobView memory job) {
+        Job storage stored = _job(jobId);
+        job = JobView({
+            client: stored.client,
+            provider: stored.provider,
+            evaluator: stored.evaluator,
+            budget: stored.budget,
+            expiredAt: stored.expiredAt,
+            status: stored.status,
+            hook: stored.hook
+        });
     }
 
     function _job(uint256 jobId) private view returns (Job storage job) {

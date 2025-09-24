@@ -141,6 +141,11 @@ describe("Unit completeness (#18)", () => {
                         defaultConfig(operator.address, { evaluationFee: 1_000000, keeperTip: 600000 })
                     )
             ).to.be.revertedWithCustomError(ev, "InvalidFeeConfig");
+            await expect(
+                ev
+                    .connect(client)
+                    .configure(core.address, 1, defaultConfig(operator.address, { disputeDeposit: 1_000000 }))
+            ).to.be.revertedWithCustomError(ev, "InvalidDepositConfig");
 
             await ev.connect(client).configure(core.address, 1, defaultConfig(operator.address));
             await expect(ev.connect(stranger).timeoutNoSubmission(core.address, 1)).to.be.revertedWithCustomError(

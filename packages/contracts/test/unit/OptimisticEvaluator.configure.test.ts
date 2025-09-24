@@ -207,4 +207,45 @@ describe("OptimisticEvaluator configure and hook (#14)", () => {
             .configure(core.address, jobId, defaultConfig(operator.address, { reviewWindow: 7200 }));
         expect((await evaluator.getConfig(core.address, jobId)).reviewWindow).to.equal(7200);
     });
+
+    it("configureWithPermit pulls the evaluation fee after a permit", async () => {
+        const { token, core, evaluator } = await setup();
+        const expiredAt = await defaultExpiry();
+        await core.connect(client).createJob(provider.address, evaluator.address, expiredAt, DESC, evaluator.address);
+        await core.connect(client).setBudget(1, 100_000000, EMPTY);
+        await token.mint(client.address, 1_000000);
+        const deadline = (await time.latest()) + 3600;
+        const sig = await client._signTypedData(
+            { name: "USD Coin", version: "1", chainId: 31337, verifyingContract: token.address },
+            {
+                Permit: [
+                    { name: "owner", type: "address" },
+                    { name: "spender", type: "address" },
+                    { name: "value", type: "uint256" },
+                    { name: "nonce", type: "uint256" },
+                    { name: "deadline", type: "uint256" },
+                ],
+            },
+            {
+                owner: client.address,
+                spender: evaluator.address,
+                value: 1_000000,
+                nonce: await token.nonces(client.address),
+                deadline,
+            }
+        );
+        const { v, r, s } = ethers.utils.splitSignature(sig);
+        await evaluator
+            .connect(client)
+            .configureWithPermit(
+                core.address,
+                1,
+                defaultConfig(operator.address, { evaluationFee: 1_000000 }),
+                deadline,
+                v,
+                r,
+                s
+            );
+        expect(await evaluator.feeHeld(core.address, 1)).to.equal(1_000000);
+    });
 });

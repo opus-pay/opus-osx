@@ -35,11 +35,21 @@ describe("OpusAgenticCommerce (#6)", () => {
                     .createJob(provider.address, evaluator.address, expiredAt, DESC, ethers.constants.AddressZero)
             )
                 .to.emit(core, "JobCreated")
-                .withArgs(1, client.address, provider.address, evaluator.address, expiredAt);
+                .withArgs(
+                    1,
+                    client.address,
+                    provider.address,
+                    evaluator.address,
+                    expiredAt,
+                    ethers.constants.AddressZero
+                );
             const job = await core.getJob(1);
             expect(job.client).to.equal(client.address);
             expect(job.status).to.equal(0);
             expect(job.description).to.equal(DESC);
+            const view = await core.getJobView(1);
+            expect(view.client).to.equal(client.address);
+            expect(view.hook).to.equal(ethers.constants.AddressZero);
         });
 
         it("allows a zero provider", async () => {

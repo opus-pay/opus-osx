@@ -1,5 +1,5 @@
 {
-    "filter_paths": "node_modules/|contracts/mocks/|old/",
+    "filter_paths": "node_modules/|contracts/mocks/|contracts/experimental/|old/",
     "exclude_informational": true,
     "exclude_low": false,
     "hardhat_ignore_compile": true

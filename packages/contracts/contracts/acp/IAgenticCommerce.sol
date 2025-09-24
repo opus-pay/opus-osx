@@ -6,13 +6,16 @@ pragma solidity 0.8.24;
 ///      ERC commit a078cab5cc8e9581c15f76c091ed96eed28f02f7 (2026-03-13). Created 2026-02-25.
 ///      D11: `fund` includes `expectedBudget`. The same EIP's reference `AgenticCommerce.sol`
 ///      omits it; the specification text and current hook-contracts selectors include it.
+///      `JobCreated` includes `hook` to match the current specification interface / reference
+///      event (the SHOULD list still omits it).
 interface IAgenticCommerce {
     event JobCreated(
         uint256 indexed jobId,
         address indexed client,
         address indexed provider,
         address evaluator,
-        uint256 expiredAt
+        uint256 expiredAt,
+        address hook
     );
     event ProviderSet(uint256 indexed jobId, address indexed provider);
     event BudgetSet(uint256 indexed jobId, uint256 amount);

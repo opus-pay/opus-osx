@@ -5,9 +5,9 @@ import { ethers } from "hardhat";
 import { MockPermitToken, OptimisticEvaluator, OpusAgenticCommerce } from "../../typechain-types";
 import { defaultExpiry, deployCore, DESC, EMPTY } from "./acp";
 
-export async function deployEvaluator(): Promise<OptimisticEvaluator> {
+export async function deployEvaluator(forwarder = ethers.constants.AddressZero): Promise<OptimisticEvaluator> {
     const factory = await ethers.getContractFactory("OptimisticEvaluator");
-    const evaluator = (await factory.deploy()) as OptimisticEvaluator;
+    const evaluator = (await factory.deploy(forwarder)) as OptimisticEvaluator;
     await evaluator.deployed();
     return evaluator;
 }
