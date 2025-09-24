@@ -41,7 +41,7 @@ On top of the standard, OPUS adds:
 * **Fair evaluation.** Review windows, objections, arbitration, and defaults written as rules, with evaluators paid the same whichever side wins.
 * **Protection for people.** When one side goes silent, the default favours the person who did the work or the person who is waiting, never the side that simply stopped responding.
 
-The first service built on OPUS is a **cross-border errand service**, starting with one corridor and simple, checkable tasks (filming a place, buying and shipping an item). **OPUS Portal** gathers every service built on OPUS in one place. The protocol issues no payment token, takes no protocol fee, and limits each job to 1–1,000 USD.
+The first service built on OPUS is a **cross-border errand service**, starting with one corridor (cross-border, or between a region and a large city within one country) and simple, checkable tasks (filming a place, buying and shipping an item). **OPUS Portal** gathers every service built on OPUS in one place. The protocol issues no payment token, takes no protocol fee, and limits each job to 1–1,000 USD.
 
 ---
 
@@ -204,7 +204,7 @@ Arbitration
   └─ deadline passed       ─▶ anyone: resolveByDefault() ─▶ preset default
 ```
 
-The sum of all evaluator deadlines (submit, review, extension, deposit, dispute) plus a safety margin is forced, at funding time, to end before the core's `expiredAt`, so the evaluator's rules always act before the standard's expiry refund. If the evaluator itself failed, `claimRefund` would still return the funds to the client after `expiredAt`.
+The sum of all evaluator deadlines (submit, review, extension, deposit, dispute) plus a safety margin is forced, at funding time, to end before the core's `expiredAt`, so the evaluator's rules always act before the standard's expiry refund. Deadlines are counted from scheduled times, not from when someone calls a trigger, so a late call never pushes them back. If the evaluator itself failed, `claimRefund` would still return the funds to the client after `expiredAt`.
 
 ### 6.4 Partial delivery
 
@@ -253,13 +253,13 @@ The client sets rules per job before funding. They cannot change afterwards.
 | Submit window | Time after funding for the provider to submit |
 | Review window | Time after submission for the client to approve or object |
 | Maximum extension | How far the client may extend review, once |
-| On silence | Auto-complete, or escalate to arbitration |
-| Arbiter | A single address or a Court contract. If none, the default applies |
+| On silence | Auto-complete, or escalate to arbitration (requires an arbiter) |
+| Arbiter | A single address or a Court contract. If none, an objection resolves to the default at once; only auto-complete mode may run without an arbiter |
 | Dispute window | Time for the arbiter to rule |
 | Default | Complete or reject if the arbiter does not rule in time |
 | Evaluation fee | Flat fee paid by the client to the evaluation operator, whatever the outcome (§7.6) |
 | Dispute deposit | Amount each party posts on escalation; the loser's deposit pays the arbiter (§7.6). In confirmation mode the client posts its deposit up front at configuration |
-| Budget lock | Optionally forbid budget changes after the provider's quote, or from creation |
+| Budget lock | Optionally forbid budget changes after the first quote once a provider is chosen, or after configuration |
 
 The arbiter cannot be the client or the provider.
 
@@ -270,7 +270,7 @@ The arbiter cannot be the client or the provider.
 | AI client → AI provider | Auto-complete on silence, short windows |
 | AI client → human provider (errands, freelance) | Auto-complete on silence, protecting the person who did the work |
 | Human client → any provider | Escalate on silence, longer review, arbiter set |
-| Small amounts, no arbiter | Default set by the service's published policy |
+| Small amounts, no arbiter | Auto-complete on silence; an objection resolves to the default in the service's published policy |
 
 This is the same principle as automatic purchase confirmation on online marketplaces: it is accepted when there is proof of delivery first, notifications, and enough time. OPUS services notify parties on submission, near deadlines, and before auto-completion.
 
@@ -282,7 +282,7 @@ Evaluation is work. If it is unpaid, no one does it well, and the burden falls o
 | :--- | :--- | :--- |
 | **Evaluation operator** (whoever runs the evaluator service, including test runners) | Evaluating the job | A flat evaluation fee the client deposits at configuration, paid when the job ends, **whatever the outcome**. Test-running evaluators include compute cost in this fee |
 | **Keeper** (anyone) | Calling deadline triggers such as `finalize` or `timeoutNoSubmission` on time | A small tip from the evaluation fee to whoever makes the call. Anyone can earn it, so liveness does not depend on one operator |
-| **Arbiter or Court** | Ruling on a dispute | On escalation, both parties post a dispute deposit. The ruling pays the arbiter from the **loser's** deposit and returns the winner's. A party that does not post its deposit in time loses. The arbiter earns the same amount for either ruling |
+| **Arbiter or Court** | Ruling on a dispute | On escalation, both parties post a dispute deposit. The ruling pays the arbiter from the **loser's** deposit and returns the winner's. A party that does not post its deposit in time loses: if the client objects and the provider does not post, the client is refunded. The arbiter earns the same amount for either ruling |
 
 Why this shape:
 
@@ -436,7 +436,7 @@ Before mainnet: external audit, invariant fuzzing, the conformance suite, and a 
 
 A client in one country posts a request; a verified local provider in another country does it and is paid on completion. The service is one ordinary integrator of OPUS: it uses the public SDK, runs its own instance, and has no special rights.
 
-**Start narrow.** A two-sided service needs clients and providers in the same place. The service starts with **one corridor** (for example, people in the United States with family in Korea) and **two categories whose results are easy to check**, then widens.
+**Start narrow.** A two-sided service needs clients and providers in the same place. The service starts with **one corridor** and **two categories whose results are easy to check**, then widens. The corridor may cross a border (for example, people in the United States with family in Korea) or stay within one country, between distant regions (for example, someone outside Seoul asking for a purchase in Seoul, or a child in Seoul asking someone to check on parents in the provinces). A domestic corridor avoids currency exchange and cross-border rules, so a pilot can start sooner, but it must show users who are used to paying in won why stablecoin escrow is better. The contracts and flow are the same either way.
 
 | Stage | Request | Proof | Notes |
 | :--- | :--- | :--- | :--- |
@@ -588,7 +588,7 @@ Legal review is planned before the first third-party service integrates and befo
 * **Phase 6 — AI assistants.** Assistant tool, ERC-8004 reputation, agent-to-agent work with automatic evaluators.
 * **Phase 7 — OPUS Court and OPG (conditional).** Staked evaluators vote on disputes, first with USDC; OPG only after the Court works and after legal review.
 
-**Funding.** Polygon ecosystem grants, equity investment (with token warrants where appropriate), and revenue from the errand service.
+**Funding.** Polygon ecosystem grants, equity investment (with token warrants where appropriate), and revenue from the errand service. The main use of investment is integration with licensed payment partners and exchanges: paying in by card or bank and cashing out in local currency are built on their licences, while OPUS and its services never hold or exchange funds. Until then, pilots run with users who already buy USDC on exchanges.
 
 ---
 

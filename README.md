@@ -2,7 +2,7 @@
 
 **Escrow for cross-border errands, built on the ERC-8183 standard.**
 
-A person in one country asks a person in another to do something real: film a place, buy and ship an item, and later accompany family. OPUS locks the client's USDC or USDT when the work is agreed and releases it to the provider when the work is done, or returns it to the client when it is not. No one, including the OPUS team, can move the money any other way.
+A person in one place asks a person far away, in another country or another region, to do something real: film a place, buy and ship an item, and later accompany family. OPUS locks the client's USDC or USDT when the work is agreed and releases it to the provider when the work is done, or returns it to the client when it is not. No one, including the OPUS team, can move the money any other way.
 
 OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not distinguish people from AI agents, so the same contracts will serve people's AI assistants when they start posting errands.
 
@@ -31,7 +31,7 @@ Explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com). No admin roles a
 | Document | Contents |
 | :--- | :--- |
 | [`WHITEPAPER.md`](./WHITEPAPER.md) / [`WHITEPAPER.ko.md`](./WHITEPAPER.ko.md) | Design, evaluation, security model, products, risks (English / Korean; kept in sync) |
-| [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D28 |
+| [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D29 |
 | [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#75 with tasks and acceptance criteria |
 | [`packages/contracts/docs/EVM_TARGET.md`](./packages/contracts/docs/EVM_TARGET.md) | D1: Polygon / Amoy `cancun` target and sources |
 | [`packages/contracts/docs/ERC8183_CONFORMANCE.md`](./packages/contracts/docs/ERC8183_CONFORMANCE.md) | ERC-8183 MUST/SHOULD map (D11) |
@@ -83,4 +83,4 @@ One issue, one branch, one pull request. Pull requests that touch `packages/cont
 
 ## License
 
-To be decided before the first public release (decision D7; MIT suggested).
+Currently Business Source License 1.1 (see `LICENSE.md`), changing to MIT on 2030-01-01. The final choice is decision D7 and must be settled before the first public release.
