@@ -21,19 +21,19 @@ export async function deployUsdc(): Promise<MockPermitToken> {
     return token;
 }
 
-export async function deployCore(token: string, decimals = 6): Promise<OpusAgenticCommerce> {
+export async function deployCore(
+    token: string,
+    decimals = 6,
+    treasury = ethers.constants.AddressZero,
+    feeBP = 0,
+    forwarder = ethers.constants.AddressZero,
+    factoryAddr = ethers.constants.AddressZero
+): Promise<OpusAgenticCommerce> {
     const [deployer] = testWallets();
     const factory = await ethers.getContractFactory("OpusAgenticCommerce");
     const core = (await factory
         .connect(deployer)
-        .deploy(
-            token,
-            decimals,
-            ethers.constants.AddressZero,
-            0,
-            ethers.constants.AddressZero,
-            ethers.constants.AddressZero
-        )) as OpusAgenticCommerce;
+        .deploy(token, decimals, treasury, feeBP, forwarder, factoryAddr)) as OpusAgenticCommerce;
     await core.deployed();
     return core;
 }

@@ -107,12 +107,16 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #7] Settlement and immutable fee configuration
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #6
 * **Tasks:**
-  - [ ] Constructor-set `token`, `platformTreasury`, `platformFeeBP` (≤ `MAX_PLATFORM_FEE_BP`, D2); `evaluatorFeeBP = 0`
-  - [ ] On `complete`: fee rounded down; provider receives budget − fee; fee only on completion
-  - [ ] On `reject` / `claimRefund`: full refund, no fee
-  - [ ] Test that the only fee recipient is the instance's `platformTreasury` (no protocol fee, D13)
-  - [ ] Fuzz: `toProvider + fee == budget`
+  - [x] Constructor-set `token`, `platformTreasury`, `platformFeeBP` (≤ `MAX_PLATFORM_FEE_BP`, D2); `evaluatorFeeBP = 0`
+  - [x] On `complete`: fee rounded down; provider receives budget − fee; fee only on completion
+  - [x] On `reject` / `claimRefund`: full refund, no fee
+  - [x] Test that the only fee recipient is the instance's `platformTreasury` (no protocol fee, D13)
+  - [x] Fuzz: `toProvider + fee == budget`
 * **Acceptance:** I-1 covered for settlement paths.
+
+* **해결 내용:**
+  - 생성자에 `platformTreasury`와 `platformFeeBP`를 고정한다. `(treasury == 0) == (feeBP == 0)`. 상한은 `PLACEHOLDER_MAX_PLATFORM_FEE_BP = 1000` (D2).
+  - `complete`만 수수료를 깎아 인스턴스 수취처에 보낸다. `evaluatorFeeBP`는 항상 0이다. 거절·환불은 전액 의뢰인에게 돌아간다.
 
 #### [Issue #8] Deferred payouts
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #7
