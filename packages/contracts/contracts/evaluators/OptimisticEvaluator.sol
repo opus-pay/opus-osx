@@ -42,6 +42,8 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
         address token;
         uint128 feeHeld;
         uint8 tipsPaid;
+        bool budgetLocked;
+        bool lockBudgetAfter;
     }
 
     mapping(address => mapping(uint256 => Case)) private _cases;
@@ -69,6 +71,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
     error UnexpectedFeeAmount(uint256 received, uint256 expected);
     error NothingToWithdraw();
     error NothingToSweep();
+    error BudgetLocked();
 
     /// @inheritdoc IOpusEvaluator
     function configure(address instance, uint256 jobId, Config calldata cfg) external nonReentrant {
@@ -239,6 +242,11 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
         Case storage c = _cases[msg.sender][jobId];
         IOpusACPExtensions.Job memory job = IOpusACPExtensions(msg.sender).getJob(jobId);
 
+        if (selector == IAgenticCommerce.setBudget.selector) {
+            _beforeSetBudget(c, job);
+            return;
+        }
+
         if (selector == IAgenticCommerce.setProvider.selector) {
             if (!c.configured) return;
             (address provider, ) = abi.decode(data, (address, bytes));
@@ -274,10 +282,14 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
         if (selector == IAgenticCommerce.complete.selector || selector == IAgenticCommerce.reject.selector) {
             return;
         }
+        Case storage c = _cases[msg.sender][jobId];
         if (selector == IAgenticCommerce.submit.selector) {
-            Case storage c = _cases[msg.sender][jobId];
             c.submittedAt = uint64(block.timestamp);
             c.phase = Phase.Submitted;
+        }
+        if (selector == IAgenticCommerce.setBudget.selector && c.lockBudgetAfter) {
+            c.budgetLocked = true;
+            c.lockBudgetAfter = false;
         }
     }
 
@@ -327,6 +339,18 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ReentrancyGuard {
             interfaceId == type(IACPHook).interfaceId ||
             interfaceId == type(IOpusEvaluator).interfaceId ||
             interfaceId == type(IERC165).interfaceId;
+    }
+
+    function _beforeSetBudget(Case storage c, IOpusACPExtensions.Job memory job) private {
+        if (!c.configured) return;
+        uint8 lock = c.config.budgetLock;
+        if (lock == uint8(BudgetLock.FromCreation)) revert BudgetLocked();
+        if (lock == uint8(BudgetLock.AfterProviderSetBudget)) {
+            if (c.budgetLocked) revert BudgetLocked();
+            if (job.budget != 0 && job.provider != address(0)) {
+                c.lockBudgetAfter = true;
+            }
+        }
     }
 
     function _requireOpenCase(address instance, uint256 jobId) private view returns (Case storage c) {
