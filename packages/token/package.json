@@ -1,0 +1,61 @@
+{
+    "name": "@opus/token",
+    "version": "0.1.0",
+    "description": "OPG governance token — fixed supply, no mint",
+    "files": [
+        "**/*.sol"
+    ],
+    "scripts": {
+        "build": "hardhat compile",
+        "clean": "hardhat clean",
+        "test": "hardhat test",
+        "coverage": "hardhat coverage",
+        "node": "hardhat node",
+        "deploy:localhost": "hardhat run deploy/localhost/deploy.ts --network localhost",
+        "deploy:amoy": "ENV_NETWORK=amoy hardhat run deploy/amoy/deploy.ts --network amoy",
+        "deploy:polygon": "ENV_NETWORK=polygon hardhat run deploy/polygon/deploy.ts --network polygon",
+        "lint": "solhint 'contracts/**/*.sol'",
+        "formatting:check": "prettier '**/*.{json,sol,ts,js}' -c",
+        "formatting:write": "prettier '**/*.{json,sol,ts,js}' --write"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/opus-pay/opus-osx.git"
+    },
+    "author": "opus-pay",
+    "license": "SEE LICENSE IN LICENSE.md",
+    "bugs": {
+        "url": "https://github.com/opus-pay/opus-osx/issues"
+    },
+    "homepage": "https://github.com/opus-pay/opus-osx#readme",
+    "devDependencies": {
+        "@ethersproject/abi": "^5.7.0",
+        "@ethersproject/providers": "^5.7.2",
+        "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
+        "@nomicfoundation/hardhat-ledger": "1.0.3",
+        "@nomicfoundation/hardhat-network-helpers": "^1.0.11",
+        "@nomiclabs/hardhat-ethers": "^2.2.3",
+        "@nomiclabs/hardhat-etherscan": "^3.1.8",
+        "@typechain/ethers-v5": "^10.2.1",
+        "@typechain/hardhat": "^6.1.6",
+        "@types/chai": "^4.3.11",
+        "@types/mocha": "^10.0.6",
+        "@types/node": "^20.11.30",
+        "chai": "^4.3.10",
+        "dotenv": "^16.4.5",
+        "ethers": "^5.7.2",
+        "hardhat": "^2.22.17",
+        "hardhat-gas-reporter": "^1.0.10",
+        "mocha": "^10.3.0",
+        "prettier": "^2.8.8",
+        "prettier-plugin-solidity": "^1.3.1",
+        "solhint": "^4.5.4",
+        "solidity-coverage": "^0.8.12",
+        "ts-node": "^10.9.2",
+        "typechain": "^8.3.2",
+        "typescript": "^5.4.5"
+    },
+    "dependencies": {
+        "@openzeppelin/contracts": "^5.0.2"
+    }
+}

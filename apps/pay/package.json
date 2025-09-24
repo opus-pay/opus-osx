@@ -1,0 +1,32 @@
+{
+    "name": "@opus/pay",
+    "version": "0.1.0",
+    "description": "OPUS payment-link app. Skeleton until issues #27–#30.",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "clean": "rm -rf dist",
+        "test": "mocha --require ts-node/register 'test/**/*.ts'",
+        "coverage": "yarn test",
+        "lint": "tsc -p tsconfig.json --noEmit",
+        "formatting:check": "prettier '**/*.{json,ts,js}' -c",
+        "formatting:write": "prettier '**/*.{json,ts,js}' --write"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/opus-pay/opus-osx.git"
+    },
+    "author": "opus-pay",
+    "license": "SEE LICENSE IN LICENSE.md",
+    "devDependencies": {
+        "@types/chai": "^4.3.11",
+        "@types/mocha": "^10.0.6",
+        "@types/node": "^20.11.30",
+        "chai": "^4.3.10",
+        "mocha": "^10.3.0",
+        "prettier": "^2.8.8",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.4.5"
+    }
+}
