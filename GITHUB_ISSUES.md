@@ -338,10 +338,14 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #21] Static analysis and no-admin check
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #11
 * **Tasks:**
-  - [ ] slither with recorded baseline
-  - [ ] CI check that core, factory, and evaluators contain no `Ownable`, `AccessControl`, `Pausable`, `delegatecall`, `selfdestruct`, `upgrade`
-  - [ ] ABI check: no setter or admin function
+  - [x] slither with recorded baseline
+  - [x] CI check that core, factory, and evaluators contain no `Ownable`, `AccessControl`, `Pausable`, `delegatecall`, `selfdestruct`, `upgrade`
+  - [x] ABI check: no setter or admin function
 * **Acceptance:** I-6 enforced in CI.
+
+* **해결 내용:**
+  - `scripts/checkNoAdmin.ts`가 코어·팩토리·평가자·전달자 소스와 ABI를 검사한다. 이 검사는 CI에서 실패한다.
+  - slither는 `docs/SLITHER_BASELINE.md`에 허용 항목을 기록하고, 리포트 JSON을 아티팩트로 남긴다. slither 탐지 자체는 감사 전까지 실패하지 않는다.
 
 ---
 
