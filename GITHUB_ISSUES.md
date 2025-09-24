@@ -283,10 +283,14 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #53
 * **Description:** Keep the arbiter slot generic so a single arbiter, an external arbitration protocol, or OPUS Court (M11) can fill it without changing the evaluator.
 * **Tasks:**
-  - [ ] `IOpusArbiter`: receives a case (instance, jobId, evidence hashes, deadline), returns a ruling by calling the evaluator
-  - [ ] Single-address arbiter works without any contract
-  - [ ] Adapter for one external arbitration protocol (research which one fits Polygon and the fee model)
+  - [x] `IOpusArbiter`: receives a case (instance, jobId, evidence hashes, deadline), returns a ruling by calling the evaluator
+  - [x] Single-address arbiter works without any contract
+  - [x] Adapter for one external arbitration protocol (research which one fits Polygon and the fee model)
 * **Acceptance:** Evaluator tests pass with an EOA arbiter, a mock contract arbiter, and the adapter.
+
+* **해결 내용:**
+  - 평가자는 중재자를 호출하지 않는다. `CaseOpened` 이후 EOA·컨트랙트·어댑터가 `rule`을 부른다.
+  - Polygon에 있고 패자 부담 모델이 맞는 Kleros를 어댑터로 골랐다. 중재자 주소는 생성자에 넣으며 D10 기본 중재자는 아직 정하지 않는다.
 
 ---
 
