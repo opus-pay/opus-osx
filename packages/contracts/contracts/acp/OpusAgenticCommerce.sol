@@ -30,6 +30,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
 
     uint256 public jobCount;
     mapping(uint256 => Job) private _jobs;
+    mapping(address => uint256) public claimable;
 
     error InvalidJob();
     error WrongStatus();
@@ -44,6 +45,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     error UnexpectedFundedAmount(uint256 received, uint256 expected);
     error InvalidFeeConfig();
     error FeesTooHigh(uint256 feeBP);
+    error NothingToWithdraw();
 
     constructor(
         address token_,
@@ -152,10 +154,10 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         uint256 fee = (amount * platformFeeBP) / 10_000;
         uint256 toProvider = amount - fee;
         if (fee > 0) {
-            token.safeTransfer(platformTreasury, fee);
+            _pay(platformTreasury, fee);
         }
         if (toProvider > 0) {
-            token.safeTransfer(job.provider, toProvider);
+            _pay(job.provider, toProvider);
         }
         emit JobCompleted(jobId, job.evaluator, reason);
         emit PaymentReleased(jobId, job.provider, toProvider);
@@ -178,7 +180,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         if (previous == JobStatus.Funded || previous == JobStatus.Submitted) {
             uint256 amount = job.budget;
             if (amount > 0) {
-                token.safeTransfer(job.client, amount);
+                _pay(job.client, amount);
             }
             emit Refunded(jobId, job.client, amount);
         }
@@ -193,10 +195,20 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         job.status = JobStatus.Expired;
         uint256 amount = job.budget;
         if (amount > 0) {
-            token.safeTransfer(job.client, amount);
+            _pay(job.client, amount);
         }
         emit Refunded(jobId, job.client, amount);
         emit JobExpired(jobId);
+    }
+
+    /// @inheritdoc IOpusACPExtensions
+    function withdraw(address to) external nonReentrant {
+        if (to == address(0)) revert ZeroAddress();
+        uint256 amount = claimable[_msgSender()];
+        if (amount == 0) revert NothingToWithdraw();
+        claimable[_msgSender()] = 0;
+        token.safeTransfer(to, amount);
+        emit Withdrawn(_msgSender(), to, amount);
     }
 
     /// @inheritdoc IOpusACPExtensions
@@ -207,5 +219,14 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     function _job(uint256 jobId) private view returns (Job storage job) {
         job = _jobs[jobId];
         if (job.client == address(0)) revert InvalidJob();
+    }
+
+    function _pay(address to, uint256 amount) private {
+        (bool ok, bytes memory ret) = address(token).call(abi.encodeWithSelector(IERC20.transfer.selector, to, amount));
+        if (ok && (ret.length == 0 || abi.decode(ret, (bool)))) {
+            return;
+        }
+        claimable[to] += amount;
+        emit PayoutDeferred(to, amount);
     }
 }
