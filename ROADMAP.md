@@ -317,7 +317,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D11 | `fund` signature per current EIP text | **Decided: `fund(jobId, expectedBudget, optParams)`** | — |
 | D12 | Submit feedback to ERC-8183 | Open | #37 |
 | D13 | Protocol fee | **Decided: none** | — |
-| D14 | ERC-2771 forwarder at launch | Open (leaning yes: errands need gasless use) | #12, #25 |
+| D14 | ERC-2771 forwarder at launch | **Decided: yes** — `OpusForwarder` | #25 |
 | D15 | USDC permit funding path | Open | #13 |
 | D16 | Signature-based agreement execution | **Decided: not at launch** (backlog #51) | — |
 | D17 | Token at launch | **Decided: none** (review in #52) | — |
