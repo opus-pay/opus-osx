@@ -11,7 +11,7 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 * No protocol fee; evaluators are paid the same whatever the outcome
 * No token at launch
 
-> Status: planning complete, implementation starting (issue #1). Not deployed. ERC-8183 is a draft standard.
+> Status: toolchain and EVM target are set (issues #1–#2). Not deployed. ERC-8183 is a draft standard.
 
 ## Documents
 
@@ -20,6 +20,7 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 | [`WHITEPAPER.md`](./WHITEPAPER.md) / [`WHITEPAPER.ko.md`](./WHITEPAPER.ko.md) | Design, evaluation, security model, products, risks (English / Korean; kept in sync) |
 | [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D28 |
 | [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#75 with tasks and acceptance criteria |
+| [`packages/contracts/docs/EVM_TARGET.md`](./packages/contracts/docs/EVM_TARGET.md) | D1: Polygon / Amoy `cancun` target and sources |
 
 ## Planned packages
 
