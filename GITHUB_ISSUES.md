@@ -52,12 +52,17 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #1
 * **Description:** Make the standard the source of truth before any core code.
 * **Tasks:**
-  - [ ] Fetch the current ERC-8183 text; record its date or commit
-  - [ ] Copy `IAgenticCommerce` and `IACPHook` verbatim, including event signatures
-  - [ ] Resolve the `fund` signature (D11); document the choice
-  - [ ] Write `docs/ERC8183_CONFORMANCE.md`: every MUST/SHOULD, and how OPUS meets it (standard, stricter implementation choice, or extension)
-  - [ ] List OPUS extensions separately and state that none changes standard behaviour
+  - [x] Fetch the current ERC-8183 text; record its date or commit
+  - [x] Copy `IAgenticCommerce` and `IACPHook` verbatim, including event signatures
+  - [x] Resolve the `fund` signature (D11); document the choice
+  - [x] Write `docs/ERC8183_CONFORMANCE.md`: every MUST/SHOULD, and how OPUS meets it (standard, stricter implementation choice, or extension)
+  - [x] List OPUS extensions separately and state that none changes standard behaviour
 * **Acceptance:** Conformance map reviewed; interfaces compile.
+
+* **해결 내용:**
+  - ERC-8183 초안을 2026-09-26에 읽었다. Created 2026-02-25. `ethereum/ERCs` 커밋 `a078cab5` (2026-03-13).
+  - D11: `fund(uint256 jobId, uint256 expectedBudget, bytes calldata optParams)`. 명세와 hook-contracts 셀렉터를 따른다. 같은 페이지의 참조 구현은 `expectedBudget`을 빠뜨린다.
+  - `IAgenticCommerce`, `IACPHook`와 적합성 표는 `packages/contracts/docs/ERC8183_CONFORMANCE.md`에 있다. 참조 구현의 관리자·UUPS·훅 화이트리스트는 복사하지 않는다.
 
 #### [Issue #4] Test mock tokens and hostile hooks
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #1

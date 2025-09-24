@@ -21,6 +21,7 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 | [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D28 |
 | [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#75 with tasks and acceptance criteria |
 | [`packages/contracts/docs/EVM_TARGET.md`](./packages/contracts/docs/EVM_TARGET.md) | D1: Polygon / Amoy `cancun` target and sources |
+| [`packages/contracts/docs/ERC8183_CONFORMANCE.md`](./packages/contracts/docs/ERC8183_CONFORMANCE.md) | ERC-8183 MUST/SHOULD map (D11) |
 
 ## Planned packages
 
