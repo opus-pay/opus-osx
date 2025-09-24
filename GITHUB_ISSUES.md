@@ -366,13 +366,15 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Tasks:**
   - [x] Deploy (forwarder) → factory → reference USDC instance (fee 0) → `OptimisticEvaluator`
   - [x] No role grants or post-deploy configuration calls
-  - [ ] Addresses written per network; verified source on the explorer
+  - [x] Addresses written per network; verified source on the explorer
   - [x] Post-deploy check script (constructor args, no admin ABI)
 * **Acceptance:** Public Amoy addresses in `README.md`.
 
 * **해결 내용:**
   - 배포 순서는 `src/deploy/protocol.ts`. 로컬은 Mock USDC, Amoy는 `AMOY_USDC`를 env에서 주입한다 (D8).
-  - `scripts/checkDeploy.ts`가 생성자·전달자·수수료 0·관리자 ABI를 검사한다. Amoy 주소와 소스 검증은 배포 당일에 남는다.
+  - `scripts/checkDeploy.ts`가 생성자·전달자·수수료 0·관리자 ABI를 검사한다.
+  - Amoy에 전달자, 팩토리, 수수료 0 USDC 인스턴스, 평가자를 배포했다. Polygonscan에서 소스를 검증했고, 주소는 `deploy/amoy/addresses.json`과 README에 있다. 배포 후 역할 부여는 없다.
+  - **정정:** 공식 Amoy RPC는 내려갔다. dRPC의 가스 견적은 약 400 gwei라서 배포 가스는 체인 최소인 25 gwei로 고정한다. 소스 검증은 Etherscan API v2를 쓴다.
 
 #### [Issue #23] TypeScript SDK
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #22

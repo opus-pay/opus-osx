@@ -16,11 +16,20 @@ async function main() {
     const token = new ethers.Contract(addresses.usdc, ["function decimals() view returns (uint8)"], ethers.provider);
     const decimals: number = await token.decimals();
 
-    const jobs: { address: string; constructorArguments: unknown[] }[] = [
-        { address: addresses.forwarder, constructorArguments: [] },
-        { address: addresses.factory, constructorArguments: [[addresses.usdc], addresses.forwarder] },
+    const jobs: { address: string; contract: string; constructorArguments: unknown[] }[] = [
+        {
+            address: addresses.forwarder,
+            contract: "contracts/forwarder/OpusForwarder.sol:OpusForwarder",
+            constructorArguments: [],
+        },
+        {
+            address: addresses.factory,
+            contract: "contracts/acp/OpusACPFactory.sol:OpusACPFactory",
+            constructorArguments: [[addresses.usdc], addresses.forwarder],
+        },
         {
             address: addresses.instance,
+            contract: "contracts/acp/OpusAgenticCommerce.sol:OpusAgenticCommerce",
             constructorArguments: [
                 addresses.usdc,
                 decimals,
@@ -30,7 +39,11 @@ async function main() {
                 addresses.factory,
             ],
         },
-        { address: addresses.evaluator, constructorArguments: [addresses.forwarder] },
+        {
+            address: addresses.evaluator,
+            contract: "contracts/evaluators/OptimisticEvaluator.sol:OptimisticEvaluator",
+            constructorArguments: [addresses.forwarder],
+        },
     ];
 
     for (const job of jobs) {
