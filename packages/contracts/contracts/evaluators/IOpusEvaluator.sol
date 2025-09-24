@@ -1,12 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-/// @notice Per-job evaluator configuration and views. The evaluator is also the job hook.
+/// @notice Per-job evaluator configuration, flow, and views. The evaluator is also the job hook.
 interface IOpusEvaluator {
     enum BudgetLock {
         None,
         AfterProviderSetBudget,
         FromCreation
+    }
+
+    enum Phase {
+        None,
+        Funded,
+        Submitted,
+        Escalated,
+        ArbiterPending,
+        Resolved
     }
 
     struct Config {
@@ -26,12 +35,55 @@ interface IOpusEvaluator {
     }
 
     event Configured(address indexed instance, uint256 indexed jobId, address indexed client);
+    event ReviewExtended(address indexed instance, uint256 indexed jobId, uint32 secondsExtended);
+    event Objected(address indexed instance, uint256 indexed jobId, bytes32 evidenceHash);
+    event Escalated(address indexed instance, uint256 indexed jobId);
+    event CaseOpened(
+        address indexed instance,
+        uint256 indexed jobId,
+        address indexed arbiter,
+        uint64 disputeDeadline,
+        bytes32[] evidenceHashes
+    );
+    event Ruled(
+        address indexed instance,
+        uint256 indexed jobId,
+        address indexed arbiter,
+        bool completed,
+        bytes32 reasonHash
+    );
+    event ResolvedByDefault(address indexed instance, uint256 indexed jobId, bool completed);
+    event Conceded(address indexed instance, uint256 indexed jobId, address indexed by);
 
     function configure(address instance, uint256 jobId, Config calldata cfg) external;
+
+    function timeoutNoSubmission(address instance, uint256 jobId) external;
+
+    function approve(address instance, uint256 jobId) external;
+
+    function withdrawAsProvider(address instance, uint256 jobId) external;
+
+    function object(address instance, uint256 jobId, bytes32 evidenceHash) external;
+
+    function extendReview(address instance, uint256 jobId, uint32 secondsExtended) external;
+
+    function finalize(address instance, uint256 jobId) external;
+
+    function escalateOnSilence(address instance, uint256 jobId) external;
+
+    function rule(address instance, uint256 jobId, bool completed, bytes32 reasonHash) external;
+
+    function resolveByDefault(address instance, uint256 jobId) external;
 
     function getConfig(address instance, uint256 jobId) external view returns (Config memory cfg);
 
     function fundedAt(address instance, uint256 jobId) external view returns (uint64 timestamp);
 
     function submittedAt(address instance, uint256 jobId) external view returns (uint64 timestamp);
+
+    function phase(address instance, uint256 jobId) external view returns (Phase current);
+
+    function reviewEnd(address instance, uint256 jobId) external view returns (uint256 endedAt);
+
+    function disputeDeadlineOf(address instance, uint256 jobId) external view returns (uint64 deadline);
 }

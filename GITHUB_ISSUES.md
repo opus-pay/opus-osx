@@ -220,18 +220,22 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #14
 * **Description:** Includes the concession rule (D21): any party may, at any time, concede in the other's favour.
 * **Tasks:**
-  - [ ] `timeoutNoSubmission` (anyone, after submit window) → `reject`
-  - [ ] `approve` (client) → `complete`, allowed at any time after submission: during review, after objection, during arbitration or a Court vote
-  - [ ] `withdrawAsProvider` (provider) → `reject` and refund, allowed at any time after funding, including after submission and during a dispute
+  - [x] `timeoutNoSubmission` (anyone, after submit window) → `reject`
+  - [x] `approve` (client) → `complete`, allowed at any time after submission: during review, after objection, during arbitration or a Court vote
+  - [x] `withdrawAsProvider` (provider) → `reject` and refund, allowed at any time after funding, including after submission and during a dispute
   - [ ] Concession during a dispute counts as losing: the arbiter or Court is paid from the conceding party's deposit (#53)
-  - [ ] `object(evidenceHash)` (client, within review) → escalated
-  - [ ] `extendReview(seconds)` (client, once, within max extension)
-  - [ ] `finalize` (anyone, review ended, auto-complete mode) → `complete`
-  - [ ] `escalateOnSilence` (anyone, review ended, confirmation mode) → escalated
-  - [ ] `rule(complete|reject, reasonHash)` (arbiter, within dispute window)
-  - [ ] `resolveByDefault` (anyone, after dispute window, or immediately if no arbiter)
-  - [ ] Tests for every branch at `deadline − 1` and `deadline`; concession tested from every non-terminal state
+  - [x] `object(evidenceHash)` (client, within review) → escalated
+  - [x] `extendReview(seconds)` (client, once, within max extension)
+  - [x] `finalize` (anyone, review ended, auto-complete mode) → `complete`
+  - [x] `escalateOnSilence` (anyone, review ended, confirmation mode) → escalated
+  - [x] `rule(complete|reject, reasonHash)` (arbiter, within dispute window)
+  - [x] `resolveByDefault` (anyone, after dispute window, or immediately if no arbiter)
+  - [x] Tests for every branch at `deadline − 1` and `deadline`; concession tested from every non-terminal state
 * **Acceptance:** Every path ends before `expiredAt`; I-4 and the concession part of I-9 covered.
+
+* **해결 내용:**
+  - 제출 기한·검토·이의·중재·기본 판정과 의뢰인 승인·수행자 포기를 평가자가 표준 `complete`/`reject`로 종결한다 (I-4, I-9).
+  - 분쟁 중 양보의 보증금 처리는 #53에서 이어서 한다.
 
 #### [Issue #16] Evaluation fee and keeper tips
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #15, D18
