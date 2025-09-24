@@ -99,5 +99,6 @@ None of these change a successful standard call’s state, events, or hook order
 | Trusted forwarder / `_msgSender` | #12 | ERC-8183 optional extension |
 | `fundWithPermit` | #13 | `try permit` then the same `fund` path |
 | `OptimisticEvaluator` | #14+ | Separate contract; uses standard `complete` / `reject` |
+| `fundWithPermit` hook selector | #14 | Core passes `fund.selector` so the extension shares the standard hook path (I-8) |
 
 The in-page reference admin surface (`AccessControl`, UUPS, `setPlatformFee`, hook whitelist, `evaluatorFeeBP` setter) is **not** implemented (I-6, D13).
