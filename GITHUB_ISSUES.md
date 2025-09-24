@@ -91,14 +91,18 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #2, #3, #4
 * **Description:** Implement the standard functions, events, states, and caller rules exactly as the EIP defines them.
 * **Tasks:**
-  - [ ] `createJob`, `setProvider`, `setBudget`, `fund`, `submit`, `complete`, `reject`, `claimRefund`
-  - [ ] Caller rules per role; `setProvider` only by client, only once, only while Open
-  - [ ] `fund` checks: provider set, budget equals expected budget, not expired, received balance delta equals budget (no fee-on-transfer)
-  - [ ] `createJob` bounds: `expiredAt` within job duration limits (D3); evaluator non-zero
-  - [ ] `getJob` view (extension)
-  - [ ] `nonReentrant` + checks-effects-interactions everywhere; custom errors only
-  - [ ] Unit tests: every function, allowed path and every revert; expiry at `expiredAt − 1` and `expiredAt`
+  - [x] `createJob`, `setProvider`, `setBudget`, `fund`, `submit`, `complete`, `reject`, `claimRefund`
+  - [x] Caller rules per role; `setProvider` only by client, only once, only while Open
+  - [x] `fund` checks: provider set, budget equals expected budget, not expired, received balance delta equals budget (no fee-on-transfer)
+  - [x] `createJob` bounds: `expiredAt` within job duration limits (D3); evaluator non-zero
+  - [x] `getJob` view (extension)
+  - [x] `nonReentrant` + checks-effects-interactions everywhere; custom errors only
+  - [x] Unit tests: every function, allowed path and every revert; expiry at `expiredAt − 1` and `expiredAt`
 * **Acceptance:** Standard flow works end to end; I-3, I-7 covered by tests.
+
+* **해결 내용:**
+  - `OpusAgenticCommerce`가 표준 상태와 역할을 구현한다. 완료 시 예산을 수행자에게 전액 보낸다. 수수료·지연 지급·훅은 이후 이슈다.
+  - D3는 `PLACEHOLDER_MIN_JOB_DURATION = 1 hours`, `PLACEHOLDER_MAX_JOB_DURATION = 180 days`. 역할(I-3)과 종결 후 재전이 금지(I-7)를 테스트한다.
 
 #### [Issue #7] Settlement and immutable fee configuration
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #6
