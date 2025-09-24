@@ -326,10 +326,14 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #20] ERC-8183 conformance suite
 * **Type:** `Test` / **Priority:** `P0` / **Depends on:** #3, #18
 * **Tasks:**
-  - [ ] One test per rule in `ERC8183_CONFORMANCE.md`, run against an instance with all extensions present
-  - [ ] Extension paths emit the same events in the same order as standard paths and call the same hooks
-  - [ ] Written so it can be published for other implementers
+  - [x] One test per rule in `ERC8183_CONFORMANCE.md`, run against an instance with all extensions present
+  - [x] Extension paths emit the same events in the same order as standard paths and call the same hooks
+  - [x] Written so it can be published for other implementers
 * **Acceptance:** I-8 covered.
+
+* **해결 내용:**
+  - `test/conformance/ERC8183.test.ts`가 명세 맵의 MUST/SHOULD 규칙을 팩토리·전달자·평가자·permit이 있는 인스턴스에서 검사한다.
+  - `fundWithPermit`은 표준 `JobFunded`와 `fund` 훅 셀렉터를 쓴다. H5·H7은 맵대로 later.
 
 #### [Issue #21] Static analysis and no-admin check
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #11
