@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: yarn build
 
+      - name: No-admin check (I-6)
+        run: yarn workspace @opus/contracts check:no-admin
+
       - name: Test
         run: yarn test
 
@@ -55,7 +58,6 @@ jobs:
   analyze:
     name: Static analysis
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -74,9 +76,20 @@ jobs:
       - name: Build
         run: yarn workspace @opus/contracts build
 
+      - name: No-admin check (I-6)
+        run: yarn workspace @opus/contracts check:no-admin
+
       - name: Install Slither
         run: pip install slither-analyzer
 
       - name: Run Slither
-        run: slither . --config-file slither.config.json
+        continue-on-error: true
+        run: slither . --config-file slither.config.json --json slither-report.json
         working-directory: packages/contracts
+
+      - name: Upload Slither report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slither-report
+          path: packages/contracts/slither-report.json

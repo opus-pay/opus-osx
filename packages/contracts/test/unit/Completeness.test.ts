@@ -123,16 +123,14 @@ describe("Unit completeness (#18)", () => {
                 ev.connect(client).configure(core.address, 1, defaultConfig(operator.address, { budgetLock: 3 }))
             ).to.be.revertedWithCustomError(ev, "InvalidBudgetLock");
             await expect(
-                ev
-                    .connect(client)
-                    .configure(
-                        core.address,
-                        1,
-                        defaultConfig(operator.address, {
-                            evaluationFee: 1_000000,
-                            operator: ethers.constants.AddressZero,
-                        })
-                    )
+                ev.connect(client).configure(
+                    core.address,
+                    1,
+                    defaultConfig(operator.address, {
+                        evaluationFee: 1_000000,
+                        operator: ethers.constants.AddressZero,
+                    })
+                )
             ).to.be.revertedWithCustomError(ev, "InvalidFeeConfig");
             await expect(
                 ev

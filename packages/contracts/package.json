@@ -11,6 +11,7 @@
         "test": "hardhat test",
         "coverage": "hardhat coverage",
         "coverage:check": "ts-node scripts/checkCoverage.ts",
+        "check:no-admin": "ts-node scripts/checkNoAdmin.ts",
         "node": "hardhat node",
         "deploy:localhost": "hardhat run deploy/localhost/deploy.ts --network localhost",
         "deploy:amoy": "ENV_NETWORK=amoy hardhat run deploy/amoy/deploy.ts --network amoy",
