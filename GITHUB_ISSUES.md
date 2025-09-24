@@ -76,6 +76,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **해결 내용:**
   - `MockPermitToken`, `MockFeeOnTransferToken`, `MockBlacklistToken`, `MockReentrantToken`과 훅 `HookAlwaysRevert`, `HookGasBurn`, `HookReenter`를 `contracts/mocks/`에 두었다.
   - `test/unit/Mocks.test.ts`가 각 목을 한 번씩 쓴다. solhint ignore와 slither `filter_paths`는 이미 `mocks/`를 뺀다.
+  - **정정:** #9에서 `HookGasBurn`을 무한 루프로 바꿔 가스 상한 호출이 실패하게 했다.
 
 #### [Issue #5] Keep the whitepapers in sync
 * **Type:** `Docs` / **Priority:** `P1` / **Depends on:** #3
@@ -135,11 +136,15 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #9] Hooks with gas cap
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #6
 * **Tasks:**
-  - [ ] `beforeAction` / `afterAction` on the six hookable functions with the EIP's `data` encoding
-  - [ ] Fixed `HOOK_GAS_LIMIT` (D2)
-  - [ ] `claimRefund` never calls a hook
-  - [ ] Hostile-hook tests: reverting, gas-burning, re-entering hooks; after expiry `claimRefund` still succeeds
+  - [x] `beforeAction` / `afterAction` on the six hookable functions with the EIP's `data` encoding
+  - [x] Fixed `HOOK_GAS_LIMIT` (D2)
+  - [x] `claimRefund` never calls a hook
+  - [x] Hostile-hook tests: reverting, gas-burning, re-entering hooks; after expiry `claimRefund` still succeeds
 * **Acceptance:** I-4 holds with any hook.
+
+* **해결 내용:**
+  - 훅 가능 함수 여섯 개에 명세 `data` 인코딩으로 `beforeAction`/`afterAction`을 호출한다. 가스 상한은 `PLACEHOLDER_HOOK_GAS_LIMIT = 300_000` (D2).
+  - `claimRefund`는 훅을 부르지 않는다. 되돌리기·가스 소진·재진입 훅이 있어도 만료 후 환불이 된다 (I-4).
 
 #### [Issue #10] Budget range per job: 1–1,000 USD
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #6

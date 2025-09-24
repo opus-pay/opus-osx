@@ -98,13 +98,11 @@ describe("Test mocks (#4)", () => {
         await expect(hook.afterAction(1, "0x12345678", "0x")).to.be.revertedWithCustomError(hook, "HookReverted");
     });
 
-    it("gas-burn hook spends most of a large gas stipend", async () => {
+    it("gas-burn hook exhausts a capped call", async () => {
         const factory = await ethers.getContractFactory("HookGasBurn");
         const hook = (await factory.connect(deployer).deploy()) as HookGasBurn;
         await hook.deployed();
-        const tx = await hook.beforeAction(1, "0x12345678", "0x", { gasLimit: 300_000 });
-        const receipt = await tx.wait();
-        expect(receipt.gasUsed.toNumber()).to.be.greaterThan(200_000);
+        await expect(hook.beforeAction(1, "0x12345678", "0x", { gasLimit: 300_000 })).to.be.reverted;
     });
 
     it("re-enter hook calls the target", async () => {

@@ -6,6 +6,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+import { IACPHook } from "./IACPHook.sol";
 import { IAgenticCommerce } from "./IAgenticCommerce.sol";
 import { IOpusACPExtensions } from "./IOpusACPExtensions.sol";
 
@@ -19,8 +20,9 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
 
     uint256 public constant EVALUATOR_FEE_BP = 0;
 
-    /// @dev D2 — replace after the fee-cap decision. Suggested 1,000 (10%).
+    /// @dev D2 — replace after the fee-cap decision. Suggested 1,000 (10%) and 300,000 gas.
     uint256 public constant PLACEHOLDER_MAX_PLATFORM_FEE_BP = 1_000;
+    uint256 public constant PLACEHOLDER_HOOK_GAS_LIMIT = 300_000;
 
     IERC20 public immutable token;
     uint8 public immutable tokenDecimals;
@@ -46,6 +48,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     error InvalidFeeConfig();
     error FeesTooHigh(uint256 feeBP);
     error NothingToWithdraw();
+    error HookFailed(bytes4 selector, bool before);
 
     constructor(
         address token_,
@@ -95,28 +98,34 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     }
 
     /// @inheritdoc IAgenticCommerce
-    function setProvider(uint256 jobId, address provider, bytes calldata) external nonReentrant {
+    function setProvider(uint256 jobId, address provider, bytes calldata optParams) external nonReentrant {
         Job storage job = _job(jobId);
         if (job.status != JobStatus.Open) revert WrongStatus();
         if (_msgSender() != job.client) revert Unauthorized();
         if (job.provider != address(0)) revert WrongStatus();
         if (provider == address(0)) revert ZeroAddress();
+        bytes memory data = abi.encode(provider, optParams);
+        _callHook(job.hook, true, jobId, data);
         job.provider = provider;
         emit ProviderSet(jobId, provider);
+        _callHook(job.hook, false, jobId, data);
     }
 
     /// @inheritdoc IAgenticCommerce
-    function setBudget(uint256 jobId, uint256 amount, bytes calldata) external nonReentrant {
+    function setBudget(uint256 jobId, uint256 amount, bytes calldata optParams) external nonReentrant {
         Job storage job = _job(jobId);
         if (job.status != JobStatus.Open) revert WrongStatus();
         address caller = _msgSender();
         if (caller != job.client && caller != job.provider) revert Unauthorized();
+        bytes memory data = abi.encode(amount, optParams);
+        _callHook(job.hook, true, jobId, data);
         job.budget = amount;
         emit BudgetSet(jobId, amount);
+        _callHook(job.hook, false, jobId, data);
     }
 
     /// @inheritdoc IAgenticCommerce
-    function fund(uint256 jobId, uint256 expectedBudget, bytes calldata) external nonReentrant {
+    function fund(uint256 jobId, uint256 expectedBudget, bytes calldata optParams) external nonReentrant {
         Job storage job = _job(jobId);
         if (job.status != JobStatus.Open) revert WrongStatus();
         if (_msgSender() != job.client) revert Unauthorized();
@@ -125,6 +134,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         if (job.budget != expectedBudget) revert BudgetMismatch(job.budget, expectedBudget);
         if (block.timestamp >= job.expiredAt) revert WrongStatus();
 
+        _callHook(job.hook, true, jobId, optParams);
         job.status = JobStatus.Funded;
 
         uint256 beforeBal = token.balanceOf(address(this));
@@ -133,22 +143,28 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         if (received != job.budget) revert UnexpectedFundedAmount(received, job.budget);
 
         emit JobFunded(jobId, job.client, job.budget);
+        _callHook(job.hook, false, jobId, optParams);
     }
 
     /// @inheritdoc IAgenticCommerce
-    function submit(uint256 jobId, bytes32 deliverable, bytes calldata) external nonReentrant {
+    function submit(uint256 jobId, bytes32 deliverable, bytes calldata optParams) external nonReentrant {
         Job storage job = _job(jobId);
         if (job.status != JobStatus.Funded) revert WrongStatus();
         if (_msgSender() != job.provider) revert Unauthorized();
+        bytes memory data = abi.encode(deliverable, optParams);
+        _callHook(job.hook, true, jobId, data);
         job.status = JobStatus.Submitted;
         emit JobSubmitted(jobId, job.provider, deliverable);
+        _callHook(job.hook, false, jobId, data);
     }
 
     /// @inheritdoc IAgenticCommerce
-    function complete(uint256 jobId, bytes32 reason, bytes calldata) external nonReentrant {
+    function complete(uint256 jobId, bytes32 reason, bytes calldata optParams) external nonReentrant {
         Job storage job = _job(jobId);
         if (job.status != JobStatus.Submitted) revert WrongStatus();
         if (_msgSender() != job.evaluator) revert Unauthorized();
+        bytes memory data = abi.encode(reason, optParams);
+        _callHook(job.hook, true, jobId, data);
         job.status = JobStatus.Completed;
         uint256 amount = job.budget;
         uint256 fee = (amount * platformFeeBP) / 10_000;
@@ -161,10 +177,11 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
         }
         emit JobCompleted(jobId, job.evaluator, reason);
         emit PaymentReleased(jobId, job.provider, toProvider);
+        _callHook(job.hook, false, jobId, data);
     }
 
     /// @inheritdoc IAgenticCommerce
-    function reject(uint256 jobId, bytes32 reason, bytes calldata) external nonReentrant {
+    function reject(uint256 jobId, bytes32 reason, bytes calldata optParams) external nonReentrant {
         Job storage job = _job(jobId);
         address caller = _msgSender();
         if (job.status == JobStatus.Open) {
@@ -175,6 +192,8 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
             revert WrongStatus();
         }
 
+        bytes memory data = abi.encode(reason, optParams);
+        _callHook(job.hook, true, jobId, data);
         JobStatus previous = job.status;
         job.status = JobStatus.Rejected;
         if (previous == JobStatus.Funded || previous == JobStatus.Submitted) {
@@ -185,6 +204,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
             emit Refunded(jobId, job.client, amount);
         }
         emit JobRejected(jobId, caller, reason);
+        _callHook(job.hook, false, jobId, data);
     }
 
     /// @inheritdoc IAgenticCommerce
@@ -219,6 +239,18 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     function _job(uint256 jobId) private view returns (Job storage job) {
         job = _jobs[jobId];
         if (job.client == address(0)) revert InvalidJob();
+    }
+
+    function _callHook(address hook, bool before, uint256 jobId, bytes memory data) private {
+        if (hook == address(0)) return;
+        bytes memory payload = abi.encodeWithSelector(
+            before ? IACPHook.beforeAction.selector : IACPHook.afterAction.selector,
+            jobId,
+            msg.sig,
+            data
+        );
+        (bool ok, ) = hook.call{ gas: PLACEHOLDER_HOOK_GAS_LIMIT }(payload);
+        if (!ok) revert HookFailed(msg.sig, before);
     }
 
     function _pay(address to, uint256 amount) private {
