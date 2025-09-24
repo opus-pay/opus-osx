@@ -164,11 +164,15 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #11] `OpusACPFactory` and fixed stablecoin list
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #7
 * **Tasks:**
-  - [ ] Constructor takes the stablecoin list (D8); validates non-zero, no duplicates, decimals 6 or 18
-  - [ ] Permissionless `createInstance(token, treasury, feeBP)`; one instance per (token, treasury, fee); emits `InstanceCreated`
-  - [ ] `(treasury == 0) == (feeBP == 0)`
-  - [ ] No protocol-fee parameter anywhere
+  - [x] Constructor takes the stablecoin list (D8); validates non-zero, no duplicates, decimals 6 or 18
+  - [x] Permissionless `createInstance(token, treasury, feeBP)`; one instance per (token, treasury, fee); emits `InstanceCreated`
+  - [x] `(treasury == 0) == (feeBP == 0)`
+  - [x] No protocol-fee parameter anywhere
 * **Acceptance:** Factory and instances have no admin functions (checked in #21).
+
+* **해결 내용:**
+  - `OpusACPFactory`가 생성자로 스테이블코인 목록을 받는다 (D8: 주소는 배포 시 넣고, 코드에 USDC/USDT를 하드코딩하지 않는다).
+  - CREATE2 솔트는 `(token, treasury, feeBP)` 해시. 권한 없이 `createInstance`. 프로토콜 수수료 매개변수는 없다. 관리자 함수 ABI 검사는 #21.
 
 #### [Issue #12] ERC-2771 trusted forwarder support
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #6, D14
