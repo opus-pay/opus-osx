@@ -2,6 +2,7 @@
 pragma solidity 0.8.24;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -53,6 +54,7 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     error HookFailed(bytes4 selector, bool before);
     error BudgetBelowMinimum(uint256 amount);
     error BudgetAboveMaximum(uint256 amount);
+    error InsufficientAllowance(uint256 available, uint256 needed);
 
     constructor(
         address token_,
@@ -131,25 +133,24 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
 
     /// @inheritdoc IAgenticCommerce
     function fund(uint256 jobId, uint256 expectedBudget, bytes calldata optParams) external nonReentrant {
-        Job storage job = _job(jobId);
-        if (job.status != JobStatus.Open) revert WrongStatus();
-        if (_msgSender() != job.client) revert Unauthorized();
-        if (job.provider == address(0)) revert ProviderNotSet();
-        if (job.budget == 0) revert ZeroBudget();
-        _requireBudgetRange(job.budget);
-        if (job.budget != expectedBudget) revert BudgetMismatch(job.budget, expectedBudget);
-        if (block.timestamp >= job.expiredAt) revert WrongStatus();
+        _fund(jobId, expectedBudget, optParams);
+    }
 
-        _callHook(job.hook, true, jobId, optParams);
-        job.status = JobStatus.Funded;
-
-        uint256 beforeBal = token.balanceOf(address(this));
-        token.safeTransferFrom(job.client, address(this), job.budget);
-        uint256 received = token.balanceOf(address(this)) - beforeBal;
-        if (received != job.budget) revert UnexpectedFundedAmount(received, job.budget);
-
-        emit JobFunded(jobId, job.client, job.budget);
-        _callHook(job.hook, false, jobId, optParams);
+    /// @notice OPUS extension. Tries `permit`, then the standard `fund` path (same hooks and events).
+    function fundWithPermit(
+        uint256 jobId,
+        uint256 expectedBudget,
+        bytes calldata optParams,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external nonReentrant {
+        address owner = _msgSender();
+        try IERC20Permit(address(token)).permit(owner, address(this), expectedBudget, deadline, v, r, s) {} catch {}
+        uint256 allowed = token.allowance(owner, address(this));
+        if (allowed < expectedBudget) revert InsufficientAllowance(allowed, expectedBudget);
+        _fund(jobId, expectedBudget, optParams);
     }
 
     /// @inheritdoc IAgenticCommerce
@@ -245,6 +246,28 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
     function _job(uint256 jobId) private view returns (Job storage job) {
         job = _jobs[jobId];
         if (job.client == address(0)) revert InvalidJob();
+    }
+
+    function _fund(uint256 jobId, uint256 expectedBudget, bytes memory optParams) private {
+        Job storage job = _job(jobId);
+        if (job.status != JobStatus.Open) revert WrongStatus();
+        if (_msgSender() != job.client) revert Unauthorized();
+        if (job.provider == address(0)) revert ProviderNotSet();
+        if (job.budget == 0) revert ZeroBudget();
+        _requireBudgetRange(job.budget);
+        if (job.budget != expectedBudget) revert BudgetMismatch(job.budget, expectedBudget);
+        if (block.timestamp >= job.expiredAt) revert WrongStatus();
+
+        _callHook(job.hook, true, jobId, optParams);
+        job.status = JobStatus.Funded;
+
+        uint256 beforeBal = token.balanceOf(address(this));
+        token.safeTransferFrom(job.client, address(this), job.budget);
+        uint256 received = token.balanceOf(address(this)) - beforeBal;
+        if (received != job.budget) revert UnexpectedFundedAmount(received, job.budget);
+
+        emit JobFunded(jobId, job.client, job.budget);
+        _callHook(job.hook, false, jobId, optParams);
     }
 
     function _normalized(uint256 amount) private view returns (uint256) {

@@ -318,7 +318,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D12 | Submit feedback to ERC-8183 | Open | #37 |
 | D13 | Protocol fee | **Decided: none** | — |
 | D14 | ERC-2771 forwarder at launch | **Decided: yes** — `OpusForwarder` | #25 |
-| D15 | USDC permit funding path | Open | #13 |
+| D15 | USDC permit funding path | **Decided: yes** — `fundWithPermit` | — |
 | D16 | Signature-based agreement execution | **Decided: not at launch** (backlog #51) | — |
 | D17 | Token at launch | **Decided: none** (review in #52) | — |
 | D18 | Evaluation fee, keeper tip, dispute deposit amounts (fee capped relative to budget) | Open | #16, #53 |

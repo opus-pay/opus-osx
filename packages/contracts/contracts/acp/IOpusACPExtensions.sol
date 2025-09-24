@@ -34,4 +34,15 @@ interface IOpusACPExtensions {
 
     /// @notice OPUS extension. Deferred amount owed to `account`.
     function claimable(address account) external view returns (uint256 amount);
+
+    /// @notice OPUS extension. `try permit` then the standard `fund` path.
+    function fundWithPermit(
+        uint256 jobId,
+        uint256 expectedBudget,
+        bytes calldata optParams,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
 }

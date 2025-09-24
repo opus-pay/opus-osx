@@ -189,9 +189,12 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #13] USDC permit funding path
 * **Type:** `Feature` / **Priority:** `P2` / **Depends on:** #6, D15
 * **Tasks:**
-  - [ ] Extension that calls `permit` in `try/catch`, then requires allowance ≥ budget, then runs standard `fund` logic including hooks
-  - [ ] Front-run test: a pre-submitted permit does not make funding fail
+  - [x] Extension that calls `permit` in `try/catch`, then requires allowance ≥ budget, then runs standard `fund` logic including hooks
+  - [x] Front-run test: a pre-submitted permit does not make funding fail
 * **Acceptance:** Emits the same events as standard `fund`.
+
+* **해결 내용:**
+  - D15 = 도입. `fundWithPermit`이 `permit`을 try/catch로 호출한 뒤 표준 `fund`와 같은 훅·이벤트를 탄다. 이미 제출된 permit이 있어도 예치가 실패하지 않는다.
 
 ---
 
