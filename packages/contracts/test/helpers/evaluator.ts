@@ -52,6 +52,45 @@ export async function openConfiguredJob(
     return jobId;
 }
 
+export async function fundConfiguredJob(
+    core: OpusAgenticCommerce,
+    evaluator: OptimisticEvaluator,
+    token: MockPermitToken,
+    client: Wallet,
+    provider: string,
+    operator: string,
+    budget: number | string = 100_000000,
+    configOverrides: Record<string, unknown> = {}
+): Promise<number> {
+    const jobId = await openConfiguredJob(core, evaluator, token, client, provider, operator, budget, configOverrides);
+    await core.connect(client).fund(jobId, budget, EMPTY);
+    return jobId;
+}
+
+export async function submitConfiguredJob(
+    core: OpusAgenticCommerce,
+    evaluator: OptimisticEvaluator,
+    token: MockPermitToken,
+    client: Wallet,
+    provider: Wallet,
+    operator: string,
+    budget: number | string = 100_000000,
+    configOverrides: Record<string, unknown> = {}
+): Promise<number> {
+    const jobId = await fundConfiguredJob(
+        core,
+        evaluator,
+        token,
+        client,
+        provider.address,
+        operator,
+        budget,
+        configOverrides
+    );
+    await core.connect(provider).submit(jobId, ethers.utils.id("work"), EMPTY);
+    return jobId;
+}
+
 export async function longExpiry(): Promise<number> {
     return (await time.latest()) + 30 * 24 * 60 * 60;
 }

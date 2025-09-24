@@ -125,15 +125,15 @@ describe("OptimisticEvaluator configure and hook (#14)", () => {
         const jobId = await openConfiguredJob(core, evaluator, token, client, provider.address, operator.address);
         await core.connect(client).fund(jobId, 100_000000, EMPTY);
         const funded = (await evaluator.fundedAt(core.address, jobId)).toNumber();
-        await time.setNextBlockTimestamp(funded + 3600);
+        await time.setNextBlockTimestamp(funded + 3599);
         await core.connect(provider).submit(jobId, ethers.utils.id("ok"), EMPTY);
-        expect(await evaluator.submittedAt(core.address, jobId)).to.equal(funded + 3600);
+        expect(await evaluator.submittedAt(core.address, jobId)).to.equal(funded + 3599);
 
         const { token: token2, core: core2, evaluator: evaluator2 } = await setup();
         const job2 = await openConfiguredJob(core2, evaluator2, token2, client, provider.address, operator.address);
         await core2.connect(client).fund(job2, 100_000000, EMPTY);
         const funded2 = (await evaluator2.fundedAt(core2.address, job2)).toNumber();
-        await time.setNextBlockTimestamp(funded2 + 3601);
+        await time.setNextBlockTimestamp(funded2 + 3600);
         await expect(
             core2.connect(provider).submit(job2, ethers.utils.id("late"), EMPTY)
         ).to.be.revertedWithCustomError(core2, "HookFailed");
