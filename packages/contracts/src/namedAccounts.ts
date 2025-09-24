@@ -1,0 +1,1 @@
+export const NAMED_ACCOUNT_KEYS = ["DEPLOYER", "TREASURY", "OPERATOR", "ARBITRATOR"] as const;

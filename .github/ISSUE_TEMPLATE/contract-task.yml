@@ -1,0 +1,79 @@
+name: 컨트랙트 작업
+description: 스마트 컨트랙트 구현·수정 작업 이슈
+title: "[Dev] "
+labels: ["Dev"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        `ROADMAP.md`의 이슈 번호가 있으면 제목에 함께 적어주세요. (예: `[Dev] #63 거래별 USDT 잠금 로직`)
+
+  - type: dropdown
+    id: contract
+    attributes:
+      label: 대상 컨트랙트
+      options:
+        - OpusRoles
+        - OpusToken (OPG)
+        - StablecoinRegistry
+        - OpusPriceOracle
+        - OpusVault
+        - OpusShop
+        - OpusReputation
+        - OpusCredit
+        - OpusEscrow
+        - OpusArbitrator
+        - OpusVesting
+        - 인터페이스 / 라이브러리
+        - 배포 스크립트
+        - 기타
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: 목표
+      description: 이 작업이 끝나면 무엇이 가능해지는지 한두 문장으로 적어주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: 작업 항목
+      description: 구현할 함수, 상태 변수, 이벤트를 체크리스트로 적어주세요.
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 완료 조건
+      description: 어떤 테스트가 통과하면 완료인지 적어주세요.
+      value: |
+        - [ ] 단위 테스트 통과
+        - [ ] 불변식 테스트 통과 (해당 시)
+        - [ ] `yarn contracts build`, `yarn formatting:check` 통과
+    validations:
+      required: true
+
+  - type: textarea
+    id: decisions
+    attributes:
+      label: 확정된 설계 결정
+      description: |
+        `ROADMAP.md` Part B의 설계 쟁점 중 이 작업에 관련된 것이 있으면 결정 내용을 적어주세요.
+        비워두면 구현 중 확인을 요청하게 되어 작업이 지연됩니다.
+      placeholder: |
+        예) 구독료 리베이트는 10% 유지
+        예) Vault는 불변 배포(프록시 미사용)
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: 참고 사항
+      description: 참조할 기존 코드, 외부 라이브러리, 주의점 등

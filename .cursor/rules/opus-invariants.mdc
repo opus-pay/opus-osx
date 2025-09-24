@@ -1,0 +1,59 @@
+---
+description: OPUS Protocol 핵심 불변식 및 금지 사항
+alwaysApply: true
+---
+
+# OPUS 핵심 불변식
+
+구현 판단 시 아래 규칙이 다른 모든 고려사항보다 우선합니다.
+
+## 자금 이동 제약
+
+에스크로 자금의 도착지는 해당 거래의 `buyer` 또는 `store` 두 주소뿐입니다.
+
+```solidity
+// ❌ 금지 — 관리자가 임의 주소로 인출
+function emergencyWithdraw(address to, uint256 amount) external onlyAdmin {
+    token.safeTransfer(to, amount);
+}
+
+// ✅ 허용 — 도착지가 거래 당사자로 고정
+function _settle(uint256 id, bool toBuyer) internal {
+    Escrow storage e = escrows[id];
+    address dest = toBuyer ? e.buyer : e.store;
+    e.state = toBuyer ? State.Refunded : State.Released;   // 상태 먼저
+    IERC20(e.token).safeTransfer(dest, e.amount);           // 전송 나중
+}
+```
+
+## 발행 금지
+
+OPG에 `mint` 계열 함수를 추가하지 마십시오. 이자·리베이트·보상은 모두 기존 보유분에서 장부 이동으로 처리합니다.
+
+## OPG와 프로토콜 분리
+
+`packages/token` 은 OPUS-OSX 프로토콜과 온체인 연결고리를 만들지 않습니다. `OpusToken`을 `OpusRegistry`에 등록하지 말고, 토큰에 `OpusComponent`/`OpusRoles`를 붙이지 말며, `@opus/contracts` 배포 그래프에 토큰 배포를 넣지 마십시오. Vault·Shop·Vesting은 OPG를 `IERC20` 주소로만 받습니다.
+
+## 예치금은 수량 기준
+
+`10 USDT 상당`은 등록 시점 가격 산정 기준일 뿐입니다. USD 표시 부채를 저장하지 말고 예치된 토큰 수량을 기장하십시오.
+
+```solidity
+// ❌ 금지
+storeDebtUsd[store] = 10e6;
+
+// ✅ 허용
+uint256 amount = oracle.quoteOpgForUsd(10e6);
+storeDeposits[store] += amount;   // 수량을 기장하고 수량으로 반환
+```
+
+## 외부 호출 방어
+
+플러그인·오라클 호출은 실패해도 자금이 잠기지 않아야 합니다. `try/catch` + 가스 상한 + 기본 동작 폴백을 적용하십시오.
+
+## 필수 패턴
+
+* 상태 변경 후 외부 호출 (checks-effects-interactions)
+* 자금을 다루는 외부 함수에 `nonReentrant`
+* 토큰 전송은 항상 `SafeERC20`
+* 실제 수취액은 잔고 차분으로 검증 (fee-on-transfer 방어)

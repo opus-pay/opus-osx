@@ -1,0 +1,56 @@
+name: 프론트엔드 작업
+description: 허브 웹사이트 및 자체 상점 UI 작업 이슈
+title: "[Frontend] "
+labels: ["Frontend"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: 대상 영역
+      options:
+        - 허브 포털 (공통)
+        - 상점 디렉토리
+        - 상점 등록 콘솔
+        - 구독 관리
+        - 에스크로 결제 위젯
+        - 구매자 대시보드
+        - 상점 정산 대시보드
+        - 자체 상점 1 — 개발 의뢰
+        - 자체 상점 2 — 디지털 콘텐츠
+        - 자체 상점 3 — 보안 감사
+        - 기타
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: 목표
+      description: 사용자가 무엇을 할 수 있게 되는지 적어주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: contracts
+    attributes:
+      label: 연동할 컨트랙트 함수 / 이벤트
+      description: 읽을 이벤트와 호출할 함수를 적어주세요.
+      placeholder: |
+        예) OpusShop.registerStore(), StoreRegistered 이벤트
+        예) OpusEscrow.createEscrow(), EscrowLocked 이벤트
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: 작업 항목
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: 참고 사항
+      description: 디자인 참고, 예외 처리(가스비 부족, 네트워크 불일치 등), 기타

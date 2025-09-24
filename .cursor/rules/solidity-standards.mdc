@@ -1,0 +1,58 @@
+---
+description: OPUS Solidity 코딩 규약
+globs: **/*.sol
+alwaysApply: false
+---
+
+# Solidity 규약
+
+## 버전 및 임포트
+
+```solidity
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity 0.8.24;   // 범위(^)가 아닌 고정 버전
+
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";   // named import 사용
+```
+
+컨트랙트는 `packages/contracts/contracts/` 하위에 둡니다. 임포트 경로는 `node_modules` 기준이므로 remapping 설정이 필요하지 않습니다.
+
+## 명명 규칙
+
+* 컨트랙트 `OpusEscrow`, 인터페이스 `IOpusEscrow`, 라이브러리 `EscrowStateLib`
+* 내부·private 함수와 변수는 `_` 접두사: `_settle()`, `_vault`
+* 상수는 `SCREAMING_SNAKE_CASE`, 불변값은 `immutable` 우선
+* 스토리지 레이아웃 순서: 상수 → immutable → 상태변수 → 이벤트 → 에러 → 모디파이어 → 생성자 → external → public → internal → private
+
+## 에러 처리
+
+`require` 문자열 대신 커스텀 에러를 사용합니다.
+
+```solidity
+// ❌ BAD
+require(amount > 0, "amount must be positive");
+
+// ✅ GOOD
+error ZeroAmount();
+if (amount == 0) revert ZeroAmount();
+```
+
+## 이벤트
+
+상태를 변경하는 external 함수는 반드시 이벤트를 발생시킵니다. 프론트엔드와 인덱서가 이벤트만 읽어 동작하므로, 시그니처 변경은 `ROADMAP.md` 이벤트 명세 갱신과 함께 진행합니다. 주소와 ID는 `indexed`로 선언합니다.
+
+## 주석
+
+* 모든 external·public 함수에 NatSpec(`@notice`, `@param`, `@return`)을 작성합니다.
+* 불변식을 유지하는 코드에는 `@dev`로 그 이유를 남깁니다.
+* 코드가 스스로 드러내는 내용을 반복하는 주석은 작성하지 않습니다.
+
+## 테스트
+
+테스트는 TypeScript로 작성합니다. 위치는 `packages/contracts/test/` 이고 파일명은 `*.test.ts` 입니다.
+
+* 컨트랙트 타입은 `../typechain-types` 에서 가져옵니다. 손으로 정의하지 마십시오.
+* 리버트는 `revertedWithCustomError(contract, "ErrorName")` 로 단정합니다. 커스텀 에러를 쓰므로 `revertedWith` 문자열 비교는 동작하지 않습니다.
+* 시간 이동은 `time.increaseTo()` / `time.increase()` 를 씁니다.
+* 불변식 테스트는 `test/invariant/` 에 두고 고정 시드로 무작위 행동열을 생성합니다.
+* 자금을 다루는 함수는 재진입 시도 테스트를 함께 작성합니다.

@@ -1,0 +1,25 @@
+/.idea/
+
+node_modules/
+dist/
+
+artifacts/
+cache/
+typechain-types/
+
+coverage/
+coverage.json
+lcov.info
+
+# 슬래시를 포함한 패턴은 이 파일 위치에 고정되므로 packages/* 하위까지 덮도록 **를 씁니다.
+**/env/.env
+**/env/.env.*
+**/env/.*.env
+!**/env/.env.sample
+!**/env/.*.env.sample
+
+# 이관 참고용 기존 프로젝트. 각자 별도 저장소이므로 추적하지 않습니다.
+/legacy/
+
+.DS_Store
+

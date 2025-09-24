@@ -1,0 +1,29 @@
+{
+    "name": "opus-osx",
+    "version": "0.1.0",
+    "description": "OPUS — escrow for cross-border errands on ERC-8183",
+    "repository": "https://github.com/opus-pay/opus-osx",
+    "author": "opus-pay",
+    "license": "SEE LICENSE IN LICENSE.md",
+    "private": true,
+    "workspaces": {
+        "packages": [
+            "packages/*",
+            "apps/*"
+        ]
+    },
+    "scripts": {
+        "build": "yarn workspaces run build",
+        "test": "yarn workspaces run test",
+        "clean": "yarn workspaces run clean",
+        "lint": "yarn workspaces run lint",
+        "formatting:check": "yarn workspaces run formatting:check",
+        "formatting:write": "yarn workspaces run formatting:write",
+        "coverage": "yarn workspaces run coverage",
+        "contracts": "yarn workspace @opus/contracts",
+        "sdk": "yarn workspace @opus/sdk",
+        "keeper": "yarn workspace @opus/keeper",
+        "pay": "yarn workspace @opus/pay",
+        "token": "yarn workspace @opus/token"
+    }
+}
