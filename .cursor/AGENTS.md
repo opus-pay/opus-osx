@@ -82,8 +82,9 @@ packages/
     docs/                    EVM_TARGET.md, ERC8183_CONFORMANCE.md
     env/                     .env, .amoy.env, .polygon.env (커밋 금지, 샘플만 커밋)
   sdk/                       TypeScript SDK (@opus/sdk, viem)
-  keeper/                    기한 처리 호출기
-  relayer/                   가스 대납 중계 (ERC-2771)
+  keeper/                    기한 처리 호출기. 운영 문서는 packages/keeper/README.md
+  relayer/                   가스 대납 중계 (ERC-2771). 운영 문서는 packages/relayer/README.md
+  indexer/                   작업·인스턴스 조회 인덱스. 운영 문서는 packages/indexer/README.md
   verifier/                  테스트 실행 검증 서버 (M13)
 apps/
   pay/                       에스크로 결제 링크

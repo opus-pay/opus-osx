@@ -28,6 +28,7 @@
 | `packages/sdk` | TypeScript SDK (viem) | npm | M4 |
 | `packages/keeper` | Calls permissionless deadline triggers | Hosted | M4 |
 | `packages/relayer` | ERC-2771 relay and gas sponsorship | Hosted | M4 |
+| `packages/indexer` | Job and instance index for apps and the keeper | Hosted | M4 |
 | `apps/errands` | Cross-border errand service (team-run service platform) | Hosted | M6 |
 | `packages/verifier` | Isolated test runner for `TestRunnerEvaluator` | Hosted | M13 |
 | `apps/pay` | Escrow payment link web app | Hosted | M5 |
