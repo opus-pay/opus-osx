@@ -686,8 +686,12 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 #### [Issue #45] License decision
 * **Type:** `Legal` / **Priority:** `P1` / **Depends on:** —
 * **Tasks:**
-  - [ ] MIT (suggested for a public-standard implementation with no protocol fee) vs BSL (D7). `LICENSE.md` is currently BUSL-1.1 (MIT from 2030-01-01); if BUSL stays, fix its "Licensed Work" text, which still describes the previous project
+  - [x] MIT (suggested for a public-standard implementation with no protocol fee) vs BSL (D7). `LICENSE.md` is currently BUSL-1.1 (MIT from 2030-01-01); if BUSL stays, fix its "Licensed Work" text, which still describes the previous project
 * **Acceptance:** `LICENSE` file matches the decision before the first public release.
+
+* **해결 내용:**
+  - D7은 MIT로 정했다. `LICENSE.md`를 MIT 전문으로 바꿨고 저작권자는 opus-pay다. 각 `package.json`의 `SEE LICENSE IN LICENSE.md`는 그대로 MIT를 가리킨다.
+  - 솔리디티 파일 8개의 `SPDX-License-Identifier: BUSL-1.1`은 남겼다. 헤더를 바꾸면 메타데이터 해시가 바뀌어 Amoy에 검증한 소스와 어긋난다. 다음 배포(메인넷 #42 또는 Amoy 재배포) 때 `MIT`로 바꾸고, `.cursor/rules/solidity-standards.mdc`의 헤더 예시도 함께 바꾼다.
 
 ---
 

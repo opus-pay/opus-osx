@@ -312,7 +312,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D3 | Job duration bounds; evaluator window bounds; safety margin | Open | #6, #14 |
 | D4 | Budget range | **Decided: 1–1,000 USD per job, fixed constant** | — |
 | D5 | Foundry for invariant tests | Open | #19 |
-| D7 | License (MIT vs BSL) | Open (MIT suggested) | #45 |
+| D7 | License (MIT vs BSL) | **Decided: MIT.** Solidity SPDX headers switch at the next deployment | #45 |
 | D8 | Stablecoins in the factory list | **Decided: constructor list, no hardcoded addresses** | — |
 | D10 | Default arbiter recommended by the SDK | Open | #23 |
 | D11 | `fund` signature per current EIP text | **Decided: `fund(jobId, expectedBudget, optParams)`** | — |
