@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { isAddress } from "viem";
 
+import { suggestCriteria, type CriteriaKind } from "../src/lib/criteria";
 import { encodeDraft, linkFor, PRESETS, type Draft, type PresetName } from "../src/lib/draft";
 
 export default function DraftPage() {
@@ -12,6 +13,8 @@ export default function DraftPage() {
     const [amountUsd, setAmountUsd] = useState("25");
     const [preset, setPreset] = useState<PresetName>("smallNoArbiter");
     const [agreement, setAgreement] = useState("");
+    const [criteriaKind, setCriteriaKind] = useState<CriteriaKind>("errand");
+    const [assistant, setAssistant] = useState("");
     const [hours, setHours] = useState("24");
     const [lock, setLock] = useState<1 | 2>(2);
     const [drafter, setDrafter] = useState<"client" | "provider">("client");
@@ -94,6 +97,40 @@ export default function DraftPage() {
                         </option>
                     ))}
                 </select>
+            </label>
+            <label className="block text-sm">
+                Completion criteria
+                <select
+                    className="mt-1 w-full rounded border bg-white p-2"
+                    value={criteriaKind}
+                    onChange={(event) => setCriteriaKind(event.target.value as CriteriaKind)}
+                >
+                    <option value="errand">errand</option>
+                    <option value="code">code</option>
+                    <option value="report">report</option>
+                    <option value="design">design</option>
+                </select>
+            </label>
+            <button
+                className="rounded border px-3 py-2"
+                type="button"
+                onClick={() =>
+                    void suggestCriteria(agreement, criteriaKind, assistant === "" ? undefined : assistant)
+                        .then(setAgreement)
+                        .catch((error: unknown) =>
+                            toast.error(error instanceof Error ? error.message : "Could not write criteria")
+                        )
+                }
+            >
+                Write criteria
+            </button>
+            <label className="block text-sm">
+                Optional criteria assistant URL
+                <input
+                    className="mt-1 w-full rounded border bg-white p-2"
+                    value={assistant}
+                    onChange={(event) => setAssistant(event.target.value.trim())}
+                />
             </label>
             <label className="block text-sm">
                 Agreement made elsewhere
