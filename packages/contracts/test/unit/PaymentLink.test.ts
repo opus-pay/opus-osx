@@ -1,7 +1,7 @@
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
-import { createPublicClient, createWalletClient, custom, getAddress, type Hex } from "viem";
+import { createPublicClient, createWalletClient, custom, getAddress, keccak256, stringToBytes, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 import { fundingView, nextFundingAction, runFundingStep, type Draft } from "../../../../apps/pay/src/lib/funding";
@@ -91,6 +91,7 @@ describe("Payment link funding (#27)", () => {
         expect(job.client).to.equal(getAddress(client.address));
         expect(job.provider).to.equal(getAddress(provider.address));
         expect(job.budget).to.equal(env.amount);
+        return { env, jobId: jobId as bigint };
     }
 
     it("reaches Funded from one shared link when the client sets the amount", async () => {
@@ -99,5 +100,15 @@ describe("Payment link funding (#27)", () => {
 
     it("reaches Funded from one shared link when the provider quotes", async () => {
         await fundFromLink(1);
+    });
+
+    it("submits a proof hash and the client approves", async () => {
+        const { env, jobId } = await fundFromLink(2);
+        const hash = keccak256(stringToBytes("station.mp4"));
+        await env.providerOpus.submit(jobId, hash, env.amount);
+        await env.clientOpus.approve(jobId);
+        const status = await env.clientOpus.status(jobId, getAddress(client.address));
+        expect(status.status).to.equal("Completed");
+        expect(status.actions).to.not.include("submit");
     });
 });
