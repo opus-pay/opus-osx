@@ -421,12 +421,18 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #12, #23
 * **Description:** Required for the errand service: clients and providers must never need to buy POL.
 * **Tasks:**
-  - [ ] Accept `OpusForwarder` requests signed with the SDK forwarder helper; submit and pay gas
-  - [ ] Only relay calls whose target is a known OPUS instance, the factory, or the evaluator (from `addresses.json`); reject anything else so the gas wallet cannot be drained
-  - [ ] Per-integrator budget and rate limits
-  - [ ] Screen signer addresses against applicable sanctions lists before relaying (whitepaper §13.2)
-  - [ ] Gas price floor and nonce management for the relayer wallet; key from env
+  - [x] Accept `OpusForwarder` requests signed with the SDK forwarder helper; submit and pay gas
+  - [x] Only relay calls whose target is a known OPUS instance, the factory, or the evaluator (from `addresses.json`); reject anything else so the gas wallet cannot be drained
+  - [x] Per-integrator budget and rate limits
+  - [x] Screen signer addresses against applicable sanctions lists before relaying (whitepaper §13.2)
+  - [x] Gas price floor and nonce management for the relayer wallet; key from env
 * **Acceptance:** A wallet with zero POL completes the payment-link flow through the relayer on Amoy (also satisfies #12's acceptance).
+
+* **해결 내용:**
+  - `@opus/relayer`는 SDK가 서명한 `OpusForwarder` 요청만 받아 가스 지갑으로 `execute`를 보낸다. 대상이 주소 파일의 인스턴스, 팩토리, 평가자가 아니거나 `value`가 0이 아니면 거절한다. 그래서 토큰 승인처럼 다른 컨트랙트로는 가스 지갑이 빠져나가지 않고, 예치가 필요하면 `fundWithPermit`을 쓴다.
+  - 연동사는 id와 토큰으로 구분하고, 가스 예산과 시간창 안의 호출 횟수로 제한한다. 이 한도는 프로토콜 상수가 아니다. 서명자 주소는 운영자가 넣는 제재 목록에 있으면 중계하지 않는다. 목록 파일이 없으면 프로세스는 시작하지 않는다.
+  - 키는 `RELAYER_PRIVATE_KEY`에서만 읽는다. 샘플은 `packages/relayer/env/.env.sample`이고 실제 키는 커밋하지 않는다. 배포자 주소와 같으면 시작을 거부한다. Amoy에서는 가스 가격 바닥을 25 gwei로 두고, 지갑 nonce는 대기 중인 개수에서 이어서 올린다.
+  - 로컬 Hardhat에서 POL 잔고가 0인 의뢰인과 수행자가 생성, 설정, 예산, `fundWithPermit`, 제출, 승인까지 마친다. 대금은 수행자에게 간다. Amoy에서 POL이 없는 지갑으로 끝내는 인수 기준과 #12의 라이브 해시는 아직 없다.
 
 #### [Issue #26] Indexing
 * **Type:** `Task` / **Priority:** `P1` / **Depends on:** #22
