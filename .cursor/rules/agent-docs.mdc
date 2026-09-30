@@ -1,0 +1,16 @@
+---
+description: 작업 전 .cursor/AGENTS.md와 .cursor/CURSOR_BRIEF.md를 읽는다
+alwaysApply: true
+---
+
+# 에이전트 문서
+
+구현, 리뷰, 테스트, 문서 수정을 시작하기 전에 아래 두 파일을 읽고 그 내용을 따른다.
+
+1. `.cursor/AGENTS.md` — 불변식 I-1~I-9, 작업 규칙, 결정 기록, 미확정 항목
+2. `.cursor/CURSOR_BRIEF.md` — M0–M5 구현 명세
+
+두 문서가 어긋나면 코드는 `.cursor/CURSOR_BRIEF.md`를 따른다. 그 충돌은 사용자에게 알린다.
+미확정 결정(D 번호)은 추측하지 말고 묻는다. 값이 필요하면 `PLACEHOLDER_` 상수를 쓴다.
+백서를 고칠 때는 `WHITEPAPER.md`와 `WHITEPAPER.ko.md`를 함께 고친다.
+이슈 하나는 브랜치 하나, 커밋 하나로 다룬다.
