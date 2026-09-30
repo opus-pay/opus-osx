@@ -31,6 +31,8 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The refer
 | [`WHITEPAPER.md`](./WHITEPAPER.md) / [`WHITEPAPER.ko.md`](./WHITEPAPER.ko.md) | Design, evaluation, security model, products, risks (English / Korean; kept in sync) |
 | [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D29 |
 | [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#75 with tasks and acceptance criteria |
+| [`.cursor/AGENTS.md`](./.cursor/AGENTS.md) | Context for AI coding agents: invariants I-1–I-9, rules, decisions |
+| [`.cursor/CURSOR_BRIEF.md`](./.cursor/CURSOR_BRIEF.md) | Implementation spec for M0–M5 |
 | [`packages/contracts/docs/EVM_TARGET.md`](./packages/contracts/docs/EVM_TARGET.md) | D1: Polygon / Amoy `cancun` target and sources |
 | [`packages/contracts/docs/ERC8183_CONFORMANCE.md`](./packages/contracts/docs/ERC8183_CONFORMANCE.md) | ERC-8183 MUST/SHOULD map (D11) |
 
@@ -77,7 +79,7 @@ yarn pay test
 
 ## Contributing
 
-One issue, one branch, one pull request. Pull requests that touch `packages/contracts` must state which invariants (I-1–I-9) their tests cover. When an issue is done, tick it in `GITHUB_ISSUES.md` and add a short resolution note.
+One issue, one branch, one pull request. Pull requests that touch `packages/contracts` must state which invariants (I-1–I-9 in `.cursor/AGENTS.md`) their tests cover. When an issue is done, tick it in `GITHUB_ISSUES.md` and add a short resolution note.
 
 ## License
 

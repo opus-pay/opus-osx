@@ -5,7 +5,7 @@
 >
 > When an issue is done, tick its tasks and add a short **해결 내용** list under it (what was built, key decisions, anything left open). If a later issue proves an earlier note wrong, add a **정정** line instead of deleting the note.
 
-Invariants referenced below (full text in the whitepaper §10.1):
+Invariants referenced below (full text in the whitepaper §10.1 and `.cursor/AGENTS.md`):
 I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms · I-6 no admin · I-7 no double settlement · I-8 ERC-8183 conformance · I-9 concession and Court stake rules.
 
 ---
