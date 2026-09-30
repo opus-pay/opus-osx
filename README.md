@@ -99,4 +99,4 @@ One issue, one branch, one pull request. Pull requests that touch `packages/cont
 
 ## License
 
-Currently Business Source License 1.1 (see `LICENSE.md`), changing to MIT on 2030-01-01. The final choice is decision D7 and must be settled before the first public release.
+MIT (see `LICENSE.md`), decision D7. Solidity files still carry `SPDX-License-Identifier: BUSL-1.1` because changing the header changes the metadata of the contracts already verified on Amoy; they switch to `MIT` with the next deployment.
