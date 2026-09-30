@@ -498,10 +498,14 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #30] Completion-criteria helper
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #27
 * **Tasks:**
-  - [ ] Templates for code, reports, design, errands
-  - [ ] Optional AI assistant that turns a vague request into checkable criteria
-  - [ ] Criteria hashed into the job
+  - [x] Templates for code, reports, design, errands
+  - [x] Optional AI assistant that turns a vague request into checkable criteria
+  - [x] Criteria hashed into the job
 * **Acceptance:** Every pilot job has written criteria.
+
+* **해결 내용:**
+  - 코드, 보고서, 디자인, 심부름 템플릿이 완료 기준 문장을 만든다. 작성자가 고른 문장은 합의 칸에 들어가고, 작업을 만들 때 SDK `descriptionOf`가 그 문장을 해시로 체인에 넣는다.
+  - 도우미 URL이 없으면 템플릿이 기준이다. URL이 있으면 `{ vague, template }`을 POST하고 `{ criteria }` 문장을 받아 같은 칸에 넣는다.
 
 ---
 
