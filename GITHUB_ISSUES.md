@@ -486,9 +486,14 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #29] Notifications
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #28
 * **Tasks:**
-  - [ ] Notify on funding, submission, review deadline approaching, auto-completion imminent, escalation, **deposit deadline approaching for the party that has not posted** (missing it loses the job), ruling
-  - [ ] Channel per Q11 (email, Telegram, or webhook)
+  - [x] Notify on funding, submission, review deadline approaching, auto-completion imminent, escalation, **deposit deadline approaching for the party that has not posted** (missing it loses the job), ruling
+  - [x] Channel per Q11 (email, Telegram, or webhook)
 * **Acceptance:** No party misses a deadline in the pilot without having been notified.
+
+* **해결 내용:**
+  - 파일럿 채널은 HTTPS 웹훅이다(D31). 이메일과 텔레그램은 뒤로 둔다.
+  - 상태 페이지는 웹훅 주소가 있으면 예치, 제출, 검토 기한, 자동 완료, 상향, 아직 보증금을 내지 않은 쪽의 보증금 기한, 판정을 POST한다. 여유는 3600초다.
+  - 보증금 기한 알림은 분쟁 보증금이 있고 한쪽이 아직 내지 않았을 때 나간다. 그 기한을 놓치면 그 작업은 그 쪽의 패배다.
 
 #### [Issue #30] Completion-criteria helper
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #27
