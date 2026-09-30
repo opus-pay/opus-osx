@@ -24,7 +24,17 @@ set +a
 yarn relayer start
 ```
 
-기본 바인딩은 `127.0.0.1:8787`입니다. 기동 로그는 `relayer listening on 127.0.0.1:8787`입니다.
+데몬은 패키지 `env/.env`를 쓰지 않습니다. `config/relayer.env.sample`을 `config/relayer.env`로 복사해 키를 채웁니다. 주소 파일은 `config/addresses.json`, 제재 목록은 `config/sanctions.txt`이고, Compose가 둘을 `/config`에 붙입니다. 키는 이미지에 들어가지 않습니다. 태그는 커밋 해시 12자이고, 호스트에는 `127.0.0.1:8787`만 엽니다. `restart: unless-stopped`라서 프로세스가 죽거나 호스트가 재부팅되어도 다시 뜹니다. `docker-build.sh`를 실행하려면 `docker login`이 되어 있어야 합니다.
+
+```bash
+docker compose up -d --build relayer
+docker compose logs -f relayer
+docker compose stop relayer
+```
+
+레지스트리에 올릴 때는 `packages/relayer/docker-build.sh`입니다. `linux/amd64`와 `linux/arm64`를 함께 올리려면 `packages/relayer/docker-buildx.sh`입니다.
+
+셸로 직접 띄우면 기본 바인딩은 `127.0.0.1:8787`입니다. 기동 로그는 `relayer listening on 127.0.0.1:8787`입니다.
 
 `RELAYER_SANCTIONS_FILE`이 없으면 시작하지 않습니다. 샘플 `env/sanctions.txt`는 주석뿐이라 모든 서명자를 중계합니다. 운영 목록은 적용할 제재 주소이고, 한 줄에 주소 하나, `#`으로 시작하는 줄은 무시합니다. 주소가 아닌 줄이 있으면 시작이 실패합니다.
 

@@ -24,6 +24,16 @@ set +a
 yarn keeper start
 ```
 
+데몬은 패키지 `env/.env`를 쓰지 않습니다. `config/keeper.env.sample`을 `config/keeper.env`로 복사해 키를 채웁니다. 주소 파일은 `config/addresses.json`이고, Compose가 컨테이너의 `/config/addresses.json`에 붙입니다. 키는 이미지에 들어가지 않습니다. 태그는 커밋 해시 12자이고, `restart: unless-stopped`라서 프로세스가 죽거나 호스트가 재부팅되어도 다시 뜹니다. `docker-build.sh`를 실행하려면 `docker login`이 되어 있어야 합니다.
+
+```bash
+docker compose up -d --build keeper
+docker compose logs -f keeper
+docker compose stop keeper
+```
+
+레지스트리에 올릴 때는 `packages/keeper/docker-build.sh`입니다. `linux/amd64`와 `linux/arm64`를 함께 올리려면 `packages/keeper/docker-buildx.sh`입니다.
+
 성공한 호출은 표준 출력에 `finalize job 1 0x…` 형태로 찍힙니다. 동작 이름은 `timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveMissingDeposit`, `resolveByDefault`입니다.
 
 평가자 주소가 주소 파일의 `evaluator`와 다른 작업은 건너뜁니다.
