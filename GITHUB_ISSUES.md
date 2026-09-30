@@ -437,9 +437,15 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #26] Indexing
 * **Type:** `Task` / **Priority:** `P1` / **Depends on:** #22
 * **Tasks:**
-  - [ ] Hosted indexer (subgraph or equivalent) for instances (`InstanceCreated`), jobs (all ERC-8183 events), and evaluator events (`Configured`, `Escalated`, `CaseOpened`, `DepositPosted`, `Ruled`, `TipPaid`, `FeePaid`, `Swept`)
-  - [ ] Queries used by the payment link app and keeper
+  - [x] Hosted indexer (subgraph or equivalent) for instances (`InstanceCreated`), jobs (all ERC-8183 events), and evaluator events (`Configured`, `Escalated`, `CaseOpened`, `DepositPosted`, `Ruled`, `TipPaid`, `FeePaid`, `Swept`)
+  - [x] Queries used by the payment link app and keeper
 * **Acceptance:** Job status pages load from the index, not from raw logs.
+
+* **해결 내용:**
+  - `@opus/indexer`는 서브그래프와 같은 역할의 읽기 전용 서비스다. 팩토리 `InstanceCreated`, ERC-8183 작업 이벤트, 평가자 `Configured`·`Escalated`·`CaseOpened`·`DepositPosted`·`Ruled`·`TipPaid`·`FeePaid`·`Swept`를 장부로 접는다. 상태 페이지는 `GET /jobs/:instance/:id`로 이 장부를 읽으며, 응답에 원본 로그는 없다.
+  - 결제 링크가 쓸 지갑별 목록은 `GET /jobs?account=`이고, 키퍼가 아직 볼 예치·제출 작업은 `GET /active?instance=&evaluator=`다. 키퍼 프로세스는 계속 온체인 `Opus.status`로 기한을 판단한다. 인덱스는 그 대상을 로그 스캔 없이 고르는 조회다.
+  - 개인키는 없다. 주소 파일과 RPC만으로 15초마다 이어서 읽고, 이미 반영한 블록은 다시 적용하지 않는다. `JobCreated`에 설명 URI가 없어 의뢰 문구는 인덱스에 없다.
+  - 로컬 Hardhat에서 예치 후 제출한 작업을 동기화하면 상태 페이지가 `Submitted`이고, 완료 뒤에는 `Completed`이며 활성 목록에서 빠진다. 공개 호스트에 올린 인덱서는 아직 없고, 결제 링크 앱(#27)이 이 조회를 붙인다.
 
 ---
 
