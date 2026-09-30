@@ -92,6 +92,14 @@ set -a && source packages/relayer/env/.env && set +a && yarn relayer start
 set -a && source packages/indexer/env/.env && set +a && yarn indexer start
 ```
 
+Keeper and relayer can instead run as daemons. Images are `mukeunkim/opus-keeper` and `mukeunkim/opus-relayer`, tagged with the 12-character commit hash. `packages/<name>/docker-build.sh` pushes that tag; `docker-buildx.sh` also pushes `linux/amd64` and `linux/arm64` as `latest`. `compose.yaml` restarts them unless they are stopped. It reads `config/keeper.env` and `config/relayer.env`, and mounts `config/addresses.json` plus `config/sanctions.txt`. The `config` directory is not copied into the image. Keys are not copied into the image. The relayer is published only on `127.0.0.1:8787`.
+
+```bash
+docker compose up -d --build keeper relayer
+docker compose logs -f keeper relayer
+docker compose stop keeper relayer
+```
+
 
 ## Contributing
 

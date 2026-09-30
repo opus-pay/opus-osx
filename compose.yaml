@@ -1,0 +1,58 @@
+# Keeper and relayer daemons. Keys stay in config/keeper.env and config/relayer.env.
+# Copy config/keeper.env.sample and config/relayer.env.sample, then fill the keys.
+# Addresses and the sanctions list are mounted from config/, not from the image.
+# Published images are mukeunkim/opus-keeper and mukeunkim/opus-relayer.
+
+services:
+    keeper:
+        image: mukeunkim/opus-keeper:latest
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                PACKAGE: keeper
+        env_file:
+            - config/keeper.env
+        volumes:
+            - ./config/addresses.json:/config/addresses.json:ro
+        restart: unless-stopped
+        init: true
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    relayer:
+        image: mukeunkim/opus-relayer:latest
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                PACKAGE: relayer
+        env_file:
+            - config/relayer.env
+        volumes:
+            - ./config/addresses.json:/config/addresses.json:ro
+            - ./config/sanctions.txt:/config/sanctions.txt:ro
+        ports:
+            - "127.0.0.1:8787:8787"
+        restart: unless-stopped
+        init: true
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "node",
+                    "-e",
+                    "fetch('http://127.0.0.1:8787/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+                ]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 10s
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"

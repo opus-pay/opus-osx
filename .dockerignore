@@ -1,0 +1,15 @@
+.git
+.cursor
+legacy
+node_modules
+**/node_modules
+**/dist
+**/.next
+**/coverage
+**/artifacts
+**/cache
+**/typechain-types
+**/env/.env
+config
+**/*.tsbuildinfo
+.DS_Store

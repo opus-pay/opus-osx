@@ -1,0 +1,1 @@
+# Applicable sanctions addresses, one per line. Lines starting with # are ignored.
