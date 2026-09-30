@@ -137,7 +137,7 @@ yarn contracts deploy:amoy                             # Amoy 배포
 * **서명:** EIP-712, OpenZeppelin `EIP712` + `Nonces`
 * **네트워크:** Polygon Amoy (테스트넷) → Polygon PoS
 * **SDK:** TypeScript + viem
-* **앱:** Next.js App Router, Tailwind, shadcn/ui, wagmi + viem
+* **앱:** Next.js App Router, Tailwind, shadcn/ui, wagmi + viem. 모듈 버전과 경계는 `apps/pay/README.md`
 
 ## 기술 결정 기록
 

@@ -265,6 +265,7 @@ Order: forwarder (if D14) → factory → reference USDC instance (`treasury = 0
 * Notifications on funding, submission, near deadlines, before auto-completion, escalation, ruling.
 * Completion-criteria helper with templates; criteria hashed into the job.
 * The errand service (M6) reuses these screens.
+* Module versions and call boundaries are `apps/pay/README.md`. Chain calls go through `@opus/sdk`.
 
 ---
 

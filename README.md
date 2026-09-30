@@ -38,6 +38,7 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The refer
 | [`packages/keeper/README.md`](./packages/keeper/README.md) | Keeper: wallet, poll, triggers, alerts (Korean) |
 | [`packages/relayer/README.md`](./packages/relayer/README.md) | Relayer: `POST /relay`, budgets, sanctions file (Korean) |
 | [`packages/indexer/README.md`](./packages/indexer/README.md) | Indexer: job queries and the events it stores (Korean) |
+| [`apps/pay/README.md`](./apps/pay/README.md) | Payment-link app module spec (Korean) |
 
 ## Planned packages
 

@@ -77,7 +77,7 @@ No role grants. No post-deploy configuration calls.
 * **Q9a. Evaluation economics.** Default flat evaluation fee per preset (with a cap relative to budget so a 1 USD job is not charged more than its value), keeper tip size, dispute deposit size (flat or a share of budget), deposit deadline, and how a provider without stablecoin posts a deposit. → **D18**
 
 ## B.3 Products
-* **Q10. Payment link custody of drafts.** Where unsigned link drafts live (local only vs a small server).
+* **Q10. Payment link custody of drafts.** Where unsigned link drafts live (local only vs a small server). → **D30**
 * **Q11. Notifications.** Email, Telegram, or webhook first.
 * **Q12. Test runner isolation (M13).** Container sandbox vs hosted CI; what the signed result contains; how anyone can reproduce it.
 * **Q22. First corridor.** Cross-border (for example United States → Korea) or domestic, between a Korean region and a large city (for example a provincial city ↔ Seoul). A domestic corridor removes currency exchange and cross-border rules and can start sooner; it still needs a won ↔ USDC on/off-ramp and a reason for users to prefer stablecoin escrow over won payments. Decides on/off-ramp partners, provider recruiting, and legal review. → **D25**
@@ -334,6 +334,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D27 | Wallet onboarding approach | Open | #73 |
 | D28 | Business focus | **Decided: cross-border errands first; AI assistants as the growth path on the same standard** | — |
 | D29 | Money in and out | **Decided: OPUS and its services never hold licences for card, bank, or exchange flows. Equity funding pays for integrations with licensed partners (card/bank on-ramps, exchanges for cash-out, later won stablecoin issuers and payment gateways). Until then, pilots use users who already buy USDC on exchanges** | #43, #72, D26 |
+| D30 | Payment-link draft custody | **Decided: the unsigned draft is the URL fragment. No server stores it. The chain stores only the description hash** | #27 |
 
 ---
 
