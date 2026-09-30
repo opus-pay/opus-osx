@@ -49,6 +49,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Build the SDK
+        run: yarn workspace @opus/sdk build
+
       - name: Coverage
         run: yarn workspace @opus/contracts coverage
 

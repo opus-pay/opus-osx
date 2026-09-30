@@ -40,7 +40,10 @@ service = service.replace(
     url.search = parameters.toString();`,
     `const url = withExistingQuery(apiURL, parameters);`
 );
-if (!service.includes("withExistingQuery(url, parameters)") || !service.includes("withExistingQuery(apiURL, parameters)")) {
+if (
+    !service.includes("withExistingQuery(url, parameters)") ||
+    !service.includes("withExistingQuery(apiURL, parameters)")
+) {
     throw new Error(`could not keep the Etherscan chainid query in ${serviceFile}`);
 }
 fs.writeFileSync(serviceFile, service);
