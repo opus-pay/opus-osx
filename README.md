@@ -35,6 +35,9 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The refer
 | [`.cursor/CURSOR_BRIEF.md`](./.cursor/CURSOR_BRIEF.md) | Implementation spec for M0–M5 |
 | [`packages/contracts/docs/EVM_TARGET.md`](./packages/contracts/docs/EVM_TARGET.md) | D1: Polygon / Amoy `cancun` target and sources |
 | [`packages/contracts/docs/ERC8183_CONFORMANCE.md`](./packages/contracts/docs/ERC8183_CONFORMANCE.md) | ERC-8183 MUST/SHOULD map (D11) |
+| [`packages/keeper/README.md`](./packages/keeper/README.md) | Keeper: wallet, poll, triggers, alerts (Korean) |
+| [`packages/relayer/README.md`](./packages/relayer/README.md) | Relayer: `POST /relay`, budgets, sanctions file (Korean) |
+| [`packages/indexer/README.md`](./packages/indexer/README.md) | Indexer: job queries and the events it stores (Korean) |
 
 ## Planned packages
 
@@ -44,6 +47,7 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The refer
 | `packages/sdk` | TypeScript SDK (viem) | M4 |
 | `packages/keeper` | Calls deadline triggers; earns tips | M4 |
 | `packages/relayer` | Gasless relaying (ERC-2771) | M4 |
+| `packages/indexer` | Job and instance index for status pages | M4 |
 | `apps/pay` | Escrow payment links | M5 |
 | `apps/errands` | Cross-border errand service | M6 |
 | `apps/portal` | OPUS Portal: directory of services built on OPUS | M12 |
@@ -74,8 +78,19 @@ yarn contracts test         # contract tests
 yarn contracts coverage     # contract coverage
 yarn sdk test
 yarn keeper test
+yarn relayer test
+yarn indexer test
 yarn pay test
 ```
+
+Keeper, relayer, and indexer each have an operator guide in that package. Copy `packages/<name>/env/.env.sample` to `env/.env` and export it in the shell that starts that process. The process does not open `env/.env` itself, and `yarn <name> start` runs with the package directory as its working directory. Run each service in its own shell:
+
+```bash
+set -a && source packages/keeper/env/.env && set +a && yarn keeper start
+set -a && source packages/relayer/env/.env && set +a && yarn relayer start
+set -a && source packages/indexer/env/.env && set +a && yarn indexer start
+```
+
 
 ## Contributing
 
