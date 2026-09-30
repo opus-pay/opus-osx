@@ -102,7 +102,11 @@ function OpenLink() {
                     Connect wallet
                 </button>
             )}
-            {jobText !== "" && <p>Job {jobText}</p>}
+            {jobText !== "" && (
+                <p>
+                    Job {jobText}. <a href={`/jobs/${jobText}`}>Open the status page</a>
+                </p>
+            )}
         </div>
     );
 }

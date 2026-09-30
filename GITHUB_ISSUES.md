@@ -471,11 +471,17 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #28] Payment link: submit, review, object, status
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #27, #24
 * **Tasks:**
-  - [ ] Provider uploads deliverable or proof off-chain; hash submitted
-  - [ ] Client approve / object / extend buttons with countdowns
-  - [ ] Dispute path: provider sees the deposit deadline and posts the deposit (`postDeposit` / permit); both see the arbiter's deadline and the ruling
-  - [ ] Status page for both parties from the SDK status helper; withdraw deferred payouts from the instance and the evaluator
+  - [x] Provider uploads deliverable or proof off-chain; hash submitted
+  - [x] Client approve / object / extend buttons with countdowns
+  - [x] Dispute path: provider sees the deposit deadline and posts the deposit (`postDeposit` / permit); both see the arbiter's deadline and the ruling
+  - [x] Status page for both parties from the SDK status helper; withdraw deferred payouts from the instance and the evaluator
 * **Acceptance:** A real paid job completes on Amoy between two people.
+
+* **해결 내용:**
+  - 상태 페이지는 `Opus.status`가 돌려준 단계, 다음 기한, 지금 가능한 동작만 보여 준다. 남은 시간은 그 기한에서 센다.
+  - 수행자는 파일을 고르고, 그 바이트의 keccak256을 `submit`한다. 의뢰인은 승인, 이의(문구의 해시), 검토 연장을 같은 페이지에서 보낸다. 보증금이 필요하면 `postDepositWithPermit`이다.
+  - 인스턴스나 평가자에 찾아갈 잔액이 있으면 `withdraw`가 그 쪽만 인출한다.
+  - 로컬 Hardhat에서 예치된 작업이 증빙 해시 제출과 승인 뒤 `Completed`가 된다. Amoy에서 두 사람이 끝내는 인수 기준은 라이브 실행 후에 해시를 남긴다.
 
 #### [Issue #29] Notifications
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #28
