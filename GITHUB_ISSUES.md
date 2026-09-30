@@ -454,13 +454,19 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
 #### [Issue #27] Payment link: create, share, fund
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #23
 * **Tasks:**
-  - [ ] Either party drafts terms: counterparty address, amount, deadlines, evaluator preset, hash of the agreement made elsewhere
-  - [ ] Shareable link with expiry
-  - [ ] Counterparty view: terms in plain language ("paid automatically 3 days after submission unless you object"), prominent address display
-  - [ ] Client creates the job, configures the evaluator from an SDK preset, and funds; either the provider quotes via `setBudget` (budget lock mode 1 locks the first quote), or the client sets the amount before `configure` and uses lock mode 2
-  - [ ] Expiry set with the SDK deadline helper; approvals or permits for budget and evaluation fee handled in one step for the user
-  - [ ] Where link drafts are stored (Q10) decided and documented
+  - [x] Either party drafts terms: counterparty address, amount, deadlines, evaluator preset, hash of the agreement made elsewhere
+  - [x] Shareable link with expiry
+  - [x] Counterparty view: terms in plain language ("paid automatically 3 days after submission unless you object"), prominent address display
+  - [x] Client creates the job, configures the evaluator from an SDK preset, and funds; either the provider quotes via `setBudget` (budget lock mode 1 locks the first quote), or the client sets the amount before `configure` and uses lock mode 2
+  - [x] Expiry set with the SDK deadline helper; approvals or permits for budget and evaluation fee handled in one step for the user
+  - [x] Where link drafts are stored (Q10) decided and documented
 * **Acceptance:** Two wallets reach `Funded` from one shared link.
+
+* **해결 내용:**
+  - 서명 전 초안은 공유 링크의 URL fragment다(D30). 서버는 초안을 보관하지 않는다. 만료 시각이 지나면 그 링크로는 작업을 만들지 않는다. 체인에는 합의 문구의 해시만 올라간다.
+  - 상대 화면은 프리셋의 검토 창으로 “Paid automatically … after submission unless you object.”를 보여주고, 의뢰인과 수행자 주소를 크게 표시한다. 사람→누구나 프리셋은 중재자(D10)가 있어야 하므로 화면의 프리셋은 자동 완료 세 가지다.
+  - 의뢰인이 금액을 정하면 잠금 2로 설정 전에 `setBudget`하고, 수행자가 견적이면 잠금 1로 설정 뒤에 첫 견적이 잠긴다. 작업 만료는 `minimumExpiredAt`이다. 평가 수수료가 있으면 `configureWithPermit`, 예치는 `fundWithPermit`을 같은 버튼에서 이어서 보낸다.
+  - 로컬 Hardhat에서 링크 하나로부터 두 지갑이 `Funded`에 도달한다. Amoy에서 두 사람이 끝내는 인수 기준은 #28이다.
 
 #### [Issue #28] Payment link: submit, review, object, status
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #27, #24
