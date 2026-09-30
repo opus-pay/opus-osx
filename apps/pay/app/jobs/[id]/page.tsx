@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAccount, useConnect, usePublicClient, useWalletClient } from "wagmi";
 
+import { dueNotices, notify } from "../../../src/lib/notices";
 import { countdown, proofHash, textHash } from "../../../src/lib/proof";
 import { addresses } from "../../../src/lib/wagmi";
 
@@ -22,6 +23,7 @@ export default function JobPage() {
     const [actions, setActions] = useState<JobAction[]>([]);
     const [objection, setObjection] = useState("The work does not match the agreement.");
     const [extension, setExtension] = useState("3600");
+    const [webhook, setWebhook] = useState("");
 
     async function load() {
         if (publicClient === undefined || walletClient?.account === undefined) return;
@@ -30,6 +32,26 @@ export default function JobPage() {
         const left = countdown(status.nextDeadline, BigInt(Math.floor(Date.now() / 1000)));
         setView(`${status.status} · ${status.phase} · ${left}`);
         setActions(status.actions.filter((action) => PARTY.has(action)));
+        if (webhook !== "") {
+            const kinds = dueNotices({
+                status: status.status,
+                phase: status.phase,
+                now: BigInt(Math.floor(Date.now() / 1000)),
+                nextDeadline: status.nextDeadline,
+                marginSeconds: 3600n,
+                autoCompleteOnSilence: status.actions.includes("finalize"),
+                disputeDeposit: status.actions.includes("postDeposit") ? 1n : 0n,
+                clientPosted: false,
+                providerPosted: false,
+            });
+            try {
+                for (const kind of kinds) {
+                    await notify(webhook, { kind, jobId: jobId.toString(), instance: addresses.instance });
+                }
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : "The webhook failed");
+            }
+        }
         return { opus, status };
     }
 
@@ -84,6 +106,14 @@ export default function JobPage() {
                     Connect wallet
                 </button>
             )}
+            <label className="block text-sm">
+                Webhook URL
+                <input
+                    className="mt-1 w-full rounded border bg-white p-2"
+                    value={webhook}
+                    onChange={(event) => setWebhook(event.target.value.trim())}
+                />
+            </label>
             <label className="block text-sm">
                 Deliverable file
                 <input id="proof" className="mt-1 block" type="file" />
