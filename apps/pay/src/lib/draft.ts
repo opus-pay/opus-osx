@@ -18,14 +18,29 @@ export type Draft = {
     drafter: "client" | "provider";
 };
 
+/** Browser-safe base64url. The payment page has no Node Buffer. */
+function encodeBase64Url(text: string): string {
+    const bytes = new TextEncoder().encode(text);
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return btoa(binary).split("+").join("-").split("/").join("_").replace(/=+$/, "");
+}
+
+function decodeBase64Url(token: string): string {
+    const padded = token.split("-").join("+").split("_").join("/") + "=".repeat((4 - (token.length % 4)) % 4);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+}
+
 export function encodeDraft(draft: Draft): string {
-    return Buffer.from(JSON.stringify(checked(draft)), "utf8").toString("base64url");
+    return encodeBase64Url(JSON.stringify(checked(draft)));
 }
 
 export function decodeDraft(token: string, nowSeconds: number): Draft {
     let parsed: unknown;
     try {
-        parsed = JSON.parse(Buffer.from(token, "base64url").toString("utf8"));
+        parsed = JSON.parse(decodeBase64Url(token));
     } catch {
         throw new Error("The link is not a payment draft");
     }

@@ -11,11 +11,11 @@ export function Providers({ children }: { children: ReactNode }) {
     const [queryClient] = useState(() => new QueryClient());
     const [ready, setReady] = useState(false);
     useEffect(() => setReady(true), []);
-    if (!ready) return <main className="mx-auto max-w-xl p-8">{children}</main>;
+    if (!ready) return <main className="mx-auto max-w-xl px-6 py-5">{children}</main>;
     return (
         <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
-                <main className="mx-auto max-w-xl p-8">{children}</main>
+                <main className="mx-auto max-w-xl px-6 py-5">{children}</main>
                 <Toaster />
             </QueryClientProvider>
         </WagmiProvider>
