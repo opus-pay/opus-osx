@@ -257,6 +257,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - Amoy에서 제3자 키퍼가 팁을 받는 확인은 배포(#22)에서 한다.
   - **정정:** 그 확인은 #22 배포에 포함되지 않았다. #24 키퍼의 Amoy 수용 기준과 함께 트랜잭션 해시를 남긴다.
   - **정정:** `resolveMissingDeposit`도 기한이 된 처리 함수라 팁을 준다 (작업당 최대 2회에 포함).
+  - **정정:** Amoy 작업 3의 [`finalize`](https://amoy.polygonscan.com/tx/0x93a058e01f2f9ac447e0fd22a2ccc2eca9ae8dd2e557c1fc9668088fdbec7335)와 작업 4의 [`timeoutNoSubmission`](https://amoy.polygonscan.com/tx/0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea)을 배포자가 아닌 키퍼가 호출했다. 팁은 그 호출자에게 간다. 키퍼는 배포자 주소와 같으면 시작을 거부한다.
 
 #### [Issue #17] Budget lock modes
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #14
@@ -400,6 +401,8 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - `@opus/sdk`의 `Opus`가 viem `PublicClient`와 `WalletClient`만 받는다. 개인키는 받지 않는다. 주소는 `deploy/<network>/addresses.json`, 호출 ABI는 인터페이스와 같은 `parseAbi`이며 컴파일된 셀렉터와 테스트로 맞춘다.
   - 표준 흐름, 평가자, 승인·permit, 프리셋, 만료 시각, 예산, 상태, 안전 검사, 지연 지급, 전달자 EIP-712, 이벤트·커스텀 오류 해석을 넣었다. 중재자(D10)와 금액(D18)은 인자가 없으면 `PLACEHOLDER_`다. 사람→누구나 프리셋은 중재자가 있어야 하고, 중재자 없는 프리셋은 자동 완료에 분쟁 보증금 0이다.
   - 로컬 Hardhat에서 두 수용 흐름(승인, 만료 후 `claimRefund`·`sweep`)과 나머지 헬퍼를 검증했다. Amoy 예시 서명은 `packages/sdk/examples/amoy.ts`에 있으나, 라이브 서명이 없어 트랜잭션 해시는 아직 없다.
+  - **정정:** Amoy 작업 1은 `Completed`다. [`createJob`](https://amoy.polygonscan.com/tx/0x069f81554874b63e4e599537dda0e3959bbbfc3a5cfc8e87ed14f3c7ca82d14d), [`configure`](https://amoy.polygonscan.com/tx/0xca64f3e128cb902d1a55fa32732b4d3fce1c3b13a22f1887ce201ff30f6defdd), [`fund`](https://amoy.polygonscan.com/tx/0xa7142b8dacdede06df163d03863694e27091744d6dcdbb4c018ce63517610467), [`submit`](https://amoy.polygonscan.com/tx/0xbb89fc9ec436928def56f276708983fa01c053eb2b0f9d47bc87efc86b1771cf), [`approve`](https://amoy.polygonscan.com/tx/0x9fb80d767d49a15db8cdab089a4afcc3a9a43274b1ad4b775471f3064c954f9c). 견적과 예산 승인은 `deploy/amoy/acceptance.json`의 `jobs.approve`에 있다.
+  - **정정:** Amoy 작업 2는 `Expired`다. [`claimRefund`](https://amoy.polygonscan.com/tx/0x993153c5925677aa09201f46cafa0fa43913641cd9eadfaebbae616a790dcc1e) 뒤 [`sweep`](https://amoy.polygonscan.com/tx/0x0725df716b5d395412ac5d102a066caeaf8e6be30eb9a678eb4eb9ae83d63ad4)이 평가 수수료를 의뢰인에게 돌려준다. 생성부터 예치까지의 해시는 `jobs.sweep`에 있다.
 
 #### [Issue #24] Keeper
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #23
@@ -416,6 +419,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - `@opus/keeper`는 인스턴스의 작업을 돌며 `Opus.status`가 돌려준 기한 처리만 호출한다. 기한을 따로 계산하지 않는다. 호출은 SDK를 통하므로 Amoy 가스는 25 gwei 바닥을 쓴다. 전송 실패는 기다렸다가 다시 시도하고, 컨트랙트가 거절한 호출은 다시 보내지 않는다.
   - 키는 `KEEPER_PRIVATE_KEY`에서만 읽는다. 샘플은 `packages/keeper/env/.env.sample`이고 실제 키는 커밋하지 않는다. 배포자 주소와 같으면 시작을 거부한다. POL 잔고가 낮거나, 예치·제출 상태의 작업이 만료 여유 안에 들어오면 경고한다.
   - 로컬 Hardhat에서 침묵한 제출은 `finalize`로 완료되고, 제출 기한을 넘긴 작업은 `timeoutNoSubmission`으로 거절된다. 팁은 배포자가 아닌 키퍼 주소가 받는다. Amoy 트랜잭션 해시와 #16 수용 기준은 라이브 실행 후에 남긴다.
+  - **정정:** Amoy 작업 3은 제출 후 침묵했고, 키퍼가 [`finalize`](https://amoy.polygonscan.com/tx/0x93a058e01f2f9ac447e0fd22a2ccc2eca9ae8dd2e557c1fc9668088fdbec7335)로 완료했다. 작업 4는 제출 기한을 넘겼고, 키퍼가 [`timeoutNoSubmission`](https://amoy.polygonscan.com/tx/0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea)으로 거절했다. 이 프로세스는 배포자 주소와 같으면 시작하지 않으며, 팁은 호출자인 그 키퍼가 받는다. #16의 Amoy 수용 기준은 이 두 해시다.
 
 #### [Issue #25] Relayer
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #12, #23
