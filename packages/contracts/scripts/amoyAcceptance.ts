@@ -26,6 +26,7 @@ import {
 } from "viem";
 
 import { amoy, loadAddresses, minimumExpiredAt, Opus, presetAiToAi, type EvaluatorConfig } from "../../sdk/src";
+import { flowFromHashes, writeFlow } from "./liveResults";
 
 const CLIENT: Address = "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0";
 const PROVIDER: Address = "0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be";
@@ -335,9 +336,19 @@ function remember(record: JobRecord): void {
     save(active);
 }
 
+const FLOW_ISSUES: Record<string, string[]> = {
+    approve: ["#23"],
+    sweep: ["#23"],
+    finalize: ["#24", "#16"],
+    timeout: ["#24", "#16"],
+};
+
 function save(file: RecordFile): void {
     active = file;
     writeFileSync(OUT, `${JSON.stringify(file, null, 2)}\n`);
+    for (const [name, job] of Object.entries(file.jobs)) {
+        writeFlow(name, flowFromHashes(FLOW_ISSUES[name] ?? [], job.hashes, job.id));
+    }
 }
 
 function requiredEnv(name: string): string {
