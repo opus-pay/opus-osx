@@ -41,12 +41,23 @@ async function main(): Promise<void> {
     console.log(`usdc ${addresses.usdc}`);
     console.log(`poll ${poll}ms`);
     for (;;) {
-        const result = await keeper.tick();
-        for (const call of result.calls) {
-            console.log(`${call.action} job ${call.jobId} ${call.hash}`);
+        try {
+            const result = await keeper.tick();
+            for (const call of result.calls) {
+                console.log(`${call.action} job ${call.jobId} ${call.hash}`);
+            }
+        } catch (error) {
+            console.error(`tick failed: ${describeFailure(error)}`);
         }
         await new Promise((resolve) => setTimeout(resolve, poll));
     }
+}
+
+function describeFailure(error: unknown): string {
+    const message = error instanceof Error ? error.message : String(error);
+    const first = message.split("\n").find((line) => line.trim() !== "") ?? "unknown";
+    const details = message.match(/Details: ([^\n]+)/)?.[1];
+    return details === undefined ? first : `${first} ${details}`;
 }
 
 if (require.main === module) {
