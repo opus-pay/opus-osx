@@ -34,7 +34,7 @@ docker compose stop relayer
 
 레지스트리에 올릴 때는 `packages/relayer/docker-build.sh`입니다. `linux/amd64`와 `linux/arm64`를 함께 올리려면 `packages/relayer/docker-buildx.sh`입니다.
 
-셸로 직접 띄우면 기본 바인딩은 `127.0.0.1:8787`입니다. 기동 로그는 `relayer listening on 127.0.0.1:8787`입니다.
+셸로 직접 띄우면 기본 바인딩은 `127.0.0.1:8787`입니다. 기동하면 지갑 주소, 네트워크, RPC, 컨트랙트 주소, `listening 127.0.0.1:8787`을 표준 출력에 찍습니다. 개인키와 연동사 토큰은 찍지 않습니다.
 
 `RELAYER_SANCTIONS_FILE`이 없으면 시작하지 않습니다. 샘플 `env/sanctions.txt`는 주석뿐이라 모든 서명자를 중계합니다. 운영 목록은 적용할 제재 주소이고, 한 줄에 주소 하나, `#`으로 시작하는 줄은 무시합니다. 주소가 아닌 줄이 있으면 시작이 실패합니다.
 

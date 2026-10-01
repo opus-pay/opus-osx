@@ -30,6 +30,16 @@ async function main(): Promise<void> {
             ),
     });
     const poll = Number(process.env.KEEPER_POLL_MS ?? "30000");
+    console.log("keeper started");
+    console.log(`wallet ${account.address}`);
+    console.log(`network ${addresses.network} chain ${chain.id} ${chain.name}`);
+    console.log(`rpc ${rpc}`);
+    console.log(`instance ${addresses.instance}`);
+    console.log(`evaluator ${addresses.evaluator}`);
+    console.log(`forwarder ${addresses.forwarder}`);
+    console.log(`factory ${addresses.factory}`);
+    console.log(`usdc ${addresses.usdc}`);
+    console.log(`poll ${poll}ms`);
     for (;;) {
         const result = await keeper.tick();
         for (const call of result.calls) {

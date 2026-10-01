@@ -102,7 +102,16 @@ async function main(): Promise<void> {
     const host = process.env.RELAYER_HOST?.trim() || "127.0.0.1";
     const port = Number(process.env.RELAYER_PORT ?? "8787");
     await startServer(relayer, host, port);
-    console.log(`relayer listening on ${host}:${port}`);
+    console.log("relayer started");
+    console.log(`wallet ${account.address}`);
+    console.log(`network ${addresses.network} chain ${chain.id} ${chain.name}`);
+    console.log(`rpc ${rpc}`);
+    console.log(`instance ${addresses.instance}`);
+    console.log(`evaluator ${addresses.evaluator}`);
+    console.log(`forwarder ${addresses.forwarder}`);
+    console.log(`factory ${addresses.factory}`);
+    console.log(`usdc ${addresses.usdc}`);
+    console.log(`listening ${host}:${port}`);
 }
 
 if (require.main === module) {

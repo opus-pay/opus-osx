@@ -34,7 +34,7 @@ docker compose stop keeper
 
 레지스트리에 올릴 때는 `packages/keeper/docker-build.sh`입니다. `linux/amd64`와 `linux/arm64`를 함께 올리려면 `packages/keeper/docker-buildx.sh`입니다.
 
-성공한 호출은 표준 출력에 `finalize job 1 0x…` 형태로 찍힙니다. 동작 이름은 `timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveMissingDeposit`, `resolveByDefault`입니다.
+기동하면 지갑 주소, 네트워크, RPC, 인스턴스·평가자·전달자·팩토리·USDC 주소, 주기를 표준 출력에 찍습니다. 개인키는 찍지 않습니다. 성공한 호출은 `finalize job 1 0x…` 형태로 찍힙니다. 동작 이름은 `timeoutNoSubmission`, `finalize`, `escalateOnSilence`, `resolveMissingDeposit`, `resolveByDefault`입니다.
 
 평가자 주소가 주소 파일의 `evaluator`와 다른 작업은 건너뜁니다.
 
