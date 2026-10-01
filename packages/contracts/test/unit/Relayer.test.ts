@@ -54,6 +54,13 @@ describe("Relayer on a local Hardhat node (#25)", () => {
         await network.provider.send("hardhat_setBalance", [address, "0x0"]);
     }
 
+    after(async () => {
+        // Later files share these Hardhat accounts. Put the test balance back.
+        const funded = "0x" + 2_000_000_000_000_000_000_000_000n.toString(16);
+        await network.provider.send("hardhat_setBalance", [client.address, funded]);
+        await network.provider.send("hardhat_setBalance", [provider.address, funded]);
+    });
+
     function walletFor(key: string): WalletClient {
         return createWalletClient({
             account: privateKeyToAccount(key as Hex),
