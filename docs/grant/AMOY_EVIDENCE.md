@@ -26,6 +26,7 @@ A non-zero evaluation fee moves when the client calls `configure`, while the job
 | 2. Expiry refund | `Expired` | 1.00 USDC back to the client | 1.00 USDC back to the client. The keeper did not take it |
 | 3. Silent submission | `Completed` | 1.00 USDC to the provider | 0.50 USDC to the operator, 0.50 USDC tip to the keeper |
 | 4. No submission | `Rejected` | 1.00 USDC back to the client | 0.50 USDC to the operator, 0.50 USDC tip to the keeper |
+| 5. Gasless payment | `Completed` | 1.00 USDC to the provider | None. The signing wallets held no POL |
 
 The keeper that sent jobs 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc). The deployer is [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba).
 
@@ -40,6 +41,7 @@ The keeper that sent jobs 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882cB
 | Job 2: 1.00 USDC from the evaluator to the client | `Swept` | [`0x0725df71…83d63ad4`](https://amoy.polygonscan.com/tx/0x0725df716b5d395412ac5d102a066caeaf8e6be30eb9a678eb4eb9ae83d63ad4#eventlog) |
 | Job 3: 0.50 tip to the keeper, 0.50 fee to the operator, 1.00 budget to the provider | `TipPaid`, `FeePaid`, `PaymentReleased` | [`0x93a058e0…dbec7335`](https://amoy.polygonscan.com/tx/0x93a058e01f2f9ac447e0fd22a2ccc2eca9ae8dd2e557c1fc9668088fdbec7335#eventlog) |
 | Job 4: 0.50 tip to the keeper, 0.50 fee to the operator, 1.00 budget to the client | `TipPaid`, `FeePaid`, `Refunded` | [`0xab783631…7a6991ea`](https://amoy.polygonscan.com/tx/0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea#eventlog) |
+| Job 5: 1.00 USDC from the instance to the provider. The client and provider signed only | `PaymentReleased` | [`0x983c81d0…a45264b7`](https://amoy.polygonscan.com/tx/0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7#eventlog) |
 
 ## Job 1. The client approves
 
@@ -89,12 +91,24 @@ The provider never submitted. The same keeper called `timeoutNoSubmission`. The 
 | fund | [`0x97e866a4da9cb314c8775e23bf28d2134ce28eced7d3a3ceca59a0a1ca552cb4`](https://amoy.polygonscan.com/tx/0x97e866a4da9cb314c8775e23bf28d2134ce28eced7d3a3ceca59a0a1ca552cb4) |
 | timeoutNoSubmission | [`0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea`](https://amoy.polygonscan.com/tx/0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea) |
 
+## Job 5. A wallet with no POL finishes the job
+
+The client [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonscan.com/address/0xF304B61b7889B3B11D9F074e049Ee022AcC8830e) and the provider [`0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3`](https://amoy.polygonscan.com/address/0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3) held no POL. They signed. The relayer [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) paid the gas. The provider received 1.00 USDC.
+
+| Step | Transaction |
+| :--- | :--- |
+| createJob | [`0x2e174752817f82b9b4396e2908e46b8343464c4c10d5395b0206bc7e2582ae99`](https://amoy.polygonscan.com/tx/0x2e174752817f82b9b4396e2908e46b8343464c4c10d5395b0206bc7e2582ae99) |
+| configure | [`0x9c6af37508c3a91422abaa652c6ef5fe7f7b099d38b4ab9efe72475cc33d164e`](https://amoy.polygonscan.com/tx/0x9c6af37508c3a91422abaa652c6ef5fe7f7b099d38b4ab9efe72475cc33d164e) |
+| setBudget | [`0x6803a9f2f1d2944137f6b85a34767ffa284db5137cadb2b3f6e6ebfd89a6c926`](https://amoy.polygonscan.com/tx/0x6803a9f2f1d2944137f6b85a34767ffa284db5137cadb2b3f6e6ebfd89a6c926) |
+| fundWithPermit | [`0x7b094a18da620c192b778c9faa518face0e7eec10a0ccf472c1bc9a1b50eb03a`](https://amoy.polygonscan.com/tx/0x7b094a18da620c192b778c9faa518face0e7eec10a0ccf472c1bc9a1b50eb03a) |
+| submit | [`0xf307c382a673baf4a03ac97b897432b16a49f681084405c7e0f09b7673905694`](https://amoy.polygonscan.com/tx/0xf307c382a673baf4a03ac97b897432b16a49f681084405c7e0f09b7673905694) |
+| approve | [`0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7`](https://amoy.polygonscan.com/tx/0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7) |
+
 ## Not yet recorded on Amoy
 
-Three demonstrations are still open. Their hashes will be added here after they are sent.
+Two demonstrations are still open. Their hashes will be added here after they are sent.
 
 | Demonstration | What it will show |
 | :--- | :--- |
-| Gasless payment | A client and a provider who hold no POL finish a job. A relayer pays the gas. |
 | Shared payment link | Two wallets finish one job from one link. One run is quoted by the client, and one run is quoted by the provider. |
 | Dispute | The client objects, both sides post a deposit, and an arbiter rules. |

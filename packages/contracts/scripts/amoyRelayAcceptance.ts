@@ -325,15 +325,17 @@ async function signPermit(
     value: bigint
 ) {
     const owner = getAddress(wallet.account!.address);
-    const [nonce, name, block] = await Promise.all([
+    const versionAbi = parseAbi(["function version() view returns (string)"]);
+    const [nonce, name, version, block] = await Promise.all([
         publicClient.readContract({ address: usdc, abi: erc20Abi, functionName: "nonces", args: [owner] }),
         publicClient.readContract({ address: usdc, abi: erc20Abi, functionName: "name" }),
+        publicClient.readContract({ address: usdc, abi: versionAbi, functionName: "version" }),
         publicClient.getBlock(),
     ]);
     const deadline = block.timestamp + 3600n;
     const signature = await wallet.signTypedData({
         account: wallet.account!,
-        domain: { name, version: "1", chainId, verifyingContract: usdc },
+        domain: { name, version, chainId, verifyingContract: usdc },
         types: PERMIT_TYPES,
         primaryType: "Permit",
         message: { owner, spender, value, nonce, deadline },
