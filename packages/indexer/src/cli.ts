@@ -8,6 +8,16 @@ import { createPublicClient, http } from "viem";
 import { Indexer } from "./indexer";
 import type { IndexStore, InstanceView, JobView } from "./store";
 
+function fromBlock(chainId: number): bigint {
+    const raw = process.env.INDEXER_FROM_BLOCK?.trim();
+    if (raw === undefined || raw === "") {
+        if (chainId === 80002) throw new Error("INDEXER_FROM_BLOCK is required on Amoy");
+        return 0n;
+    }
+    if (!/^\d+$/.test(raw)) throw new Error("INDEXER_FROM_BLOCK must be a block number");
+    return BigInt(raw);
+}
+
 function json(value: unknown): string {
     return JSON.stringify(value, (_key, item) => (typeof item === "bigint" ? item.toString() : item));
 }
@@ -76,7 +86,11 @@ async function main(): Promise<void> {
     const addresses = loadAddresses(readFileSync(path, "utf8"));
     const chain = addresses.chainId === 80002 ? amoy : localHardhat;
     const rpc = process.env.INDEXER_RPC_URL?.trim() || chain.rpcUrls.default.http[0];
-    const indexer = new Indexer(createPublicClient({ chain, transport: http(rpc) }), addresses);
+    const indexer = new Indexer(
+        createPublicClient({ chain, transport: http(rpc) }),
+        addresses,
+        fromBlock(addresses.chainId)
+    );
     const host = process.env.INDEXER_HOST?.trim() || "127.0.0.1";
     const port = Number(process.env.INDEXER_PORT ?? "8788");
     const poll = Number(process.env.INDEXER_POLL_MS ?? "15000");

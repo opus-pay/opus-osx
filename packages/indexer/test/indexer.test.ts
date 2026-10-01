@@ -110,6 +110,21 @@ describe("@opus/indexer", () => {
         expect(store.instances()).to.deep.equal([{ instance, token, treasury: client, feeBP: 0n }]);
     });
 
+    it("starts the log scan at the given block", async () => {
+        const { Indexer } = await import("../src/indexer");
+        const seen: bigint[] = [];
+        const client = {
+            getBlockNumber: async () => 10n,
+            getLogs: async (args: { fromBlock: bigint }) => {
+                seen.push(args.fromBlock);
+                return [];
+            },
+        };
+        const indexer = new Indexer(client as never, { factory: instance, instance, evaluator }, 5n);
+        await indexer.sync();
+        expect(seen[0]).to.equal(5n);
+    });
+
     it("serves the job page from the store", async () => {
         const { startServer } = await import("../src/cli");
         const store = new IndexStore();
