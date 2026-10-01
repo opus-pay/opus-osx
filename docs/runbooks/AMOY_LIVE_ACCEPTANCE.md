@@ -26,8 +26,8 @@ The tables before the features name the contracts, the wallets, the deadlines, t
 | Keeper | [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc) | at least 0.1 | 0 | Pays gas for deadline calls and receives the tip |
 | Deployer | [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba) | — | — | Deployed the contracts. Does not sign these jobs |
 | Relayer | [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) | at least 0.5 | 0 | Pays gas for wallets that hold no POL |
-| Zero-POL client | None yet | 0 | at least 1 | Signs only |
-| Zero-POL provider | None yet | 0 | 0 | Signs only |
+| Zero-POL client | [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonscan.com/address/0xF304B61b7889B3B11D9F074e049Ee022AcC8830e) | 0 | at least 1 | Signs only. Job 5 |
+| Zero-POL provider | [`0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3`](https://amoy.polygonscan.com/address/0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3) | 0 | 0 | Signs only. Job 5 |
 
 Keys stay on this machine:
 
@@ -127,7 +127,7 @@ Amounts are USDC. A 0.5 tip is taken from the 1.00 evaluation fee, so the operat
 | Expiry refund | 2 | `ipfs://amoy/sweep` | 1.00 | 1.00 | 0 | Client | Client | — | Expired | Resolved |
 | Silent submission | 3 | `ipfs://amoy/finalize` | 1.00 | 1.00 | 0.50 | Provider | Operator | Keeper | Completed | Resolved |
 | No submission | 4 | `ipfs://amoy/timeout` | 1.00 | 1.00 | 0.50 | Client | Operator | Keeper | Rejected | Resolved |
-| Gasless | — | `ipfs://amoy/gasless` | 1.00 | 0 | 0 | — | — | — | Not run | Not run |
+| Gasless | 5 | `ipfs://amoy/gasless` | 1.00 | 0 | 0 | Provider | — | — | Completed | Resolved |
 | Shared link | — | Entered in the form | 1.00 | 0 | 0 | — | — | — | Not run | Not run |
 
 Job 2 expired at 2026-10-01 14:01:07 KST (`expiredAt` 1790830867). Job 3's review ended at 2026-10-01 11:53:25 KST (`dueAt` 1790823205). Job 4's submit window ended at 2026-10-01 11:54:39 KST (`dueAt` 1790823279).
@@ -255,29 +255,42 @@ If the keeper is running before step 7, it calls `timeoutNoSubmission` and the e
 
 ## 5. Gasless payment through the relayer
 
-**Purpose.** A client and a provider who hold no POL sign the whole job. The relayer submits the signatures and pays the gas. The budget is 1 USDC. The evaluation fee is 0. The preset is `presetAiToAi`.
+**Purpose.** A client and a provider who hold no POL sign the whole job. The relayer submits the signatures and pays the gas. The budget is 1 USDC. The evaluation fee is 0, so `configure` moves no USDC. The preset is `presetAiToAi`. The description stored on the job is `ipfs://amoy/gasless`.
 
-**Test.** Not run on Amoy.
+**Code.** `packages/contracts/scripts/amoyRelayAcceptance.ts`. From the repository root, `yarn contracts acceptance:relay` runs it inside `packages/contracts`. It reads `OPERATOR_ADDRESS` from the filled copy of `packages/contracts/env/.amoy.env.sample`, then the filled copy of `packages/contracts/env/.amoy.relay.env.sample`. It does not print either key. Each finished step is written to the `gasless` flow in `docs/runbooks/amoy-live-results.json`. Running the command again skips a step that already has a hash.
 
-1. Start the relayer: `docker compose up -d relayer`.
-2. Check `GET http://127.0.0.1:8787/health`. It returns `{"ok":true}`.
-3. Put the two zero-POL keys and the integrator token in `packages/contracts/env/.amoy.relay.env`.
-4. Run `yarn contracts acceptance:relay`.
-5. The zero-POL client signs `createJob`, `configure`, `setBudget`, a USDC `permit`, and `fundWithPermit`.
-6. The zero-POL provider signs `submit`.
-7. The zero-POL client signs `approve`.
-8. The relayer sends each signed call. The script stops if either wallet holds POL.
+**Method.** The zero-POL wallet signs an EIP-712 forward request. `from` is that wallet, `value` is 0, and `gas` is 2,000,000. The script posts the signature to `POST http://127.0.0.1:8787/relay` with `Authorization: Bearer` set to the integrator token and `integratorId` `errands`. The relayer wallet calls `forwarder.execute` and pays the POL. The two signing wallets never send a transaction.
 
-**Result.** No Amoy transaction yet. When it finishes, the provider's USDC has increased by 1, both wallets still have 0 POL, and the job is `Completed`.
+`fundWithPermit` carries an EIP-2612 permit for 1 USDC. The spender is the USDC instance, the domain version is the token's `version()` (`2` on Circle Amoy USDC), and the deadline is one hour. The permit is a signature, not its own transaction. If the token rejects that domain, the permit is ignored and `fundWithPermit` reverts `InsufficientAllowance`, because these wallets never call `approve`.
+
+**Procedure.** This run used two new wallets. Do not use the Ledger client, the Ledger provider, the deployer, the keeper, or the relayer. Do not send them POL. Send at least 1 USDC to the zero-POL client only. The relayer wallet pays the gas, so it still needs POL.
+
+1. Copy `config/relayer.env.sample` to `config/relayer.env`. Fill `RELAYER_PRIVATE_KEY` and `DEPLOYER_ADDRESS`. In `RELAYER_INTEGRATORS`, keep the id `errands` and replace `replace-me` with a token.
+2. Copy `packages/contracts/env/.amoy.relay.env.sample` to `packages/contracts/env/.amoy.relay.env`. Fill `RELAY_CLIENT_PRIVATE_KEY` and `RELAY_PROVIDER_PRIVATE_KEY` with `0x` and 64 hex characters. Set `RELAY_INTEGRATOR_TOKEN` to the same token as step 1. Leave `RELAY_INTEGRATOR_ID=errands` and `RELAY_URL=http://127.0.0.1:8787/relay`.
+3. Confirm `OPERATOR_ADDRESS` is set in the filled copy of `packages/contracts/env/.amoy.env.sample`. The script reads it and does not take it from the relay file.
+4. From the repository root, run `docker compose up -d relayer`.
+5. Check `GET http://127.0.0.1:8787/health`. It returns `{"ok":true}`.
+6. From the repository root, run `yarn contracts acceptance:relay`.
+7. The script stops before any signature if either wallet's POL balance is not exactly 0, or if the client has less than 1 USDC.
+8. The zero-POL client signs `createJob` on the instance. The counterparty is the zero-POL provider. The evaluator and the hook are the optimistic evaluator.
+9. The zero-POL client signs `configure` on the evaluator with `presetAiToAi` and a zero evaluation fee.
+10. The zero-POL client signs `setBudget` for 1 USDC.
+11. The zero-POL client signs the USDC permit, then `fundWithPermit`. One relay call carries both.
+12. The zero-POL provider signs `submit` with an empty deliverable hash.
+13. The zero-POL client signs `approve` on the evaluator.
+14. The script checks the job is `Completed`, the provider holds at least 1 USDC, and both signing wallets still have 0 POL.
+15. Run `docker compose stop relayer`.
+
+**Result.** Chain job 5 is `Completed`. The provider holds 1.00 USDC. Both signing wallets still have 0 POL. The relayer paid the gas.
 
 | Step | Signer | Payment | Evaluation | Transaction |
 | :--- | :--- | :--- | :--- | :--- |
-| 1. createJob | Zero-POL client | Open | None | — |
-| 2. configure | Zero-POL client | Open | None | — |
-| 3. setBudget | Zero-POL client | Open | None | — |
-| 4. fundWithPermit | Zero-POL client | Funded | Funded | — |
-| 5. submit | Zero-POL provider | Submitted | Submitted | — |
-| 6. approve | Zero-POL client | Completed | Resolved | — |
+| 1. createJob | Zero-POL client | Open | None | [`0x2e174752817f82b9b4396e2908e46b8343464c4c10d5395b0206bc7e2582ae99`](https://amoy.polygonscan.com/tx/0x2e174752817f82b9b4396e2908e46b8343464c4c10d5395b0206bc7e2582ae99) |
+| 2. configure | Zero-POL client | Open | None | [`0x9c6af37508c3a91422abaa652c6ef5fe7f7b099d38b4ab9efe72475cc33d164e`](https://amoy.polygonscan.com/tx/0x9c6af37508c3a91422abaa652c6ef5fe7f7b099d38b4ab9efe72475cc33d164e) |
+| 3. setBudget | Zero-POL client | Open | None | [`0x6803a9f2f1d2944137f6b85a34767ffa284db5137cadb2b3f6e6ebfd89a6c926`](https://amoy.polygonscan.com/tx/0x6803a9f2f1d2944137f6b85a34767ffa284db5137cadb2b3f6e6ebfd89a6c926) |
+| 4. fundWithPermit | Zero-POL client | Funded | Funded | [`0x7b094a18da620c192b778c9faa518face0e7eec10a0ccf472c1bc9a1b50eb03a`](https://amoy.polygonscan.com/tx/0x7b094a18da620c192b778c9faa518face0e7eec10a0ccf472c1bc9a1b50eb03a) |
+| 5. submit | Zero-POL provider | Submitted | Submitted | [`0xf307c382a673baf4a03ac97b897432b16a49f681084405c7e0f09b7673905694`](https://amoy.polygonscan.com/tx/0xf307c382a673baf4a03ac97b897432b16a49f681084405c7e0f09b7673905694) |
+| 6. approve | Zero-POL client | Completed | Resolved | [`0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7`](https://amoy.polygonscan.com/tx/0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7) |
 
 ## 6. Shared payment link
 
