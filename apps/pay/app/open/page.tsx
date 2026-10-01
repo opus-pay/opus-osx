@@ -2,13 +2,13 @@
 
 import { Opus } from "@opus/sdk";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getAddress } from "viem";
 import { useAccount, useConnect, usePublicClient, useWalletClient } from "wagmi";
 
 import { AddressLine } from "../../src/components/address-line";
-import { Stage, StageTab, primaryButtonClass } from "../../src/components/stage";
+import { Stage, primaryButtonClass } from "../../src/components/stage";
 import { decodeDraft, parties } from "../../src/lib/draft";
 import { configForDraft, fundingView, nextFundingAction, runFundingStep } from "../../src/lib/funding";
 import { plainTerms } from "../../src/lib/terms";
@@ -17,6 +17,7 @@ import { addresses } from "../../src/lib/wagmi";
 function OpenLink() {
     const params = useSearchParams();
     const [jobText, setJobText] = useState(params.get("job") ?? "");
+    const [funded, setFunded] = useState(false);
     const { address, isConnected } = useAccount();
     const { connect, connectors } = useConnect();
     const publicClient = usePublicClient();
@@ -31,23 +32,38 @@ function OpenLink() {
         }
     }, [token]);
 
-    if (decoded.error !== undefined || decoded.draft === undefined) {
+    const draft = decoded.draft;
+    useEffect(() => {
+        if (publicClient === undefined || jobText === "" || draft === undefined) return;
+        let cancel = false;
+        const opus = new Opus(publicClient, addresses);
+        void fundingView(opus, BigInt(jobText), draft.lock)
+            .then((view) => {
+                if (!cancel && nextFundingAction(view) === "funded") setFunded(true);
+            })
+            .catch(() => undefined);
+        return () => {
+            cancel = true;
+        };
+    }, [publicClient, jobText, draft]);
+
+    if (decoded.error !== undefined || draft === undefined) {
         return (
-            <Stage title="Review the terms" tabs={<StageTab current>Terms</StageTab>} footer={<span />}>
+            <Stage title="Review the terms" footer={<span />}>
                 <p>{decoded.error}</p>
             </Stage>
         );
     }
-    const draft = decoded.draft;
-    const config = configForDraft(draft, addresses.evaluator);
+    const terms = draft;
+    const config = configForDraft(terms, addresses.evaluator);
     const mine = address === undefined ? undefined : getAddress(address);
     const role =
         mine === undefined
             ? undefined
-            : mine === draft.from
-            ? draft.drafter
-            : mine === draft.counterparty
-            ? opposite(draft.drafter)
+            : mine === terms.from
+            ? terms.drafter
+            : mine === terms.counterparty
+            ? opposite(terms.drafter)
             : undefined;
 
     async function act() {
@@ -61,10 +77,10 @@ function OpenLink() {
         }
         const opus = new Opus(publicClient, addresses, walletClient);
         const jobId = jobText === "" ? undefined : BigInt(jobText);
-        const view = await fundingView(opus, jobId, draft.lock);
+        const view = await fundingView(opus, jobId, terms.lock);
         const step = nextFundingAction(view);
         if (step === "funded") {
-            toast.success("The job is funded");
+            setFunded(true);
             return;
         }
         if (step.signer !== role) {
@@ -73,26 +89,30 @@ function OpenLink() {
         }
         try {
             const nextId = await runFundingStep(opus, step.action, {
-                draft,
+                draft: terms,
                 jobId,
                 now: BigInt(Math.floor(Date.now() / 1000)),
                 operator: addresses.factory,
             });
             if (nextId !== undefined) setJobText(nextId.toString());
+            if (step.action === "fund") setFunded(true);
             toast.success(step.action);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "The transaction failed");
         }
     }
 
-    const sides = parties(draft);
+    const sides = parties(terms);
 
     return (
         <Stage
             title="Review the terms"
-            tabs={<StageTab current>Terms</StageTab>}
             footer={
-                isConnected ? (
+                funded && jobText !== "" ? (
+                    <a className={`${primaryButtonClass} pay-button inline-flex h-10 items-center no-underline`} href={`/jobs/${jobText}`}>
+                        Open job {jobText}
+                    </a>
+                ) : isConnected ? (
                     <button className={primaryButtonClass} type="button" onClick={() => void act()}>
                         Sign the next step
                     </button>
@@ -110,17 +130,12 @@ function OpenLink() {
             <div className="space-y-3">
                 <p>{plainTerms(config.reviewWindow)}</p>
                 <p>
-                    {draft.amountUsd} USD. Preset {draft.preset}. Link expiry{" "}
-                    {new Date(draft.expiresAt * 1000).toLocaleString()}.
+                    {terms.amountUsd} USD. Preset {terms.preset}. Link expiry{" "}
+                    {new Date(terms.expiresAt * 1000).toLocaleString()}.
                 </p>
                 <AddressLine label="Client" address={sides.client} />
                 <AddressLine label="Provider" address={sides.provider} />
-                <p className="whitespace-pre-wrap rounded bg-white p-3">{draft.agreement}</p>
-                {jobText !== "" && (
-                    <p>
-                        Job {jobText}. <a href={`/jobs/${jobText}`}>Open the status page</a>
-                    </p>
-                )}
+                <p className="whitespace-pre-wrap rounded bg-white p-3">{terms.agreement}</p>
             </div>
         </Stage>
     );

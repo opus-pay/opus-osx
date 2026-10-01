@@ -8,16 +8,19 @@ body {
     font-family: ui-sans-serif, system-ui, sans-serif;
 }
 
-button {
+button,
+a.pay-button {
     cursor: pointer;
     transition: background-color 80ms ease, box-shadow 80ms ease, transform 80ms ease;
 }
 
-button:hover {
+button:hover,
+a.pay-button:hover {
     box-shadow: 0 0 0 3px #ea580c;
 }
 
-button:active {
+button:active,
+a.pay-button:active {
     background-color: #9a3412;
     color: #fff;
     box-shadow: 0 0 0 4px #7c2d12;
