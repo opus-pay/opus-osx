@@ -8,6 +8,7 @@ import { getAddress } from "viem";
 import { useAccount, useConnect, usePublicClient, useWalletClient } from "wagmi";
 
 import { AddressLine } from "../../src/components/address-line";
+import { Stage, StageTab, primaryButtonClass } from "../../src/components/stage";
 import { decodeDraft, parties } from "../../src/lib/draft";
 import { configForDraft, fundingView, nextFundingAction, runFundingStep } from "../../src/lib/funding";
 import { plainTerms } from "../../src/lib/terms";
@@ -31,7 +32,11 @@ function OpenLink() {
     }, [token]);
 
     if (decoded.error !== undefined || decoded.draft === undefined) {
-        return <p>{decoded.error}</p>;
+        return (
+            <Stage title="Review the terms" tabs={<StageTab current>Terms</StageTab>} footer={<span />}>
+                <p>{decoded.error}</p>
+            </Stage>
+        );
     }
     const draft = decoded.draft;
     const config = configForDraft(draft, addresses.evaluator);
@@ -46,8 +51,12 @@ function OpenLink() {
             : undefined;
 
     async function act() {
-        if (publicClient === undefined || walletClient === undefined || mine === undefined || role === undefined) {
+        if (publicClient === undefined || walletClient === undefined || mine === undefined) {
             toast.error("Connect the wallet that will sign");
+            return;
+        }
+        if (role === undefined) {
+            toast.error("Switch to the client or the provider on this link");
             return;
         }
         const opus = new Opus(publicClient, addresses, walletClient);
@@ -79,35 +88,41 @@ function OpenLink() {
     const sides = parties(draft);
 
     return (
-        <div className="space-y-4">
-            <h1 className="text-2xl font-semibold">Review the terms</h1>
-            <p className="text-lg">{plainTerms(config.reviewWindow)}</p>
-            <p>
-                {draft.amountUsd} USD. Preset {draft.preset}. Link expiry{" "}
-                {new Date(draft.expiresAt * 1000).toLocaleString()}.
-            </p>
-            <AddressLine label="Client" address={sides.client} />
-            <AddressLine label="Provider" address={sides.provider} />
-            <p className="whitespace-pre-wrap rounded bg-white p-3">{draft.agreement}</p>
-            {isConnected ? (
-                <button className="rounded bg-stone-900 px-4 py-2 text-white" type="button" onClick={() => void act()}>
-                    Sign the next step
-                </button>
-            ) : (
-                <button
-                    className="rounded bg-stone-900 px-4 py-2 text-white"
-                    type="button"
-                    onClick={() => connect({ connector: connectors[0] })}
-                >
-                    Connect wallet
-                </button>
-            )}
-            {jobText !== "" && (
+        <Stage
+            title="Review the terms"
+            tabs={<StageTab current>Terms</StageTab>}
+            footer={
+                isConnected ? (
+                    <button className={primaryButtonClass} type="button" onClick={() => void act()}>
+                        Sign the next step
+                    </button>
+                ) : (
+                    <button
+                        className={primaryButtonClass}
+                        type="button"
+                        onClick={() => connect({ connector: connectors[0] })}
+                    >
+                        Connect wallet
+                    </button>
+                )
+            }
+        >
+            <div className="space-y-3">
+                <p>{plainTerms(config.reviewWindow)}</p>
                 <p>
-                    Job {jobText}. <a href={`/jobs/${jobText}`}>Open the status page</a>
+                    {draft.amountUsd} USD. Preset {draft.preset}. Link expiry{" "}
+                    {new Date(draft.expiresAt * 1000).toLocaleString()}.
                 </p>
-            )}
-        </div>
+                <AddressLine label="Client" address={sides.client} />
+                <AddressLine label="Provider" address={sides.provider} />
+                <p className="whitespace-pre-wrap rounded bg-white p-3">{draft.agreement}</p>
+                {jobText !== "" && (
+                    <p>
+                        Job {jobText}. <a href={`/jobs/${jobText}`}>Open the status page</a>
+                    </p>
+                )}
+            </div>
+        </Stage>
     );
 }
 

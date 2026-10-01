@@ -1,5 +1,6 @@
 import {
     getAddress,
+    parseAbi,
     parseSignature,
     zeroAddress,
     type Address,
@@ -409,9 +410,19 @@ export class Opus {
         }
         const block = await this.publicClient.getBlock();
         const deadline = block.timestamp + 3600n;
+        let version = "1";
+        try {
+            version = await this.publicClient.readContract({
+                address: token,
+                abi: parseAbi(["function version() view returns (string)"]),
+                functionName: "version",
+            });
+        } catch {
+            version = "1";
+        }
         const signature = await wallet.signTypedData({
             account: wallet.account!,
-            domain: { name, version: "1", chainId: this.addresses.chainId, verifyingContract: token },
+            domain: { name, version, chainId: this.addresses.chainId, verifyingContract: token },
             types: PERMIT_TYPES,
             primaryType: "Permit",
             message: { owner, spender, value, nonce, deadline },

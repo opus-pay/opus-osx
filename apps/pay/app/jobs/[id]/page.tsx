@@ -2,10 +2,11 @@
 
 import { Opus, type JobAction } from "@opus/sdk";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAccount, useConnect, usePublicClient, useWalletClient } from "wagmi";
 
+import { Stage, StageTab, primaryButtonClass, secondaryButtonClass } from "../../../src/components/stage";
 import { dueNotices, notify } from "../../../src/lib/notices";
 import { countdown, proofHash, textHash } from "../../../src/lib/proof";
 import { addresses } from "../../../src/lib/wagmi";
@@ -14,6 +15,29 @@ const PARTY = new Set<JobAction>(["submit", "approve", "object", "extendReview",
 
 export default function JobPage() {
     const params = useParams<{ id: string }>();
+    const [ready, setReady] = useState(false);
+    useEffect(() => setReady(true), []);
+    if (!ready) {
+        return (
+            <Stage
+                title={`Job ${params.id}`}
+                tabs={
+                    <>
+                        <StageTab current>Proof</StageTab>
+                        <StageTab>Dispute</StageTab>
+                    </>
+                }
+                footer={<span />}
+            >
+                <p>Connect a wallet to load this job.</p>
+            </Stage>
+        );
+    }
+    return <JobScreen id={params.id} />;
+}
+
+function JobScreen({ id }: { id: string }) {
+    const params = { id };
     const jobId = BigInt(params.id);
     const { isConnected } = useAccount();
     const { connect, connectors } = useConnect();
@@ -21,6 +45,7 @@ export default function JobPage() {
     const { data: walletClient } = useWalletClient();
     const [view, setView] = useState<string>("Connect a wallet to load this job.");
     const [actions, setActions] = useState<JobAction[]>([]);
+    const [pane, setPane] = useState<"proof" | "dispute">("proof");
     const [objection, setObjection] = useState("The work does not match the agreement.");
     const [extension, setExtension] = useState("3600");
     const [webhook, setWebhook] = useState("");
@@ -89,63 +114,91 @@ export default function JobPage() {
         }
     }
 
+    const proofActions = actions.filter(
+        (action) => action === "submit" || action === "approve" || action === "withdraw"
+    );
+    const disputeActions = actions.filter(
+        (action) => action === "object" || action === "extendReview" || action === "postDeposit"
+    );
+    const shown = pane === "proof" ? proofActions : disputeActions;
+
     return (
-        <div className="space-y-4">
-            <h1 className="text-2xl font-semibold">Job {params.id}</h1>
-            <p>{view}</p>
-            {isConnected ? (
-                <button className="rounded border px-3 py-2" type="button" onClick={() => void load()}>
-                    Refresh status
-                </button>
-            ) : (
-                <button
-                    className="rounded bg-stone-900 px-4 py-2 text-white"
-                    type="button"
-                    onClick={() => connect({ connector: connectors[0] })}
-                >
-                    Connect wallet
-                </button>
-            )}
-            <label className="block text-sm">
-                Webhook URL
-                <input
-                    className="mt-1 w-full rounded border bg-white p-2"
-                    value={webhook}
-                    onChange={(event) => setWebhook(event.target.value.trim())}
-                />
-            </label>
-            <label className="block text-sm">
-                Deliverable file
-                <input id="proof" className="mt-1 block" type="file" />
-            </label>
-            <label className="block text-sm">
-                Objection
-                <input
-                    className="mt-1 w-full rounded border bg-white p-2"
-                    value={objection}
-                    onChange={(event) => setObjection(event.target.value)}
-                />
-            </label>
-            <label className="block text-sm">
-                Extend review by seconds
-                <input
-                    className="mt-1 w-full rounded border bg-white p-2"
-                    value={extension}
-                    onChange={(event) => setExtension(event.target.value)}
-                />
-            </label>
-            <div className="flex flex-wrap gap-2">
-                {actions.map((action) => (
+        <Stage
+            title={`Job ${params.id}`}
+            tabs={
+                <>
+                    <StageTab current={pane === "proof"} onClick={() => setPane("proof")}>
+                        Proof
+                    </StageTab>
+                    <StageTab current={pane === "dispute"} onClick={() => setPane("dispute")}>
+                        Dispute
+                    </StageTab>
+                </>
+            }
+            footer={
+                isConnected ? (
+                    <>
+                        {shown.map((action) => (
+                            <button
+                                key={action}
+                                className={primaryButtonClass}
+                                type="button"
+                                onClick={() => void run(action)}
+                            >
+                                {action}
+                            </button>
+                        ))}
+                        <button className={secondaryButtonClass} type="button" onClick={() => void load()}>
+                            Refresh status
+                        </button>
+                    </>
+                ) : (
                     <button
-                        key={action}
-                        className="rounded bg-stone-900 px-3 py-2 text-white"
+                        className={primaryButtonClass}
                         type="button"
-                        onClick={() => void run(action)}
+                        onClick={() => connect({ connector: connectors[0] })}
                     >
-                        {action}
+                        Connect wallet
                     </button>
-                ))}
+                )
+            }
+        >
+            <div className="space-y-3">
+                <p>{view}</p>
+                {pane === "proof" ? (
+                    <label className="block text-sm">
+                        Deliverable file
+                        <input id="proof" className="mt-1 block" type="file" />
+                    </label>
+                ) : (
+                    <>
+                        <label className="block text-sm">
+                            Objection
+                            <input
+                                className="mt-1 w-full rounded border bg-white p-2"
+                                value={objection}
+                                onChange={(event) => setObjection(event.target.value)}
+                            />
+                        </label>
+                        <label className="block text-sm">
+                            Extend review by seconds
+                            <input
+                                className="mt-1 w-full rounded border bg-white p-2"
+                                value={extension}
+                                onChange={(event) => setExtension(event.target.value)}
+                            />
+                        </label>
+                        <label className="block text-sm">
+                            Webhook URL
+                            <input
+                                className="mt-1 w-full rounded border bg-white p-2"
+                                value={webhook}
+                                onChange={(event) => setWebhook(event.target.value.trim())}
+                            />
+                        </label>
+                    </>
+                )}
             </div>
-        </div>
+        </Stage>
     );
 }
