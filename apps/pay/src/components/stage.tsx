@@ -8,16 +8,18 @@ export function Stage({
     footer,
 }: {
     title: string;
-    tabs: ReactNode;
+    tabs?: ReactNode;
     children: ReactNode;
     footer: ReactNode;
 }) {
     return (
         <section className="flex h-[32rem] w-full flex-col">
             <h1 className="text-2xl font-semibold">{title}</h1>
-            <div className="mt-4 flex h-10 shrink-0 items-center gap-2" role="tablist">
-                {tabs}
-            </div>
+            {tabs != null && (
+                <div className="mt-4 flex h-10 shrink-0 items-center gap-2" role="tablist">
+                    {tabs}
+                </div>
+            )}
             <div className="mt-4 min-h-0 flex-1 overflow-auto">{children}</div>
             <div className="mt-4 flex h-10 shrink-0 items-center gap-2">{footer}</div>
         </section>
