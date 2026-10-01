@@ -28,7 +28,7 @@ export const amoy = defineChain({
     id: 80002,
     name: "Polygon Amoy",
     nativeCurrency: { name: "POL", symbol: "POL", decimals: 18 },
-    rpcUrls: { default: { http: ["https://polygon-amoy.drpc.org"] } },
+    rpcUrls: { default: { http: ["https://polygon-amoy-bor-rpc.publicnode.com"] } },
     blockExplorers: { default: { name: "Polygonscan", url: "https://amoy.polygonscan.com" } },
 });
 
