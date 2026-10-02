@@ -70,7 +70,7 @@ export function Balances({
                 {row("Provider", provider, held.provider)}
                 <tr className="border-t border-stone-200">
                     <td className="py-1 pr-3 text-stone-500">Escrow</td>
-                    <td className="py-1 pr-3">this job, {escrow.note}</td>
+                    <td className="py-1 pr-3">{escrow.note}</td>
                     <td className="py-1 text-right">{usdc(escrow.amount)}</td>
                 </tr>
             </tbody>

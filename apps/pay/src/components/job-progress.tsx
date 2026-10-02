@@ -22,12 +22,12 @@ export function JobProgress({
 }) {
     const steps = jobProgress(status, phase, onChain);
     return (
-        <ol className="flex flex-wrap items-center gap-2 text-sm" aria-label="Job progress">
+        <ol className="flex flex-nowrap items-center gap-1 overflow-x-auto text-[13px]" aria-label="Job progress">
             {steps.map((step, i) => (
-                <li key={step.label} className="flex items-center gap-2">
-                    {i > 0 && <span className="h-px w-5 bg-stone-300" aria-hidden />}
+                <li key={step.label} className="flex shrink-0 items-center gap-1">
+                    {i > 0 && <span className="h-px w-2 bg-stone-300" aria-hidden />}
                     <span
-                        className={`rounded-full px-3 py-1 ${STYLE[step.state]}`}
+                        className={`whitespace-nowrap rounded-full px-2 py-0.5 ${STYLE[step.state]}`}
                         aria-current={step.state === "current" || step.state === "alert" ? "step" : undefined}
                     >
                         {step.state === "done" ? "✓" : `${i + 1}.`} {step.label}
