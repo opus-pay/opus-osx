@@ -24,6 +24,7 @@ import { proofHash, textHash } from "../../../src/lib/proof";
 import { actionLabel, escrowFor, roleGuide, statusFacts, type Role } from "../../../src/lib/status-text";
 import { confirmed, explorerTx } from "../../../src/lib/tx";
 import { addresses } from "../../../src/lib/wagmi";
+import { useLocale } from "../../../src/components/locale";
 
 /** Buttons each tab may show. Keeper calls (finalize, timeouts) are left to the keeper. */
 const ROLE_ACTIONS: Record<Role, Set<JobAction>> = {
@@ -48,12 +49,13 @@ type JobView = {
 
 export default function JobPage() {
     const params = useParams<{ id: string }>();
+    const { t } = useLocale();
     const [ready, setReady] = useState(false);
     useEffect(() => setReady(true), []);
     if (!ready) {
         return (
-            <Stage title={`Job ${params.id}`} footer={<span />}>
-                <p>Loading the job.</p>
+            <Stage title={t("job.title", { id: params.id })} footer={<span />}>
+                <p>{t("job.loading")}</p>
             </Stage>
         );
     }
@@ -61,6 +63,7 @@ export default function JobPage() {
 }
 
 function JobScreen({ id }: { id: string }) {
+    const { locale, t } = useLocale();
     const jobId = BigInt(id);
     const { address, isConnected } = useAccount();
     const { connect, connectors } = useConnect();
@@ -70,7 +73,7 @@ function JobScreen({ id }: { id: string }) {
     const [loadError, setLoadError] = useState<string | undefined>(undefined);
     const [tab, setTab] = useState<Role | undefined>(undefined);
     const [tick, setTick] = useState(0);
-    const [objection, setObjection] = useState("The work does not match the agreement.");
+    const [objection, setObjection] = useState(() => t("job.objectionDefault"));
     const [extension, setExtension] = useState("3600");
     const [webhook, setWebhook] = useState("");
     const [busy, setBusy] = useState(false);
@@ -109,9 +112,7 @@ function JobScreen({ id }: { id: string }) {
     }, [publicClient, jobId]);
 
     useEffect(() => {
-        void load().catch((error) =>
-            setLoadError(error instanceof Error ? error.message : "The job could not be read")
-        );
+        void load().catch((error) => setLoadError(error instanceof Error ? error.message : t("job.unreadable")));
     }, [load, tick]);
 
     useEffect(() => {
@@ -151,7 +152,7 @@ function JobScreen({ id }: { id: string }) {
                 await notify(webhook, { kind, jobId: jobId.toString(), instance: addresses.instance });
             }
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : "The webhook failed");
+            toast.error(error instanceof Error ? error.message : t("job.webhookFailed"));
         }
     }
 
@@ -164,7 +165,7 @@ function JobScreen({ id }: { id: string }) {
             const sent: `0x${string}`[] = [];
             if (action === "submit") {
                 const file = (document.getElementById("proof") as HTMLInputElement | null)?.files?.[0];
-                if (file === undefined) throw new Error("Choose the deliverable file");
+                if (file === undefined) throw new Error(t("job.chooseFile"));
                 const hash = proofHash(new Uint8Array(await file.arrayBuffer()));
                 sent.push(
                     await confirmed(publicClient, await opus.submit(jobId, hash, (await opus.job(jobId)).budget))
@@ -181,7 +182,7 @@ function JobScreen({ id }: { id: string }) {
                 sent.push(await confirmed(publicClient, await opus.claimRefund(jobId)));
             } else if (action === "withdraw") {
                 const who = walletClient.account?.address;
-                if (who === undefined) throw new Error("Connect a wallet");
+                if (who === undefined) throw new Error(t("job.connect"));
                 if ((await opus.claimableOnInstance(who)) > 0n) {
                     sent.push(await confirmed(publicClient, await opus.withdrawFromInstance()));
                 }
@@ -191,10 +192,10 @@ function JobScreen({ id }: { id: string }) {
             }
             const last = sent.at(-1);
             setLastTx({ action, url: last === undefined ? undefined : explorerTx(addresses.chainId, last) });
-            toast.success(`${actionLabel(action)}: done`);
+            toast.success(t("done", { what: actionLabel(action, locale) }));
             await load();
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : "The transaction failed");
+            toast.error(error instanceof Error ? error.message : t("tx.failed"));
         } finally {
             setBusy(false);
         }
@@ -206,7 +207,7 @@ function JobScreen({ id }: { id: string }) {
             {label}
             {myRole === role && (
                 <span className="ml-1.5 rounded-full bg-cobalt-wash px-1.5 text-[11.5px] font-semibold text-cobalt">
-                    You
+                    {t("you")}
                 </span>
             )}
         </StageTab>
@@ -214,12 +215,12 @@ function JobScreen({ id }: { id: string }) {
 
     return (
         <Stage
-            title={`Job ${id}`}
+            title={t("job.title", { id })}
             progress={job === undefined ? undefined : <JobProgress status={job.status} phase={job.phase} />}
             tabs={
                 <>
-                    {roleTab("client", "Client")}
-                    {roleTab("provider", "Provider")}
+                    {roleTab("client", t("roleTitle.client"))}
+                    {roleTab("provider", t("roleTitle.provider"))}
                 </>
             }
             footer={
@@ -229,7 +230,7 @@ function JobScreen({ id }: { id: string }) {
                         type="button"
                         onClick={() => connect({ connector: connectors[0] })}
                     >
-                        Connect wallet
+                        {t("button.connect")}
                     </button>
                 ) : (
                     <>
@@ -241,7 +242,7 @@ function JobScreen({ id }: { id: string }) {
                                 disabled={busy || !canAct}
                                 onClick={() => void run(action)}
                             >
-                                {busy ? "Waiting for the wallet and the chain…" : actionLabel(action)}
+                                {busy ? t("button.busy") : actionLabel(action, locale)}
                             </button>
                         ))}
                         <button
@@ -250,14 +251,14 @@ function JobScreen({ id }: { id: string }) {
                             disabled={busy}
                             onClick={() => void refresh()}
                         >
-                            Refresh status
+                            {t("job.refresh")}
                         </button>
                     </>
                 )
             }
         >
             {job === undefined ? (
-                <p className="m-0 text-muted">{loadError ?? "Reading the job from the chain."}</p>
+                <p className="m-0 text-muted">{loadError ?? t("job.reading")}</p>
             ) : (
                 <div className="flex flex-col gap-6">
                     <div
@@ -268,35 +269,38 @@ function JobScreen({ id }: { id: string }) {
                         }`}
                     >
                         <p className="m-0 text-[16px] font-semibold leading-snug">
-                            {roleGuide(shownRole, job.status, job.phase, job.autoComplete)}
+                            {roleGuide(shownRole, job.status, job.phase, job.autoComplete, locale)}
                         </p>
                         {isConnected && !canAct && actions.length > 0 && (
                             <p className="m-0 mt-1 text-[13.5px] font-medium text-amber">
-                                Switch the wallet to the {shownRole} account to act here.
+                                {t("job.switch", { role: t(`role.${shownRole}`) })}
                             </p>
                         )}
                     </div>
                     <Facts
-                        items={statusFacts({
-                            status: job.status,
-                            phase: job.phase,
-                            nextDeadline: job.nextDeadline,
-                            now: job.now,
-                        })}
+                        items={statusFacts(
+                            {
+                                status: job.status,
+                                phase: job.phase,
+                                nextDeadline: job.nextDeadline,
+                                now: job.now,
+                            },
+                            locale
+                        )}
                     />
                     <section>
-                        <SectionLabel>Where the money is</SectionLabel>
+                        <SectionLabel>{t("money.title")}</SectionLabel>
                         <Balances
                             client={job.client}
                             provider={job.provider}
-                            escrow={escrowFor(job.status, job.budget)}
+                            escrow={escrowFor(job.status, job.budget, locale)}
                             me={me}
                             tick={tick}
                         />
                     </section>
                     {shownRole === "provider" && actions.includes("submit") && (
                         <label className="block">
-                            <SectionLabel>Deliverable file</SectionLabel>
+                            <SectionLabel>{t("job.file")}</SectionLabel>
                             <input
                                 id="proof"
                                 className="block w-full text-[14px] text-ink-soft file:mr-3 file:rounded-lg file:border file:border-line file:bg-white file:px-3 file:py-2 file:text-[14px] file:font-medium file:text-ink"
@@ -306,7 +310,7 @@ function JobScreen({ id }: { id: string }) {
                     )}
                     {shownRole === "client" && actions.includes("object") && (
                         <label className="block">
-                            <SectionLabel>Objection</SectionLabel>
+                            <SectionLabel>{t("job.objection")}</SectionLabel>
                             <input
                                 className={fieldClass}
                                 value={objection}
@@ -316,7 +320,7 @@ function JobScreen({ id }: { id: string }) {
                     )}
                     {shownRole === "client" && actions.includes("extendReview") && (
                         <label className="block">
-                            <SectionLabel>Extend the review by seconds</SectionLabel>
+                            <SectionLabel>{t("job.extend")}</SectionLabel>
                             <input
                                 className={fieldClass}
                                 value={extension}
@@ -327,7 +331,7 @@ function JobScreen({ id }: { id: string }) {
                     {lastTx !== undefined && (
                         <p className="m-0 flex items-center gap-2 text-[14px]">
                             <Check className="text-emerald" size={16} strokeWidth={3} aria-hidden />
-                            <span className="text-ink">{actionLabel(lastTx.action)}: done</span>
+                            <span className="text-ink">{t("done", { what: actionLabel(lastTx.action, locale) })}</span>
                             {lastTx.url !== undefined && (
                                 <a
                                     className="ml-auto inline-flex items-center gap-1 text-cobalt"
@@ -342,9 +346,9 @@ function JobScreen({ id }: { id: string }) {
                         </p>
                     )}
                     <details className="text-[14px]">
-                        <summary className="cursor-pointer font-medium text-muted">Notifications</summary>
+                        <summary className="cursor-pointer font-medium text-muted">{t("job.notifications")}</summary>
                         <label className="mt-2 block">
-                            <span className="text-[13px] font-semibold text-ink-soft">Webhook URL</span>
+                            <span className="text-[13px] font-semibold text-ink-soft">{t("job.webhook")}</span>
                             <input
                                 className={fieldClass}
                                 value={webhook}

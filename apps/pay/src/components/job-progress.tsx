@@ -2,6 +2,7 @@ import type { JobStatusName, PhaseName } from "@opus/sdk";
 import { Check } from "lucide-react";
 
 import { jobProgress, type StepState } from "../lib/progress";
+import { useLocale } from "./locale";
 
 const DOT: Record<StepState, string> = {
     done: "border-emerald bg-emerald text-white",
@@ -29,9 +30,10 @@ export function JobProgress({
     phase: PhaseName;
     onChain?: boolean;
 }) {
-    const steps = jobProgress(status, phase, onChain);
+    const { locale, t } = useLocale();
+    const steps = jobProgress(status, phase, onChain, locale);
     return (
-        <ol className="m-0 grid list-none grid-cols-5 p-0" aria-label="Job progress">
+        <ol className="m-0 grid list-none grid-cols-5 p-0" aria-label={t("progress.label")}>
             {steps.map((step, i) => {
                 const reached = step.state !== "todo";
                 return (
