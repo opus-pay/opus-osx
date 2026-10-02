@@ -10,14 +10,28 @@ import { useAccount, useConnect, usePublicClient, useWalletClient } from "wagmi"
 import { AddressLine } from "../../src/components/address-line";
 import { Stage, primaryButtonClass } from "../../src/components/stage";
 import { decodeDraft, parties } from "../../src/lib/draft";
-import { configForDraft, fundingView, nextFundingAction, runFundingStep } from "../../src/lib/funding";
+import {
+    configForDraft,
+    fundingView,
+    nextFundingAction,
+    runFundingStep,
+    stepLabel,
+    stepPosition,
+    type FundingAction,
+    type FundingStep,
+} from "../../src/lib/funding";
 import { plainTerms } from "../../src/lib/terms";
+import { explorerTx } from "../../src/lib/tx";
 import { addresses } from "../../src/lib/wagmi";
 
 function OpenLink() {
     const params = useSearchParams();
     const [jobText, setJobText] = useState(params.get("job") ?? "");
     const [funded, setFunded] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [next, setNext] = useState<FundingStep | undefined>(undefined);
+    const [done, setDone] = useState<{ action: FundingAction; hash?: `0x${string}` }[]>([]);
+    const [tick, setTick] = useState(0);
     const { address, isConnected } = useAccount();
     const { connect, connectors } = useConnect();
     const publicClient = usePublicClient();
@@ -34,18 +48,21 @@ function OpenLink() {
 
     const draft = decoded.draft;
     useEffect(() => {
-        if (publicClient === undefined || jobText === "" || draft === undefined) return;
+        if (publicClient === undefined || draft === undefined) return;
         let cancel = false;
         const opus = new Opus(publicClient, addresses);
-        void fundingView(opus, BigInt(jobText), draft.lock)
+        void fundingView(opus, jobText === "" ? undefined : BigInt(jobText), draft.lock)
             .then((view) => {
-                if (!cancel && nextFundingAction(view) === "funded") setFunded(true);
+                if (cancel) return;
+                const step = nextFundingAction(view);
+                if (step === "funded") setFunded(true);
+                else setNext(step);
             })
             .catch(() => undefined);
         return () => {
             cancel = true;
         };
-    }, [publicClient, jobText, draft]);
+    }, [publicClient, jobText, draft, tick]);
 
     if (decoded.error !== undefined || draft === undefined) {
         return (
@@ -67,6 +84,7 @@ function OpenLink() {
             : undefined;
 
     async function act() {
+        if (busy) return;
         if (publicClient === undefined || walletClient === undefined || mine === undefined) {
             toast.error("Connect the wallet that will sign");
             return;
@@ -83,38 +101,60 @@ function OpenLink() {
             setFunded(true);
             return;
         }
+        setNext(step);
         if (step.signer !== role) {
             toast.error(`Waiting for the ${step.signer} to ${step.action}`);
             return;
         }
+        setBusy(true);
         try {
-            const nextId = await runFundingStep(opus, step.action, {
+            const result = await runFundingStep(opus, step.action, {
                 draft: terms,
                 jobId,
                 now: BigInt(Math.floor(Date.now() / 1000)),
                 operator: addresses.factory,
             });
-            if (nextId !== undefined) setJobText(nextId.toString());
+            setJobText(result.jobId.toString());
+            setDone((list) => [...list, { action: step.action, hash: result.hash }]);
             if (step.action === "fund") setFunded(true);
-            toast.success(step.action);
+            toast.success(`${stepLabel(step.action)}: done`);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "The transaction failed");
+        } finally {
+            setBusy(false);
+            setTick((value) => value + 1);
         }
     }
 
     const sides = parties(terms);
+    const position = next === undefined ? undefined : stepPosition(terms.lock, next.action);
+    const waitingOnOther = next !== undefined && role !== undefined && next.signer !== role;
 
     return (
         <Stage
             title="Review the terms"
             footer={
                 funded && jobText !== "" ? (
-                    <a className={`${primaryButtonClass} pay-button inline-flex h-10 items-center no-underline`} href={`/jobs/${jobText}`}>
+                    <a
+                        className={`${primaryButtonClass} pay-button inline-flex h-10 items-center no-underline`}
+                        href={`/jobs/${jobText}`}
+                    >
                         Open job {jobText}
                     </a>
                 ) : isConnected ? (
-                    <button className={primaryButtonClass} type="button" onClick={() => void act()}>
-                        Sign the next step
+                    <button
+                        className={`${primaryButtonClass} disabled:opacity-50`}
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void act()}
+                    >
+                        {busy
+                            ? "Waiting for the wallet and the chain…"
+                            : waitingOnOther
+                            ? "Check again"
+                            : next === undefined
+                            ? "Sign the next step"
+                            : `Sign: ${stepLabel(next.action)}`}
                     </button>
                 ) : (
                     <button
@@ -136,6 +176,32 @@ function OpenLink() {
                 <AddressLine label="Client" address={sides.client} />
                 <AddressLine label="Provider" address={sides.provider} />
                 <p className="whitespace-pre-wrap rounded bg-white p-3">{terms.agreement}</p>
+                {!funded && next !== undefined && position !== undefined && (
+                    <p className="text-sm">
+                        Step {position.index} of {position.total}: {stepLabel(next.action)}. The {next.signer} signs
+                        {waitingOnOther ? `. Waiting for the ${next.signer}.` : "."}
+                    </p>
+                )}
+                {done.length > 0 && (
+                    <ul className="space-y-1 text-sm">
+                        {done.map((item) => {
+                            const url = item.hash === undefined ? undefined : explorerTx(addresses.chainId, item.hash);
+                            return (
+                                <li key={item.action}>
+                                    {stepLabel(item.action)}: done
+                                    {url !== undefined && (
+                                        <>
+                                            {" "}
+                                            <a className="underline" href={url} target="_blank" rel="noreferrer">
+                                                view on Polygonscan
+                                            </a>
+                                        </>
+                                    )}
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
             </div>
         </Stage>
     );

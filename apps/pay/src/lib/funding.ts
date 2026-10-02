@@ -8,13 +8,49 @@ import {
     type EvaluatorConfig,
     type Opus,
 } from "@opus/sdk";
-import { type Address } from "viem";
+import { type Address, type Hash } from "viem";
 
 import { parties, type Draft } from "./draft";
+import { confirmed } from "./tx";
 
 export type FundingAction = "create" | "quote" | "configure" | "fund";
 
 export type FundingStep = { action: FundingAction; signer: "client" | "provider" };
+
+const STEP_TEXT: Record<FundingAction, string> = {
+    create: "Open the job",
+    quote: "Set the amount",
+    configure: "Set the review rules",
+    fund: "Lock the USDC",
+};
+
+/** Plain words for a funding step, shown before the wallet asks for a signature. */
+export function stepLabel(action: FundingAction): string {
+    return STEP_TEXT[action];
+}
+
+/** Every signature a link needs, in order. Lock 2 quotes before configure; lock 1 lets the provider quote after it. */
+export function fundingPlan(lock: 1 | 2): FundingStep[] {
+    return lock === 2
+        ? [
+              { action: "create", signer: "client" },
+              { action: "quote", signer: "client" },
+              { action: "configure", signer: "client" },
+              { action: "fund", signer: "client" },
+          ]
+        : [
+              { action: "create", signer: "client" },
+              { action: "configure", signer: "client" },
+              { action: "quote", signer: "provider" },
+              { action: "fund", signer: "client" },
+          ];
+}
+
+/** "Step 2 of 4", counted from the plan for this lock. */
+export function stepPosition(lock: 1 | 2, action: FundingAction): { index: number; total: number } {
+    const plan = fundingPlan(lock);
+    return { index: plan.findIndex((step) => step.action === action) + 1, total: plan.length };
+}
 
 export function configForDraft(draft: Draft, operator: Address): EvaluatorConfig {
     const input = { operator };
@@ -73,35 +109,38 @@ export async function fundingView(
     };
 }
 
-/** One chain call in the funding plan. `create` returns the new job id. */
+/**
+ * One chain call in the funding plan. Waits until the call is in a block, so the next
+ * step reads the new state. `create` returns the new job id and no hash.
+ */
 export async function runFundingStep(
     opus: Opus,
     action: FundingAction,
     input: { draft: Draft; jobId?: bigint; now: bigint; operator: Address }
-): Promise<bigint | undefined> {
+): Promise<{ jobId: bigint; hash?: Hash }> {
     const config = configForDraft(input.draft, input.operator);
     const amount = amountForDraft(input.draft);
     if (action === "create") {
         const { provider } = parties(input.draft);
-        return opus.createJob({
+        const jobId = await opus.createJob({
             provider,
             evaluator: opus.addresses.evaluator,
             expiredAt: minimumExpiredAt(input.now + 3600n, config),
             description: input.draft.agreement,
             hook: opus.addresses.evaluator,
         });
+        return { jobId };
     }
-    if (input.jobId === undefined) throw new Error("The job has not been created");
+    const jobId = input.jobId;
+    if (jobId === undefined) throw new Error("The job has not been created");
+    let sent: Hash;
     if (action === "quote") {
-        await opus.quote(input.jobId, amount);
-        return input.jobId;
-    }
-    if (action === "configure") {
+        sent = await opus.quote(jobId, amount);
+    } else if (action === "configure") {
         const pull = config.evaluationFee + (config.autoCompleteOnSilence ? 0n : config.disputeDeposit);
-        if (pull > 0n) await opus.configureWithPermit(input.jobId, config);
-        else await opus.configure(input.jobId, config);
-        return input.jobId;
+        sent = pull > 0n ? await opus.configureWithPermit(jobId, config) : await opus.configure(jobId, config);
+    } else {
+        sent = await opus.fundWithPermit(jobId, amount);
     }
-    await opus.fundWithPermit(input.jobId, amount);
-    return input.jobId;
+    return { jobId, hash: await confirmed(opus.publicClient, sent) };
 }
