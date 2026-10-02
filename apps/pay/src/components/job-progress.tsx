@@ -10,9 +10,17 @@ const STYLE: Record<StepState, string> = {
     passed: "border border-stone-300 text-stone-400",
 };
 
-/** Where the job stands among its four stages. */
-export function JobProgress({ status, phase }: { status: JobStatusName; phase: PhaseName }) {
-    const steps = jobProgress(status, phase);
+/** Where the job stands among its five stages. `onChain` is false while the link is still being signed. */
+export function JobProgress({
+    status,
+    phase,
+    onChain = true,
+}: {
+    status: JobStatusName;
+    phase: PhaseName;
+    onChain?: boolean;
+}) {
+    const steps = jobProgress(status, phase, onChain);
     return (
         <ol className="flex flex-wrap items-center gap-2 text-sm" aria-label="Job progress">
             {steps.map((step, i) => (
