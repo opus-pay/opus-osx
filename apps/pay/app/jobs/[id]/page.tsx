@@ -8,7 +8,9 @@ import { useAccount, useConnect, usePublicClient, useWalletClient } from "wagmi"
 
 import { Stage, StageTab, primaryButtonClass, secondaryButtonClass } from "../../../src/components/stage";
 import { dueNotices, notify } from "../../../src/lib/notices";
-import { countdown, proofHash, textHash } from "../../../src/lib/proof";
+import { proofHash, textHash } from "../../../src/lib/proof";
+import { actionLabel, statusLine } from "../../../src/lib/status-text";
+import { confirmed, explorerTx } from "../../../src/lib/tx";
 import { addresses } from "../../../src/lib/wagmi";
 
 const PARTY = new Set<JobAction>(["submit", "approve", "object", "extendReview", "postDeposit", "withdraw"]);
@@ -49,13 +51,21 @@ function JobScreen({ id }: { id: string }) {
     const [objection, setObjection] = useState("The work does not match the agreement.");
     const [extension, setExtension] = useState("3600");
     const [webhook, setWebhook] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [lastTx, setLastTx] = useState<{ action: JobAction; url?: string } | undefined>(undefined);
 
     async function load() {
         if (publicClient === undefined || walletClient?.account === undefined) return;
         const opus = new Opus(publicClient, addresses, walletClient);
         const status = await opus.status(jobId, walletClient.account.address);
-        const left = countdown(status.nextDeadline, BigInt(Math.floor(Date.now() / 1000)));
-        setView(`${status.status} · ${status.phase} · ${left}`);
+        setView(
+            statusLine({
+                status: status.status,
+                phase: status.phase,
+                nextDeadline: status.nextDeadline,
+                now: BigInt(Math.floor(Date.now() / 1000)),
+            })
+        );
         setActions(status.actions.filter((action) => PARTY.has(action)));
         if (webhook !== "") {
             const kinds = dueNotices({
@@ -81,36 +91,47 @@ function JobScreen({ id }: { id: string }) {
     }
 
     async function run(action: JobAction) {
-        if (publicClient === undefined || walletClient === undefined) return;
-        const loaded = await load();
-        if (loaded === undefined) return;
-        const { opus, status } = loaded;
+        if (busy || publicClient === undefined || walletClient === undefined) return;
+        setBusy(true);
         try {
+            const loaded = await load();
+            if (loaded === undefined) return;
+            const { opus } = loaded;
+            // Each call waits for its block, so the refreshed status no longer offers the same button.
+            const sent: `0x${string}`[] = [];
             if (action === "submit") {
                 const file = (document.getElementById("proof") as HTMLInputElement).files?.[0];
                 if (file === undefined) throw new Error("Choose the deliverable file");
                 const hash = proofHash(new Uint8Array(await file.arrayBuffer()));
-                await opus.submit(jobId, hash, (await opus.job(jobId)).budget);
+                sent.push(
+                    await confirmed(publicClient, await opus.submit(jobId, hash, (await opus.job(jobId)).budget))
+                );
             } else if (action === "approve") {
-                await opus.approve(jobId);
+                sent.push(await confirmed(publicClient, await opus.approve(jobId)));
             } else if (action === "object") {
-                await opus.object(jobId, textHash(objection));
+                sent.push(await confirmed(publicClient, await opus.object(jobId, textHash(objection))));
             } else if (action === "extendReview") {
-                await opus.extendReview(jobId, Number(extension));
+                sent.push(await confirmed(publicClient, await opus.extendReview(jobId, Number(extension))));
             } else if (action === "postDeposit") {
-                await opus.postDepositWithPermit(jobId);
+                sent.push(await confirmed(publicClient, await opus.postDepositWithPermit(jobId)));
             } else if (action === "withdraw") {
                 const who = walletClient.account?.address;
                 if (who === undefined) throw new Error("Connect a wallet");
-                if ((await opus.claimableOnInstance(who)) > 0n) await opus.withdrawFromInstance();
+                if ((await opus.claimableOnInstance(who)) > 0n) {
+                    sent.push(await confirmed(publicClient, await opus.withdrawFromInstance()));
+                }
                 if ((await opus.claimableOnEvaluator(addresses.usdc, who)) > 0n) {
-                    await opus.withdrawFromEvaluator(addresses.usdc);
+                    sent.push(await confirmed(publicClient, await opus.withdrawFromEvaluator(addresses.usdc)));
                 }
             }
-            toast.success(action);
+            const last = sent.at(-1);
+            setLastTx({ action, url: last === undefined ? undefined : explorerTx(addresses.chainId, last) });
+            toast.success(`${actionLabel(action)}: done`);
             await load();
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "The transaction failed");
+        } finally {
+            setBusy(false);
         }
     }
 
@@ -141,14 +162,20 @@ function JobScreen({ id }: { id: string }) {
                         {shown.map((action) => (
                             <button
                                 key={action}
-                                className={primaryButtonClass}
+                                className={`${primaryButtonClass} disabled:opacity-50`}
                                 type="button"
+                                disabled={busy}
                                 onClick={() => void run(action)}
                             >
-                                {action}
+                                {busy ? "Waiting for the wallet and the chain…" : actionLabel(action)}
                             </button>
                         ))}
-                        <button className={secondaryButtonClass} type="button" onClick={() => void load()}>
+                        <button
+                            className={`${secondaryButtonClass} disabled:opacity-50`}
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void load()}
+                        >
                             Refresh status
                         </button>
                     </>
@@ -165,6 +192,19 @@ function JobScreen({ id }: { id: string }) {
         >
             <div className="space-y-3">
                 <p>{view}</p>
+                {lastTx !== undefined && (
+                    <p className="text-sm">
+                        {actionLabel(lastTx.action)}: done
+                        {lastTx.url !== undefined && (
+                            <>
+                                {" "}
+                                <a className="underline" href={lastTx.url} target="_blank" rel="noreferrer">
+                                    view on Polygonscan
+                                </a>
+                            </>
+                        )}
+                    </p>
+                )}
                 {pane === "proof" ? (
                     <label className="block text-sm">
                         Deliverable file
