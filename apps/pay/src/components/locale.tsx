@@ -54,7 +54,7 @@ export function LanguageSelect() {
     return (
         <select
             aria-label={t("nav.language")}
-            className="rounded-md border border-line bg-white py-1 pl-2 pr-7 text-[13px] font-medium text-ink-soft hover:border-ink-soft"
+            className="rounded-md border border-line bg-white py-1 pl-2 pr-7 text-[14.5px] font-medium text-ink-soft hover:border-ink-soft"
             value={locale}
             onChange={(event) => {
                 if (isLocale(event.target.value)) setLocale(event.target.value);

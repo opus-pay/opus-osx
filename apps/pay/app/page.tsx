@@ -196,8 +196,8 @@ export default function DraftPage() {
                     </Field>
                     {link !== "" && (
                         <div>
-                            <span className="text-[13px] font-semibold text-emerald">{t("draft.copiedNote")}</span>
-                            <p className="m-0 mt-1.5 break-all rounded-lg bg-canvas px-3 py-2.5 font-mono text-[12.5px] text-ink-soft">
+                            <span className="text-[14.5px] font-semibold text-emerald">{t("draft.copiedNote")}</span>
+                            <p className="m-0 mt-1.5 break-all rounded-lg bg-canvas px-3 py-2.5 font-mono text-[14px] text-ink-soft">
                                 {link}
                             </p>
                         </div>
@@ -211,7 +211,7 @@ export default function DraftPage() {
 function Field({ label, children }: { label: string; children: ReactNode }) {
     return (
         <label className="block">
-            <span className="text-[13px] font-semibold text-ink-soft">{label}</span>
+            <span className="text-[14.5px] font-semibold text-ink-soft">{label}</span>
             {children}
         </label>
     );

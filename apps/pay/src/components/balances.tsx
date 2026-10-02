@@ -16,9 +16,9 @@ function short(address: Address): string {
 
 function Amount({ value, size }: { value: bigint | undefined; size: "md" | "lg" }) {
     return (
-        <span className={`${size === "lg" ? "text-[24px] font-bold" : "text-[17px] font-semibold"}`}>
+        <span className={`${size === "lg" ? "text-[28px] font-bold" : "text-[19px] font-semibold"}`}>
             {value === undefined ? "…" : usdcText(value)}
-            <span className="ml-1 text-[12.5px] font-medium text-muted">USDC</span>
+            <span className="ml-1 text-[14px] font-medium text-muted">USDC</span>
         </span>
     );
 }
@@ -37,20 +37,20 @@ function Party({
     const { t } = useLocale();
     return (
         <div className="flex min-w-0 flex-col gap-1 rounded-xl border border-line p-3">
-            <div className="flex items-center gap-2 text-[13px] font-semibold text-ink-soft">
+            <div className="flex items-center gap-2 text-[14.5px] font-semibold text-ink-soft">
                 {label}
                 {you && (
-                    <span className="rounded-full bg-cobalt-wash px-2 text-[11.5px] font-semibold text-cobalt">
+                    <span className="rounded-full bg-cobalt-wash px-2 text-[13px] font-semibold text-cobalt">
                         {t("you")}
                     </span>
                 )}
             </div>
             {who === undefined || who === zeroAddress ? (
-                <div className="font-mono text-[12.5px] text-muted">{t("money.notSet")}</div>
+                <div className="font-mono text-[14px] text-muted">{t("money.notSet")}</div>
             ) : (
                 <button
                     type="button"
-                    className="group inline-flex items-center gap-1.5 self-start font-mono text-[12.5px] text-muted hover:text-ink"
+                    className="group inline-flex items-center gap-1.5 self-start font-mono text-[14px] text-muted hover:text-ink"
                     title={`${getAddress(who)} (${t("money.copyHint")})`}
                     aria-label={`${label} ${getAddress(who)} (${t("money.copyHint")})`}
                     onClick={() =>
@@ -125,7 +125,7 @@ export function Balances({
             }`}
         >
             <div
-                className={`flex items-center gap-1.5 text-[13px] font-semibold ${
+                className={`flex items-center gap-1.5 text-[14.5px] font-semibold ${
                     locked ? "text-emerald" : "text-ink-soft"
                 }`}
             >
@@ -133,7 +133,7 @@ export function Balances({
                 {t("money.escrow")}
             </div>
             <Amount value={escrow.amount} size="lg" />
-            <div className="text-[12.5px] leading-snug text-muted">{escrow.note}</div>
+            <div className="text-[14px] leading-snug text-muted">{escrow.note}</div>
         </div>
     );
 
