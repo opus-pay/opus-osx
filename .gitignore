@@ -28,3 +28,6 @@ slither-report.json
 
 .DS_Store
 
+
+# Demo recordings are hosted on YouTube, not in git
+docs/grant/*.mp4

@@ -4,7 +4,7 @@ OPUS is an ERC-8183 escrow with no administrator and no protocol fee. A client l
 
 Block explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com).
 
-Each run below is a numbered **Step** in this record. The job number is the id the escrow instance gave the job on chain, read from its `JobCreated` event. The two differ from Step 6 on, because on-chain job 6 was a rehearsal of the payment-link run and is not listed here.
+Steps are numbered 1–6 in this record. The job number is the id the chain gave the job. Step 6 is on-chain job 7, because on-chain job 6 was a rehearsal of the same payment-link run.
 
 ## Contracts
 
@@ -130,7 +130,7 @@ The client filled in the payment link form in the OPUS pay app and sent the link
 | Client | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) |
 | Provider | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) |
 | Budget | 5.00 USDC, set by the client before the review rules |
-| Review rules | `smallNoArbiter`: paid automatically 1 hour after submission unless the client objects |
+| Review rules | `smallNoArbiter`: paid automatically 1 hour after submission. This preset has no arbiter, so an objection resolves to the default, which is payment |
 | Agreement | "Deliver a text file whose contents are exactly: Amoy client quote." |
 | Deliverable | [`AmoyClientQuote.txt`](AmoyClientQuote.txt), keccak256 `0x52baa0e5f62955a6f6412081035036f5a0bd99d235d0c3ebd20ff30f6a1dd770` |
 
@@ -143,7 +143,7 @@ The client filled in the payment link form in the OPUS pay app and sent the link
 | submit | Provider | 12:37:09 | [`0x0f08a15e4a432eb1e2957f89990fc20838c1968f0851a5deb4b09b0d1c7593ef`](https://amoy.polygonscan.com/tx/0x0f08a15e4a432eb1e2957f89990fc20838c1968f0851a5deb4b09b0d1c7593ef) |
 | approve | Client | 12:37:54 | [`0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef`](https://amoy.polygonscan.com/tx/0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef) |
 
-The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it has no transaction of its own. The `submit` input carries job id 7 and the deliverable hash above, which is the keccak256 of `AmoyClientQuote.txt`. The whole run took three minutes. The client paid 0.0243955 POL in gas over five transactions and the provider 0.0022593 POL, both under one US cent at the time.
+The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it has no transaction of its own. The `submit` input carries job id 7 and the deliverable hash above, which is the keccak256 of `AmoyClientQuote.txt`. The whole run took three minutes. The client paid 0.0243955 POL in gas over five transactions and the provider 0.0022593 POL, each under one US cent at any POL price below USD 0.37.
 
 Known wallet display issue: the evaluator's `approve(address,uint256)` has the same function selector (`0x095ea7b3`) as the ERC-20 and ERC-721 `approve`. MetaMask therefore showed the client's approval as a token permission request. The call itself is correct, and the funds moved as shown above. Renaming the function is planned before mainnet, and the rename needs a new deployment.
 
