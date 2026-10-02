@@ -1,28 +1,55 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* OPUS pay: cool paper, navy ink, cobalt for actions, emerald for money that is held or paid. */
+@theme {
+    --color-canvas: #edf0f4;
+    --color-ink: #16213a;
+    --color-ink-soft: #3a4560;
+    --color-muted: #5e6a80;
+    --color-line: #d6dce6;
+    --color-cobalt: #2d55e0;
+    --color-cobalt-deep: #2143b8;
+    --color-cobalt-wash: #eef2fd;
+    --color-emerald: #0e8a66;
+    --color-emerald-wash: #e7f5ef;
+    --color-amber: #b45309;
+    --color-amber-wash: #fdf3e6;
+    --color-chain: #6b3fd4;
+    --color-chain-wash: #f1ecfc;
+}
+
+@theme inline {
+    --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+    --font-mono: var(--font-code), ui-monospace, monospace;
+}
+
 body {
     margin: 0;
-    background: #f6f4ef;
-    color: #1c1917;
-    font-family: ui-sans-serif, system-ui, sans-serif;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
 }
 
 button,
 a.pay-button {
     cursor: pointer;
-    transition: background-color 80ms ease, box-shadow 80ms ease, transform 80ms ease;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
-button:hover,
-a.pay-button:hover {
-    box-shadow: 0 0 0 3px #ea580c;
+button:disabled {
+    cursor: not-allowed;
 }
 
-button:active,
-a.pay-button:active {
-    background-color: #9a3412;
-    color: #fff;
-    box-shadow: 0 0 0 4px #7c2d12;
-    transform: translateY(1px);
+:focus-visible {
+    outline: 2px solid var(--color-cobalt);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
 }

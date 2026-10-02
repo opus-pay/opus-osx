@@ -1,13 +1,22 @@
 import type { JobStatusName, PhaseName } from "@opus/sdk";
+import { Check } from "lucide-react";
 
 import { jobProgress, type StepState } from "../lib/progress";
 
-const STYLE: Record<StepState, string> = {
-    done: "border border-stone-900 text-stone-900",
-    current: "bg-stone-900 text-white",
-    alert: "bg-amber-600 text-white",
-    todo: "border border-dashed border-stone-300 text-stone-400",
-    passed: "border border-stone-300 text-stone-400",
+const DOT: Record<StepState, string> = {
+    done: "border-emerald bg-emerald text-white",
+    current: "border-cobalt bg-white text-cobalt ring-4 ring-cobalt-wash",
+    alert: "border-amber bg-amber text-white ring-4 ring-amber-wash",
+    todo: "border-line bg-white text-muted",
+    passed: "border-line bg-canvas text-muted",
+};
+
+const LABEL: Record<StepState, string> = {
+    done: "text-ink-soft",
+    current: "font-semibold text-cobalt",
+    alert: "font-semibold text-amber",
+    todo: "text-muted",
+    passed: "text-muted line-through",
 };
 
 /** Where the job stands among its five stages. `onChain` is false while the link is still being signed. */
@@ -22,18 +31,33 @@ export function JobProgress({
 }) {
     const steps = jobProgress(status, phase, onChain);
     return (
-        <ol className="flex flex-nowrap items-center gap-1 overflow-x-auto text-[13px]" aria-label="Job progress">
-            {steps.map((step, i) => (
-                <li key={step.label} className="flex shrink-0 items-center gap-1">
-                    {i > 0 && <span className="h-px w-2 bg-stone-300" aria-hidden />}
-                    <span
-                        className={`whitespace-nowrap rounded-full px-2 py-0.5 ${STYLE[step.state]}`}
-                        aria-current={step.state === "current" || step.state === "alert" ? "step" : undefined}
-                    >
-                        {step.state === "done" ? "✓" : `${i + 1}.`} {step.label}
-                    </span>
-                </li>
-            ))}
+        <ol className="m-0 grid list-none grid-cols-5 p-0" aria-label="Job progress">
+            {steps.map((step, i) => {
+                const reached = step.state !== "todo";
+                return (
+                    <li key={step.label} className="relative flex flex-col items-center">
+                        {i > 0 && (
+                            <span
+                                className={`absolute right-1/2 top-[13px] h-0.5 w-full ${
+                                    reached ? "bg-emerald" : "bg-line"
+                                }`}
+                                aria-hidden
+                            />
+                        )}
+                        <span
+                            className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 text-[12.5px] font-semibold tabular-nums ${
+                                DOT[step.state]
+                            }`}
+                            aria-current={step.state === "current" || step.state === "alert" ? "step" : undefined}
+                        >
+                            {step.state === "done" ? <Check size={15} strokeWidth={3} aria-hidden /> : i + 1}
+                        </span>
+                        <span className={`mt-1.5 whitespace-nowrap text-[12.5px] ${LABEL[step.state]}`}>
+                            {step.label}
+                        </span>
+                    </li>
+                );
+            })}
         </ol>
     );
 }
