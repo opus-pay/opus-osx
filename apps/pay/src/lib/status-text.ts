@@ -1,5 +1,7 @@
 import type { JobAction, JobStatusName, PhaseName } from "@opus/sdk";
 
+import { formatUnits } from "viem";
+
 import { countdown } from "./proof";
 
 type CoreStatus = JobStatusName;
@@ -56,12 +58,16 @@ export function actionLabel(action: JobAction): string {
     return ACTION_TEXT[action] ?? action;
 }
 
-/** What the budget of this job is doing right now. */
+/**
+ * What this job actually holds in escrow right now, and a note on the agreed amount.
+ * Only a funded or submitted job holds USDC; before funding and after settlement it holds none.
+ */
 export function escrowFor(status: CoreStatus, budget: bigint): { amount: bigint; note: string } {
-    if (status === "Open") return { amount: budget, note: "agreed, not locked yet" };
-    if (status === "Funded" || status === "Submitted") return { amount: budget, note: "locked in escrow" };
-    if (status === "Completed") return { amount: budget, note: "paid to the provider" };
-    return { amount: budget, note: "returned to the client" };
+    const agreed = `${formatUnits(budget, 6)} USDC`;
+    if (status === "Funded" || status === "Submitted") return { amount: budget, note: "locked for this job" };
+    if (status === "Open") return { amount: 0n, note: `nothing locked yet, ${agreed} agreed` };
+    if (status === "Completed") return { amount: 0n, note: `released, ${agreed} paid to the provider` };
+    return { amount: 0n, note: `released, ${agreed} returned to the client` };
 }
 
 const DISPUTE =

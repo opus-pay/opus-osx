@@ -22,6 +22,7 @@ import {
     type FundingAction,
     type FundingStep,
 } from "../../src/lib/funding";
+import { escrowFor } from "../../src/lib/status-text";
 import { plainTerms } from "../../src/lib/terms";
 import { explorerTx } from "../../src/lib/tx";
 import { addresses } from "../../src/lib/wagmi";
@@ -186,10 +187,7 @@ function OpenLink({ token }: { token: string }) {
                 <Balances
                     client={sides.client}
                     provider={sides.provider}
-                    escrow={{
-                        amount: amountForDraft(terms),
-                        note: isFunded ? "locked in escrow" : "agreed, not locked yet",
-                    }}
+                    escrow={escrowFor(isFunded ? "Funded" : "Open", amountForDraft(terms))}
                     me={mine}
                     tick={tick}
                 />
