@@ -28,7 +28,7 @@ These files support OPUS's funding request to the Polygon Community Treasury. OP
 - [x] Fill the TODOs in `APPLICATION.md` and `FORUM_POST.md` (contact, team). Only the YouTube link remains.
 - [ ] Upload the demo video (`SharedPaymentLink.mp4`, kept out of git) to YouTube and put the link in place of the three `TODO (YouTube link)` markers
 - [ ] Make the repository public, and check its whole git history for keys first (for example with gitleaks)
-- [ ] Get at least two audit quotes and replace the M1 estimate with the one you accept
+- [ ] Get at least two audit quotes, including the re-check of fixes, and replace the M1 estimate with the one you accept. What must be settled before the code freeze is in [`docs/audit/PRE_AUDIT_FREEZE.md`](../audit/PRE_AUDIT_FREEZE.md)
 ***REMOVED***
 - [ ] Set up a wallet used only for OPUS grant funds, and keep a record of every conversion and payment for tax
 - [ ] Keep `APPLICATION.ko.md` in step with `APPLICATION.md`
