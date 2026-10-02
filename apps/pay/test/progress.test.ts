@@ -3,18 +3,30 @@ import { expect } from "chai";
 import { jobProgress } from "../src/lib/progress";
 import { escrowFor, roleGuide } from "../src/lib/status-text";
 
-const states = (status: Parameters<typeof jobProgress>[0], phase: Parameters<typeof jobProgress>[1]) =>
-    jobProgress(status, phase).map((step) => `${step.label}:${step.state}`);
+const states = (status: Parameters<typeof jobProgress>[0], phase: Parameters<typeof jobProgress>[1], onChain = true) =>
+    jobProgress(status, phase, onChain).map((step) => `${step.label}:${step.state}`);
 
 describe("job progress and role tabs (#28)", () => {
+    it("starts at the terms while nothing is on chain", () => {
+        expect(states("Open", "None", false)).to.deep.equal([
+            "Terms:current",
+            "Created:todo",
+            "Funded:todo",
+            "Submitted:todo",
+            "Settled:todo",
+        ]);
+    });
+
     it("marks the current stage", () => {
         expect(states("Open", "None")).to.deep.equal([
+            "Terms:done",
             "Created:current",
             "Funded:todo",
             "Submitted:todo",
             "Settled:todo",
         ]);
         expect(states("Submitted", "Submitted")).to.deep.equal([
+            "Terms:done",
             "Created:done",
             "Funded:done",
             "Submitted:current",
@@ -23,17 +35,18 @@ describe("job progress and role tabs (#28)", () => {
     });
 
     it("shows a dispute on the third stage", () => {
-        expect(states("Submitted", "Escalated")[2]).to.equal("Disputed:alert");
+        expect(states("Submitted", "Escalated")[3]).to.equal("Disputed:alert");
     });
 
     it("names how the job ended", () => {
         expect(states("Completed", "Resolved")).to.deep.equal([
+            "Terms:done",
             "Created:done",
             "Funded:done",
             "Submitted:done",
             "Paid:done",
         ]);
-        expect(states("Rejected", "Resolved").slice(2)).to.deep.equal(["Submitted:passed", "Refunded:done"]);
+        expect(states("Rejected", "Resolved").slice(3)).to.deep.equal(["Submitted:passed", "Refunded:done"]);
     });
 
     it("says where the budget is", () => {

@@ -136,7 +136,13 @@ function OpenLink({ token }: { token: string }) {
     return (
         <Stage
             title="Review the terms"
-            progress={<JobProgress status={isFunded ? "Funded" : "Open"} phase={isFunded ? "Funded" : "None"} />}
+            progress={
+                <JobProgress
+                    status={isFunded ? "Funded" : "Open"}
+                    phase={isFunded ? "Funded" : "None"}
+                    onChain={jobText !== ""}
+                />
+            }
             footer={
                 funded && jobText !== "" ? (
                     <a
