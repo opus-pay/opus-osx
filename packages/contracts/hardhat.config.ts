@@ -67,6 +67,9 @@ function getLedgerAccounts(): string[] {
             "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0",
             "0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be"
         );
+        // The dispute run also signs with a third HD account as the arbiter.
+        const arbiter = process.env.DISPUTE_ARBITER?.trim();
+        if (arbiter !== undefined && arbiter !== "") HardhatAccount.ledgerAddress.push(arbiter);
     }
     return HardhatAccount.ledgerAddress;
 }
