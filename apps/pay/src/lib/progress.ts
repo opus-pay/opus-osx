@@ -1,5 +1,7 @@
 import type { JobStatusName, PhaseName } from "@opus/sdk";
 
+import { translate, type Locale, type MessageKey } from "./i18n";
+
 export type StepState = "done" | "current" | "alert" | "todo" | "passed";
 
 const TERMINAL = new Set<JobStatusName>(["Completed", "Rejected", "Expired"]);
@@ -12,18 +14,26 @@ const TERMINAL = new Set<JobStatusName>(["Completed", "Rejected", "Expired"]);
 export function jobProgress(
     status: JobStatusName,
     phase: PhaseName,
-    onChain = true
+    onChain = true,
+    locale: Locale = "en"
 ): { label: string; state: StepState }[] {
+    const t = (key: MessageKey) => translate(locale, key);
     const disputed = phase === "Escalated" || phase === "ArbiterPending";
     const last =
         status === "Completed"
-            ? "Paid"
+            ? t("stage.paid")
             : status === "Rejected"
-            ? "Refunded"
+            ? t("stage.refunded")
             : status === "Expired"
-            ? "Expired"
-            : "Settled";
-    const labels = ["Terms", "Created", "Funded", disputed ? "Disputed" : "Submitted", last];
+            ? t("stage.expired")
+            : t("stage.settled");
+    const labels = [
+        t("stage.terms"),
+        t("stage.created"),
+        t("stage.funded"),
+        disputed ? t("stage.disputed") : t("stage.submitted"),
+        last,
+    ];
     if (onChain && TERMINAL.has(status)) {
         return labels.map((label, i) => ({ label, state: i === 3 && status !== "Completed" ? "passed" : "done" }));
     }

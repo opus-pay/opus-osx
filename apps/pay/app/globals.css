@@ -19,8 +19,19 @@
     --color-chain-wash: #f1ecfc;
 }
 
+/* Latin from Schibsted Grotesk; Hangul, kana and Han from the system font for the page language. */
+:root {
+    --font-cjk: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR";
+}
+:root:lang(ja) {
+    --font-cjk: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP";
+}
+:root:lang(zh-Hans) {
+    --font-cjk: "PingFang SC", "Microsoft YaHei", "Noto Sans SC";
+}
+
 @theme inline {
-    --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+    --font-sans: var(--font-grotesk), var(--font-cjk), ui-sans-serif, system-ui, sans-serif;
     --font-mono: var(--font-code), ui-monospace, monospace;
 }
 

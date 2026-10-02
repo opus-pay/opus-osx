@@ -7,6 +7,7 @@ import { erc20Abi, getAddress, zeroAddress, type Address } from "viem";
 import { usePublicClient } from "wagmi";
 
 import { usdcText } from "../lib/terms";
+import { useLocale } from "./locale";
 import { addresses } from "../lib/wagmi";
 
 function short(address: Address): string {
@@ -33,29 +34,30 @@ function Party({
     value: bigint | undefined;
     you: boolean;
 }) {
+    const { t } = useLocale();
     return (
         <div className="flex min-w-0 flex-col gap-1 rounded-xl border border-line p-3">
             <div className="flex items-center gap-2 text-[13px] font-semibold text-ink-soft">
                 {label}
                 {you && (
                     <span className="rounded-full bg-cobalt-wash px-2 text-[11.5px] font-semibold text-cobalt">
-                        You
+                        {t("you")}
                     </span>
                 )}
             </div>
             {who === undefined || who === zeroAddress ? (
-                <div className="font-mono text-[12.5px] text-muted">not set</div>
+                <div className="font-mono text-[12.5px] text-muted">{t("money.notSet")}</div>
             ) : (
                 <button
                     type="button"
                     className="group inline-flex items-center gap-1.5 self-start font-mono text-[12.5px] text-muted hover:text-ink"
-                    title={`${getAddress(who)} (click to copy)`}
-                    aria-label={`Copy the ${label.toLowerCase()} address ${getAddress(who)}`}
+                    title={`${getAddress(who)} (${t("money.copyHint")})`}
+                    aria-label={`${label} ${getAddress(who)} (${t("money.copyHint")})`}
                     onClick={() =>
                         void navigator.clipboard
                             .writeText(getAddress(who))
-                            .then(() => toast.success(`${label} address copied`))
-                            .catch(() => toast.error("Could not copy the address"))
+                            .then(() => toast.success(t("money.copied", { role: label })))
+                            .catch(() => toast.error(t("money.copyFailed")))
                     }
                 >
                     {short(who)}
@@ -88,6 +90,7 @@ export function Balances({
     me?: Address;
     tick: number;
 }) {
+    const { t } = useLocale();
     const publicClient = usePublicClient();
     const [held, setHeld] = useState<{ client?: bigint; provider?: bigint }>({});
     useEffect(() => {
@@ -127,7 +130,7 @@ export function Balances({
                 }`}
             >
                 {locked ? <Lock size={14} strokeWidth={2.5} aria-hidden /> : <LockOpen size={14} aria-hidden />}
-                Escrow
+                {t("money.escrow")}
             </div>
             <Amount value={escrow.amount} size="lg" />
             <div className="text-[12.5px] leading-snug text-muted">{escrow.note}</div>
@@ -136,11 +139,11 @@ export function Balances({
 
     return (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_1.3fr_auto_1fr]">
-            <Party label="Client" who={client} value={held.client} you={isMe(client)} />
+            <Party label={t("roleTitle.client")} who={client} value={held.client} you={isMe(client)} />
             <Flow />
             {escrowTile}
             <Flow />
-            <Party label="Provider" who={provider} value={held.provider} you={isMe(provider)} />
+            <Party label={t("roleTitle.provider")} who={provider} value={held.provider} you={isMe(provider)} />
         </div>
     );
 }

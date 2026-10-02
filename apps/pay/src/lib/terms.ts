@@ -1,21 +1,29 @@
+import { translate, type Locale, type MessageKey } from "./i18n";
+
 /**
  * The sentence the counterparty reads. The duration is the preset review window.
  * Only the client can object, so the provider, and a reader with no wallet yet, read "the client".
  */
-export function plainTerms(reviewWindowSeconds: number, reader: "client" | "provider" | "anyone" = "client"): string {
-    const who = reader === "client" ? "you object" : "the client objects";
-    return `Paid automatically ${span(reviewWindowSeconds)} after submission unless ${who}.`;
+export function plainTerms(
+    reviewWindowSeconds: number,
+    reader: "client" | "provider" | "anyone" = "client",
+    locale: Locale = "en"
+): string {
+    return translate(locale, reader === "client" ? "terms.you" : "terms.client", {
+        span: span(reviewWindowSeconds, locale),
+    });
 }
 
-const PRESET_TEXT: Record<string, string> = {
-    smallNoArbiter: "Small job, no arbiter",
-    aiToPerson: "AI agent to a person",
-    aiToAi: "AI agent to AI agent",
+const PRESET: Record<string, MessageKey> = {
+    smallNoArbiter: "preset.smallNoArbiter",
+    aiToPerson: "preset.aiToPerson",
+    aiToAi: "preset.aiToAi",
 };
 
 /** A preset's name in plain words; unknown names pass through. */
-export function presetLabel(name: string): string {
-    return PRESET_TEXT[name] ?? name;
+export function presetLabel(name: string, locale: Locale = "en"): string {
+    const key = PRESET[name];
+    return key === undefined ? name : translate(locale, key);
 }
 
 /** USDC with at least two decimals, and more only when the amount has them: "6.00", "0.505". */
@@ -27,14 +35,13 @@ export function usdcText(units: bigint): string {
     return `${negative ? "-" : ""}${whole.toString()}.${fraction}`;
 }
 
-function span(seconds: number): string {
+function span(seconds: number, locale: Locale): string {
     if (seconds % 86400 === 0 && seconds >= 86400) {
         const days = seconds / 86400;
-        return days === 1 ? "1 day" : `${days} days`;
+        return days === 1 ? translate(locale, "span.day") : translate(locale, "span.days", { n: days });
     }
     const hours = seconds / 3600;
-    if (hours === 1) return "1 hour";
-    return `${hours} hours`;
+    return hours === 1 ? translate(locale, "span.hour") : translate(locale, "span.hours", { n: hours });
 }
 
 const pad = (value: number) => String(value).padStart(2, "0");

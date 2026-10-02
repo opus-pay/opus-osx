@@ -1,5 +1,6 @@
 import type { JobAction, JobStatusName, PhaseName } from "@opus/sdk";
 
+import { translate, type Locale, type MessageKey } from "./i18n";
 import { countdown } from "./proof";
 import { usdcText } from "./terms";
 
@@ -8,116 +9,95 @@ type Phase = PhaseName;
 
 export type Role = "client" | "provider";
 
-const PHASE_TEXT: Record<Phase, string> = {
-    None: "not set up",
-    Funded: "waiting for the deliverable",
-    Submitted: "client reviewing",
-    Escalated: "disputed, waiting for deposits",
-    ArbiterPending: "waiting for the arbiter",
-    Resolved: "settled",
-};
-
-const DEADLINE_TEXT: Partial<Record<Phase, string>> = {
-    Funded: "Submit within",
-    Submitted: "Review ends in",
-    Escalated: "Deposits due in",
-    ArbiterPending: "Ruling due in",
+const DEADLINE: Partial<Record<Phase, MessageKey>> = {
+    Funded: "deadline.Funded",
+    Submitted: "deadline.Submitted",
+    Escalated: "deadline.Escalated",
+    ArbiterPending: "deadline.ArbiterPending",
 };
 
 /**
  * One status line a person can read: the escrow state, the review stage, and what the next deadline is for.
  * The core status and the evaluator phase share names, so each gets its own label.
  */
-export function statusLine(input: {
-    status: CoreStatus;
-    phase: Phase;
-    nextDeadline: bigint | null;
-    now: bigint;
-}): string {
-    const parts = [`Escrow: ${input.status}`, `Review: ${PHASE_TEXT[input.phase]}`];
-    const label = DEADLINE_TEXT[input.phase];
+export function statusLine(
+    input: { status: CoreStatus; phase: Phase; nextDeadline: bigint | null; now: bigint },
+    locale: Locale = "en"
+): string {
+    const t = (key: MessageKey) => translate(locale, key);
+    const parts = [`${t("fact.escrow")}: ${input.status}`, `${t("fact.review")}: ${t(`phase.${input.phase}`)}`];
+    const label = DEADLINE[input.phase];
     if (input.nextDeadline !== null && label !== undefined) {
-        parts.push(`${label} ${countdown(input.nextDeadline, input.now)}`);
+        parts.push(`${t(label)} ${countdown(input.nextDeadline, input.now, locale)}`);
     }
     return parts.join(" · ");
 }
 
-/** The same facts as `statusLine`, as label and value pairs for a two-column list. */
-export function statusFacts(input: {
-    status: CoreStatus;
-    phase: Phase;
-    nextDeadline: bigint | null;
-    now: bigint;
-}): { label: string; value: string }[] {
+/** The job's state, review stage and next deadline, as label and value pairs for a two-column list. */
+export function statusFacts(
+    input: { status: CoreStatus; phase: Phase; nextDeadline: bigint | null; now: bigint },
+    locale: Locale = "en"
+): { label: string; value: string }[] {
+    const t = (key: MessageKey) => translate(locale, key);
     const facts = [
-        { label: "Job", value: input.status },
-        { label: "Review", value: capitalize(PHASE_TEXT[input.phase]) },
+        { label: t("fact.job"), value: t(`status.${input.status}`) },
+        { label: t("fact.review"), value: capitalize(t(`phase.${input.phase}`)) },
     ];
-    const label = DEADLINE_TEXT[input.phase];
+    const label = DEADLINE[input.phase];
     if (input.nextDeadline !== null && label !== undefined) {
-        facts.push({ label, value: countdown(input.nextDeadline, input.now) });
+        facts.push({ label: t(label), value: countdown(input.nextDeadline, input.now, locale) });
     }
     return facts;
 }
 
-const ACTION_TEXT: Partial<Record<JobAction, string>> = {
-    submit: "Submit the deliverable",
-    approve: "Approve and pay",
-    object: "Object",
-    extendReview: "Extend the review",
-    postDeposit: "Post the deposit",
-    withdraw: "Withdraw",
-    claimRefund: "Take the refund",
+const ACTION: Partial<Record<JobAction, MessageKey>> = {
+    submit: "action.submit",
+    approve: "action.approve",
+    object: "action.object",
+    extendReview: "action.extendReview",
+    postDeposit: "action.postDeposit",
+    withdraw: "action.withdraw",
+    claimRefund: "action.claimRefund",
 };
 
 /** Button text for a job action. */
-export function actionLabel(action: JobAction): string {
-    return ACTION_TEXT[action] ?? action;
+export function actionLabel(action: JobAction, locale: Locale = "en"): string {
+    const key = ACTION[action];
+    return key === undefined ? action : translate(locale, key);
 }
 
 /**
  * What this job actually holds in escrow right now, and a note on the agreed amount.
  * Only a funded or submitted job holds USDC; before funding and after settlement it holds none.
  */
-export function escrowFor(status: CoreStatus, budget: bigint): { amount: bigint; note: string } {
-    const agreed = `${usdcText(budget)} USDC`;
-    if (status === "Funded" || status === "Submitted") return { amount: budget, note: "locked for this job" };
-    if (status === "Open") return { amount: 0n, note: `${agreed} agreed` };
-    if (status === "Completed") return { amount: 0n, note: `${agreed} paid to the provider` };
-    return { amount: 0n, note: `${agreed} returned to the client` };
+export function escrowFor(status: CoreStatus, budget: bigint, locale: Locale = "en"): { amount: bigint; note: string } {
+    const amount = `${usdcText(budget)} USDC`;
+    if (status === "Funded" || status === "Submitted") {
+        return { amount: budget, note: translate(locale, "escrow.locked") };
+    }
+    if (status === "Open") return { amount: 0n, note: translate(locale, "escrow.agreed", { amount }) };
+    if (status === "Completed") return { amount: 0n, note: translate(locale, "escrow.paid", { amount }) };
+    return { amount: 0n, note: translate(locale, "escrow.returned", { amount }) };
 }
 
-const DISPUTE =
-    "The job is in dispute. If the preset asks for a deposit, post it before the deadline. A side that does not post loses.";
-
 /** One sentence telling this role what is happening and what it can do. */
-export function roleGuide(role: Role, status: CoreStatus, phase: Phase, autoComplete: boolean): string {
-    if (phase === "Escalated") return DISPUTE;
-    if (phase === "ArbiterPending") return "Both sides are in. Waiting for the arbiter's ruling.";
-    if (role === "client") {
-        if (status === "Open") return "Finish the steps on the payment link to lock the USDC.";
-        if (status === "Funded") {
-            return "Waiting for the provider to submit. If nothing arrives in time, the USDC comes back to you.";
-        }
-        if (status === "Submitted") {
-            return autoComplete
-                ? "Check the deliverable. Approve to pay now, or object before the review ends. Silence pays the provider."
-                : "Check the deliverable. Approve to pay now, or object before the review ends.";
-        }
-        if (status === "Completed") return "Done. The provider was paid.";
-        if (status === "Rejected") return "Done. The USDC came back to you.";
-        return "The job expired. The USDC comes back to you.";
-    }
-    if (status === "Open") return "Waiting for the client to lock the USDC.";
-    if (status === "Funded") return "The USDC is locked. Do the work and submit the deliverable before the deadline.";
-    if (status === "Submitted") {
-        return autoComplete
-            ? "Submitted. Waiting for the client. If the client says nothing, you are paid when the review ends."
-            : "Submitted. Waiting for the client's review.";
-    }
-    if (status === "Completed") return "Done. You were paid.";
-    if (status === "Rejected") return "Done. The USDC went back to the client.";
-    return "The job expired. The USDC went back to the client.";
+export function roleGuide(
+    role: Role,
+    status: CoreStatus,
+    phase: Phase,
+    autoComplete: boolean,
+    locale: Locale = "en"
+): string {
+    const t = (key: MessageKey) => translate(locale, key);
+    if (phase === "Escalated") return t("guide.dispute");
+    if (phase === "ArbiterPending") return t("guide.arbiter");
+    const side = role === "client" ? "client" : "provider";
+    if (status === "Open") return t(`guide.${side}.open`);
+    if (status === "Funded") return t(`guide.${side}.funded`);
+    if (status === "Submitted") return t(autoComplete ? `guide.${side}.submittedAuto` : `guide.${side}.submitted`);
+    if (status === "Completed") return t(`guide.${side}.completed`);
+    if (status === "Rejected") return t(`guide.${side}.rejected`);
+    return t(`guide.${side}.expired`);
 }
 
 function capitalize(text: string): string {

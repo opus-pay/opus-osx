@@ -6,9 +6,11 @@ import { Toaster } from "sonner";
 import { WagmiProvider } from "wagmi";
 
 import { addresses, wagmiConfig } from "../lib/wagmi";
+import { LanguageSelect, LocaleProvider, useLocale } from "./locale";
 
 function Frame({ children }: { children: ReactNode }) {
-    const network = addresses.chainId === 80002 ? "Polygon Amoy testnet" : "Polygon";
+    const { t } = useLocale();
+    const network = addresses.chainId === 80002 ? t("nav.testnet") : t("nav.mainnet");
     return (
         <>
             <header className="border-b border-line bg-white">
@@ -16,9 +18,12 @@ function Frame({ children }: { children: ReactNode }) {
                     <a href="/" className="text-[17px] font-bold tracking-tight text-ink no-underline">
                         OPUS
                     </a>
-                    <span className="rounded-full bg-chain-wash px-3 py-1 text-[12.5px] font-medium text-chain">
-                        {network}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-chain-wash px-3 py-1 text-[12.5px] font-medium text-chain">
+                            {network}
+                        </span>
+                        <LanguageSelect />
+                    </div>
                 </div>
             </header>
             <main className="mx-auto max-w-[44rem] px-4 py-8">{children}</main>
@@ -30,13 +35,21 @@ export function Providers({ children }: { children: ReactNode }) {
     const [queryClient] = useState(() => new QueryClient());
     const [ready, setReady] = useState(false);
     useEffect(() => setReady(true), []);
-    if (!ready) return <Frame>{children}</Frame>;
-    return (
-        <WagmiProvider config={wagmiConfig}>
-            <QueryClientProvider client={queryClient}>
+    if (!ready) {
+        return (
+            <LocaleProvider>
                 <Frame>{children}</Frame>
-                <Toaster position="bottom-right" />
-            </QueryClientProvider>
-        </WagmiProvider>
+            </LocaleProvider>
+        );
+    }
+    return (
+        <LocaleProvider>
+            <WagmiProvider config={wagmiConfig}>
+                <QueryClientProvider client={queryClient}>
+                    <Frame>{children}</Frame>
+                    <Toaster position="bottom-right" />
+                </QueryClientProvider>
+            </WagmiProvider>
+        </LocaleProvider>
     );
 }

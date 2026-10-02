@@ -27,8 +27,11 @@ import { escrowFor } from "../../src/lib/status-text";
 import { dateTime, plainTerms, presetLabel, usdcText } from "../../src/lib/terms";
 import { explorerTx } from "../../src/lib/tx";
 import { addresses } from "../../src/lib/wagmi";
+import { useLocale } from "../../src/components/locale";
+import { localizeError } from "../../src/lib/i18n";
 
 function OpenLink({ token }: { token: string }) {
+    const { locale, t } = useLocale();
     const params = useSearchParams();
     const [jobText, setJobText] = useState(params.get("job") ?? "");
     const [funded, setFunded] = useState(false);
@@ -41,13 +44,13 @@ function OpenLink({ token }: { token: string }) {
     const publicClient = usePublicClient();
     const { data: walletClient } = useWalletClient();
     const decoded = useMemo(() => {
-        if (token === "") return { error: "Open the shared link to see the terms." };
+        if (token === "") return { error: t("open.noLink") };
         try {
             return { draft: decodeDraft(token, Math.floor(Date.now() / 1000)) };
         } catch (error) {
-            return { error: error instanceof Error ? error.message : "The link could not be read" };
+            return { error: error instanceof Error ? localizeError(locale, error.message) : t("open.unreadable") };
         }
-    }, [token]);
+    }, [token, locale, t]);
 
     const draft = decoded.draft;
     useEffect(() => {
@@ -69,7 +72,7 @@ function OpenLink({ token }: { token: string }) {
 
     if (decoded.error !== undefined || draft === undefined) {
         return (
-            <Stage title="Review the terms" footer={<span />}>
+            <Stage title={t("open.title")} footer={<span />}>
                 <p>{decoded.error}</p>
             </Stage>
         );
@@ -89,11 +92,11 @@ function OpenLink({ token }: { token: string }) {
     async function act() {
         if (busy) return;
         if (publicClient === undefined || walletClient === undefined || mine === undefined) {
-            toast.error("Connect the wallet that will sign");
+            toast.error(t("open.needWallet"));
             return;
         }
         if (role === undefined) {
-            toast.error("Switch to the client or the provider on this link");
+            toast.error(t("open.wrongWallet"));
             return;
         }
         const opus = new Opus(publicClient, addresses, walletClient);
@@ -106,7 +109,7 @@ function OpenLink({ token }: { token: string }) {
         }
         setNext(step);
         if (step.signer !== role) {
-            toast.error(`Waiting for the ${step.signer} to ${step.action}`);
+            toast.error(t("open.waitingFor", { role: t(`role.${step.signer}`), step: stepLabel(step.action, locale) }));
             return;
         }
         setBusy(true);
@@ -120,9 +123,9 @@ function OpenLink({ token }: { token: string }) {
             setJobText(result.jobId.toString());
             setDone((list) => [...list, { action: step.action, hash: result.hash }]);
             if (step.action === "fund") setFunded(true);
-            toast.success(`${stepLabel(step.action)}: done`);
+            toast.success(t("done", { what: stepLabel(step.action, locale) }));
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : "The transaction failed");
+            toast.error(error instanceof Error ? error.message : t("tx.failed"));
         } finally {
             setBusy(false);
             setTick((value) => value + 1);
@@ -137,7 +140,7 @@ function OpenLink({ token }: { token: string }) {
 
     return (
         <Stage
-            title="Review the terms"
+            title={t("open.title")}
             progress={
                 <JobProgress
                     status={isFunded ? "Funded" : "Open"}
@@ -149,17 +152,17 @@ function OpenLink({ token }: { token: string }) {
                 <>
                     {isFunded ? (
                         <a className={`${primaryButtonClass} pay-button no-underline`} href={`/jobs/${jobText}`}>
-                            Open job {jobText}
+                            {t("open.openJob", { id: jobText })}
                         </a>
                     ) : isConnected ? (
                         <button className={primaryButtonClass} type="button" disabled={busy} onClick={() => void act()}>
                             {busy
-                                ? "Waiting for the wallet and the chain…"
+                                ? t("button.busy")
                                 : waitingOnOther
-                                ? "Check again"
+                                ? t("open.checkAgain")
                                 : next === undefined
-                                ? "Sign the next step"
-                                : `Sign: ${stepLabel(next.action)}`}
+                                ? t("open.signNext")
+                                : t("open.sign", { step: stepLabel(next.action, locale) })}
                         </button>
                     ) : (
                         <button
@@ -167,16 +170,18 @@ function OpenLink({ token }: { token: string }) {
                             type="button"
                             onClick={() => connect({ connector: connectors[0] })}
                         >
-                            Connect wallet
+                            {t("button.connect")}
                         </button>
                     )}
                     {!isFunded && next !== undefined && position !== undefined && (
                         <p className="m-0 ml-auto text-right text-[13px] leading-snug text-muted">
                             <span className="font-semibold text-ink-soft">
-                                Step {position.index} of {position.total}
+                                {t("open.stepOf", { index: position.index, total: position.total })}
                             </span>
                             <br />
-                            {waitingOnOther ? `Waiting for the ${next.signer} to sign` : `The ${next.signer} signs`}
+                            {waitingOnOther
+                                ? t("open.waitingSign", { role: t(`role.${next.signer}`) })
+                                : t("open.signs", { role: t(`role.${next.signer}`) })}
                         </p>
                     )}
                 </>
@@ -185,33 +190,33 @@ function OpenLink({ token }: { token: string }) {
             <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-3">
                     <p className="m-0 text-[17px] font-semibold leading-snug text-ink">
-                        {plainTerms(config.reviewWindow, role ?? "anyone")}
+                        {plainTerms(config.reviewWindow, role ?? "anyone", locale)}
                     </p>
                     <Facts
                         items={[
-                            { label: "Amount", value: `${usdcText(amountForDraft(terms))} USDC` },
-                            { label: "Review rules", value: presetLabel(terms.preset) },
-                            { label: "Link expires", value: dateTime(terms.expiresAt) },
+                            { label: t("open.amount"), value: `${usdcText(amountForDraft(terms))} USDC` },
+                            { label: t("open.rules"), value: presetLabel(terms.preset, locale) },
+                            { label: t("open.expires"), value: dateTime(terms.expiresAt) },
                         ]}
                     />
                 </div>
                 <section>
-                    <SectionLabel>Agreement</SectionLabel>
+                    <SectionLabel>{t("open.agreement")}</SectionLabel>
                     <p className="m-0 whitespace-pre-wrap rounded-lg bg-canvas px-4 py-3 text-ink">{terms.agreement}</p>
                 </section>
                 <section>
-                    <SectionLabel>Where the money is</SectionLabel>
+                    <SectionLabel>{t("money.title")}</SectionLabel>
                     <Balances
                         client={sides.client}
                         provider={sides.provider}
-                        escrow={escrowFor(isFunded ? "Funded" : "Open", amountForDraft(terms))}
+                        escrow={escrowFor(isFunded ? "Funded" : "Open", amountForDraft(terms), locale)}
                         me={mine}
                         tick={tick}
                     />
                 </section>
                 {done.length > 0 && (
                     <section>
-                        <SectionLabel>Signed so far</SectionLabel>
+                        <SectionLabel>{t("open.signed")}</SectionLabel>
                         <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
                             {done.map((item) => {
                                 const url =
@@ -219,7 +224,7 @@ function OpenLink({ token }: { token: string }) {
                                 const chip = (
                                     <>
                                         <Check size={13} strokeWidth={3} aria-hidden />
-                                        {stepLabel(item.action)}
+                                        {stepLabel(item.action, locale)}
                                         {url !== undefined && <ExternalLink size={12} aria-hidden />}
                                     </>
                                 );
@@ -235,7 +240,7 @@ function OpenLink({ token }: { token: string }) {
                                                 href={url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                title="Open on Polygonscan"
+                                                title={t("tx.open")}
                                             >
                                                 {chip}
                                             </a>
@@ -273,9 +278,10 @@ function useHashToken(): string | undefined {
 
 export default function OpenPage() {
     const token = useHashToken();
-    if (token === undefined) return <p>Loading the link</p>;
+    const { t } = useLocale();
+    if (token === undefined) return <p>{t("open.loading")}</p>;
     return (
-        <Suspense fallback={<p>Loading the link</p>}>
+        <Suspense fallback={<p>{t("open.loading")}</p>}>
             <OpenLink key={token} token={token} />
         </Suspense>
     );

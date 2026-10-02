@@ -11,22 +11,16 @@ import {
 import { type Address, type Hash } from "viem";
 
 import { parties, type Draft } from "./draft";
+import { translate, type Locale } from "./i18n";
 import { confirmed } from "./tx";
 
 export type FundingAction = "create" | "quote" | "configure" | "fund";
 
 export type FundingStep = { action: FundingAction; signer: "client" | "provider" };
 
-const STEP_TEXT: Record<FundingAction, string> = {
-    create: "Open the job",
-    quote: "Set the amount",
-    configure: "Set the review rules",
-    fund: "Lock the USDC",
-};
-
 /** Plain words for a funding step, shown before the wallet asks for a signature. */
-export function stepLabel(action: FundingAction): string {
-    return STEP_TEXT[action];
+export function stepLabel(action: FundingAction, locale: Locale = "en"): string {
+    return translate(locale, `step.${action}`);
 }
 
 /** Every signature a link needs, in order. Lock 2 quotes before configure; lock 1 lets the provider quote after it. */
