@@ -24,7 +24,7 @@ import {
     type FundingStep,
 } from "../../src/lib/funding";
 import { escrowFor } from "../../src/lib/status-text";
-import { plainTerms } from "../../src/lib/terms";
+import { dateTime, plainTerms } from "../../src/lib/terms";
 import { explorerTx } from "../../src/lib/tx";
 import { addresses } from "../../src/lib/wagmi";
 
@@ -191,7 +191,7 @@ function OpenLink({ token }: { token: string }) {
                         items={[
                             { label: "Amount", value: `${terms.amountUsd} USD` },
                             { label: "Review preset", value: terms.preset },
-                            { label: "Link expires", value: new Date(terms.expiresAt * 1000).toLocaleString() },
+                            { label: "Link expires", value: dateTime(terms.expiresAt) },
                         ]}
                     />
                 </div>
