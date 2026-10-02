@@ -338,13 +338,20 @@ The other lock, "Provider quote, locked after the first quote", makes the provid
 
 **Purpose.** The client objects during review. Both sides post a dispute deposit. The arbiter rules, and the loser's deposit pays the arbiter. This is the path `presetAiToAi` does not take. It has not been run on Amoy.
 
-**Test.** Not run on Amoy. The person who runs it chooses an arbiter that is neither the client nor the provider. Use `presetPersonToAny` so silence escalates instead of auto-completing. Keep the window constants unchanged.
+**Test.** Not run on Amoy. `scripts/amoyDispute.ts` runs the whole case in a few minutes, inside the one-hour windows. The person who runs it chooses an arbiter that is neither the client nor the provider: a third Ledger HD account with about 0.02 POL. The job uses `presetPersonToAny` with a 0.1 USDC dispute deposit and no evaluation fee, so silence escalates instead of auto-completing. The window constants stay unchanged.
 
-1. The client creates the job and configures it with that preset, including the dispute deposit.
-2. The client funds 1 USDC.
+```bash
+DISPUTE_ARBITER=0x... yarn contracts dispute:amoy                       # run, or continue a stopped run
+DISPUTE_ARBITER=0x... DISPUTE_PHASE=status yarn contracts dispute:amoy  # print the job and hashes
+```
+
+`DISPUTE_RULING=reject` (the default) refunds the client and pays the provider's deposit to the arbiter. `DISPUTE_RULING=complete` pays the provider and pays the client's deposit to the arbiter. The client needs 1.1 USDC and about 0.1 POL; the provider needs 0.1 USDC and about 0.03 POL. Each hash is saved to `deploy/amoy/dispute.json` and `amoy-live-results.json` as soon as it is mined.
+
+1. The client creates the job, sets the budget, approves the 0.1 USDC deposit and configures the preset. In confirmation mode `configure` takes the client's deposit.
+2. The client approves and funds 1 USDC.
 3. The provider submits.
-4. The client calls `object` during the review window.
-5. The side that has not yet posted calls `postDeposit`.
+4. The client calls `object` during the review window. Its deposit is already held, so the case waits for the provider.
+5. The provider approves and posts its 0.1 USDC deposit. The case goes to the arbiter.
 6. The arbiter calls `rule`.
 
 **Result.** No Amoy transaction yet.
