@@ -26,7 +26,7 @@ import { plainTerms } from "../../src/lib/terms";
 import { explorerTx } from "../../src/lib/tx";
 import { addresses } from "../../src/lib/wagmi";
 
-function OpenLink() {
+function OpenLink({ token }: { token: string }) {
     const params = useSearchParams();
     const [jobText, setJobText] = useState(params.get("job") ?? "");
     const [funded, setFunded] = useState(false);
@@ -38,7 +38,6 @@ function OpenLink() {
     const { connect, connectors } = useConnect();
     const publicClient = usePublicClient();
     const { data: walletClient } = useWalletClient();
-    const token = typeof window === "undefined" ? "" : window.location.hash.slice(1);
     const decoded = useMemo(() => {
         if (token === "") return { error: "Open the shared link to see the terms." };
         try {
@@ -129,13 +128,15 @@ function OpenLink() {
     }
 
     const sides = parties(terms);
+    // Funded only once this link has its own job on chain.
+    const isFunded = funded && jobText !== "";
     const position = next === undefined ? undefined : stepPosition(terms.lock, next.action);
     const waitingOnOther = next !== undefined && role !== undefined && next.signer !== role;
 
     return (
         <Stage
             title="Review the terms"
-            progress={<JobProgress status={funded ? "Funded" : "Open"} phase={funded ? "Funded" : "None"} />}
+            progress={<JobProgress status={isFunded ? "Funded" : "Open"} phase={isFunded ? "Funded" : "None"} />}
             footer={
                 funded && jobText !== "" ? (
                     <a
@@ -181,7 +182,7 @@ function OpenLink() {
                     provider={sides.provider}
                     escrow={{
                         amount: amountForDraft(terms),
-                        note: funded ? "locked in escrow" : "agreed, not locked yet",
+                        note: isFunded ? "locked in escrow" : "agreed, not locked yet",
                     }}
                     me={mine}
                     tick={tick}
@@ -222,10 +223,28 @@ function opposite(role: "client" | "provider"): "client" | "provider" {
     return role === "client" ? "provider" : "client";
 }
 
+/**
+ * Pasting a new link into a tab that already shows one changes only the `#` part,
+ * which does not reload the page. Keying the screen by the link starts it fresh,
+ * so the job number and "funded" state of the previous link never carry over.
+ */
+function useHashToken(): string | undefined {
+    const [token, setToken] = useState<string | undefined>(undefined);
+    useEffect(() => {
+        const read = () => setToken(window.location.hash.slice(1));
+        read();
+        window.addEventListener("hashchange", read);
+        return () => window.removeEventListener("hashchange", read);
+    }, []);
+    return token;
+}
+
 export default function OpenPage() {
+    const token = useHashToken();
+    if (token === undefined) return <p>Loading the link</p>;
     return (
         <Suspense fallback={<p>Loading the link</p>}>
-            <OpenLink />
+            <OpenLink key={token} token={token} />
         </Suspense>
     );
 }
