@@ -24,7 +24,7 @@ import {
     type FundingStep,
 } from "../../src/lib/funding";
 import { escrowFor } from "../../src/lib/status-text";
-import { dateTime, plainTerms } from "../../src/lib/terms";
+import { dateTime, plainTerms, presetLabel, usdcText } from "../../src/lib/terms";
 import { explorerTx } from "../../src/lib/tx";
 import { addresses } from "../../src/lib/wagmi";
 
@@ -185,12 +185,12 @@ function OpenLink({ token }: { token: string }) {
             <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-3">
                     <p className="m-0 text-[17px] font-semibold leading-snug text-ink">
-                        {plainTerms(config.reviewWindow)}
+                        {plainTerms(config.reviewWindow, role ?? "anyone")}
                     </p>
                     <Facts
                         items={[
-                            { label: "Amount", value: `${terms.amountUsd} USD` },
-                            { label: "Review preset", value: terms.preset },
+                            { label: "Amount", value: `${usdcText(amountForDraft(terms))} USDC` },
+                            { label: "Review rules", value: presetLabel(terms.preset) },
                             { label: "Link expires", value: dateTime(terms.expiresAt) },
                         ]}
                     />

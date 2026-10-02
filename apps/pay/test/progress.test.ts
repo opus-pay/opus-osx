@@ -50,14 +50,14 @@ describe("job progress and role tabs (#28)", () => {
     });
 
     it("shows only what escrow really holds", () => {
-        expect(escrowFor("Open", 2_000_000n)).to.deep.equal({ amount: 0n, note: "nothing locked yet, 2 USDC agreed" });
+        expect(escrowFor("Open", 2_000_000n)).to.deep.equal({ amount: 0n, note: "2.00 USDC agreed" });
         expect(escrowFor("Funded", 2_000_000n)).to.deep.equal({ amount: 2_000_000n, note: "locked for this job" });
         expect(escrowFor("Submitted", 2_000_000n).amount).to.equal(2_000_000n);
         expect(escrowFor("Completed", 2_000_000n)).to.deep.equal({
             amount: 0n,
-            note: "released, 2 USDC paid to the provider",
+            note: "2.00 USDC paid to the provider",
         });
-        expect(escrowFor("Expired", 2_000_000n).note).to.equal("released, 2 USDC returned to the client");
+        expect(escrowFor("Expired", 2_000_000n).note).to.equal("2.00 USDC returned to the client");
     });
 
     it("tells each side what to do", () => {

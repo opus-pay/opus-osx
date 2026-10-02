@@ -7,6 +7,7 @@ import { isAddress } from "viem";
 import { Stage, StageTab, fieldClass, primaryButtonClass, secondaryButtonClass } from "../src/components/stage";
 import { suggestCriteria, type CriteriaKind } from "../src/lib/criteria";
 import { encodeDraft, linkFor, PRESETS, type Draft, type PresetName } from "../src/lib/draft";
+import { presetLabel } from "../src/lib/terms";
 
 const STEPS = ["Parties", "Payment", "Agreement"] as const;
 
@@ -107,7 +108,7 @@ export default function DraftPage() {
             )}
             {step === 1 && (
                 <div className="flex flex-col gap-5" role="tabpanel">
-                    <Field label="Amount in USD">
+                    <Field label="Amount in USDC">
                         <input
                             className={fieldClass}
                             value={amountUsd}
@@ -124,7 +125,7 @@ export default function DraftPage() {
                             <option value={1}>Provider quote, locked after the first quote</option>
                         </select>
                     </Field>
-                    <Field label="Evaluator preset">
+                    <Field label="Review rules">
                         <select
                             className={fieldClass}
                             value={preset}
@@ -132,7 +133,7 @@ export default function DraftPage() {
                         >
                             {PRESETS.map((name) => (
                                 <option key={name} value={name}>
-                                    {name}
+                                    {presetLabel(name)}
                                 </option>
                             ))}
                         </select>
