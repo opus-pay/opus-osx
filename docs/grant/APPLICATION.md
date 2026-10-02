@@ -65,7 +65,7 @@ client ── payment link ──> terms reviewed and signed
 | :--- | :--- | :--- |
 | Contracts: escrow, factory, review contract, forwarder | Deployed and source-verified on Amoy | [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) |
 | Test jobs on Amoy | 6 runs: approval, refund after expiry, auto-payout after silence, refund after no submission, no-gas-token wallets, payment link | Every transaction hash in [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) |
-| Contract tests | 145 test cases (unit, ERC-8183 conformance, invariants) at commit `8792e3dd` | `packages/contracts/test`, run with `yarn contracts test` |
+| Contract tests | 146 test cases (unit, ERC-8183 conformance, invariants), all passing at commit `36369b5f` | `packages/contracts/test`, run with `yarn contracts test` |
 | Audit scope | About 1,100 lines: `OptimisticEvaluator` 676, `OpusAgenticCommerce` 330, `OpusACPFactory` 69, `OpusForwarder` 9, plus interfaces | `packages/contracts/contracts` |
 | ERC-8183 conformance map | Each MUST and SHOULD mapped to code and tests | `packages/contracts/docs/ERC8183_CONFORMANCE.md` |
 | TypeScript SDK, keeper, relayer, indexer | Written. The SDK, keeper and relayer ran in the Amoy jobs | `packages/sdk`, `packages/keeper`, `packages/relayer`, `packages/indexer` |

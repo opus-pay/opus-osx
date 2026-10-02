@@ -67,7 +67,7 @@ OPUS는 서로 모르는 두 사람이 1~1,000달러짜리 작은 일을, 서로
 | :--- | :--- | :--- |
 | 컨트랙트: 에스크로, 팩토리, 검토 컨트랙트, 포워더 | Amoy 배포·소스 검증 완료 | [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) |
 | Amoy 테스트 작업 | 6건: 승인, 만료 후 환불, 무응답 후 자동 지급, 미제출 시 환불, 가스 토큰 없는 지갑, 결제 링크 | [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md)의 모든 트랜잭션 해시 |
-| 컨트랙트 테스트 | 테스트 케이스 145개(단위, ERC-8183 적합성, 불변식), 커밋 `8792e3dd` 기준 | `packages/contracts/test`, `yarn contracts test`로 실행 |
+| 컨트랙트 테스트 | 테스트 케이스 146개(단위, ERC-8183 적합성, 불변식), 커밋 `36369b5f`에서 모두 통과 | `packages/contracts/test`, `yarn contracts test`로 실행 |
 | 감사 범위 | 약 1,100줄: `OptimisticEvaluator` 676, `OpusAgenticCommerce` 330, `OpusACPFactory` 69, `OpusForwarder` 9, 그 외 인터페이스 | `packages/contracts/contracts` |
 | ERC-8183 적합성 표 | MUST·SHOULD 조항마다 코드와 테스트를 연결 | `packages/contracts/docs/ERC8183_CONFORMANCE.md` |
 | TypeScript SDK, 키퍼, 릴레이어, 인덱서 | 작성 완료. SDK·키퍼·릴레이어는 Amoy 작업에서 실행됨 | `packages/sdk`, `packages/keeper`, `packages/relayer`, `packages/indexer` |

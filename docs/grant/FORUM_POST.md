@@ -33,7 +33,7 @@ When someone pays a stranger far away to buy, ship, film or fetch something, one
 | Wallets holding no POL | 5 | Provider paid; the relayer paid the gas |
 | Payment link, 5 USDC | 7 | Provider paid; gas 0.0244 POL for the client and 0.0023 POL for the provider |
 
-Every hash: [docs/grant/AMOY_EVIDENCE.md](https://github.com/opus-pay/opus-osx/blob/main/docs/grant/AMOY_EVIDENCE.md). The contracts are source-verified on Amoy Polygonscan, with 145 contract test cases including ERC-8183 conformance and invariants. Not yet shown on chain: the counterparty opening a link created by the other side, and a dispute. Both will run before M1 ends.
+Every hash: [docs/grant/AMOY_EVIDENCE.md](https://github.com/opus-pay/opus-osx/blob/main/docs/grant/AMOY_EVIDENCE.md). The contracts are source-verified on Amoy Polygonscan, with 146 contract test cases including ERC-8183 conformance and invariants. Not yet shown on chain: the counterparty opening a link created by the other side, and a dispute. Both will run before M1 ends.
 
 ## Why Polygon
 
