@@ -11,7 +11,7 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 * No protocol fee; evaluators are paid the same whatever the outcome
 * No token at launch
 
-> Status: contracts through #22 are deployed and verified on Polygon Amoy. ERC-8183 is a draft standard.
+> Status: the contracts are deployed and verified on Polygon Amoy, and six test jobs have run there end to end ([evidence](./docs/grant/AMOY_EVIDENCE.md)). The SDK, keeper, relayer and payment-link app were used in those runs, and the indexer is written. Not yet audited; no mainnet deployment. ERC-8183 is a draft standard.
 
 ## Amoy (issue #22)
 
@@ -29,6 +29,7 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The refer
 | Document | Contents |
 | :--- | :--- |
 | [`WHITEPAPER.md`](./WHITEPAPER.md) / [`WHITEPAPER.ko.md`](./WHITEPAPER.ko.md) | Design, evaluation, security model, products, risks (English / Korean; kept in sync) |
+| [`docs/grant/`](./docs/grant/README.md) | Polygon grant pack: application, forum post, Amoy evidence |
 | [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D29 |
 | [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#75 with tasks and acceptance criteria |
 | [`.cursor/AGENTS.md`](./.cursor/AGENTS.md) | Context for AI coding agents: invariants I-1–I-9, rules, decisions |
@@ -40,18 +41,18 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The refer
 | [`packages/indexer/README.md`](./packages/indexer/README.md) | Indexer: job queries and the events it stores (Korean) |
 | [`apps/pay/README.md`](./apps/pay/README.md) | Payment-link app module spec (Korean) |
 
-## Planned packages
+## Packages
 
-| Path | Purpose | Milestone |
-| :--- | :--- | :--- |
-| `packages/contracts` | ERC-8183 core, factory, `OptimisticEvaluator`, forwarder | M1–M3 |
-| `packages/sdk` | TypeScript SDK (viem) | M4 |
-| `packages/keeper` | Calls deadline triggers; earns tips | M4 |
-| `packages/relayer` | Gasless relaying (ERC-2771) | M4 |
-| `packages/indexer` | Job and instance index for status pages | M4 |
-| `apps/pay` | Escrow payment links | M5 |
-| `apps/errands` | Cross-border errand service | M6 |
-| `apps/portal` | OPUS Portal: directory of services built on OPUS | M12 |
+| Path | Purpose | Milestone | Status |
+| :--- | :--- | :--- | :--- |
+| `packages/contracts` | ERC-8183 core, factory, `OptimisticEvaluator`, forwarder | M1–M3 | Deployed on Amoy; audit pending |
+| `packages/sdk` | TypeScript SDK (viem) | M4 | Written |
+| `packages/keeper` | Calls deadline triggers; earns tips | M4 | Written; ran on Amoy |
+| `packages/relayer` | Gasless relaying (ERC-2771) | M4 | Written; ran on Amoy |
+| `packages/indexer` | Job and instance index for status pages | M4 | Written |
+| `apps/pay` | Escrow payment links | M5 | Written; ran on Amoy |
+| `apps/errands` | Cross-border errand service | M6 | Planned |
+| `apps/portal` | OPUS Portal: directory of services built on OPUS | M12 | Planned |
 
 Apps use `@opus/sdk` only. Contract types come from typechain output; never copy ABIs by hand.
 
