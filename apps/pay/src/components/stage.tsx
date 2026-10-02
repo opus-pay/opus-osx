@@ -30,7 +30,7 @@ export function Stage({
                     </div>
                 </div>
             )}
-            <div className="min-h-0 flex-1 overflow-auto px-7 py-5 text-[15px] leading-relaxed">{children}</div>
+            <div className="min-h-0 flex-1 overflow-auto px-7 py-4 text-[15px] leading-relaxed">{children}</div>
             <footer className="flex shrink-0 items-center gap-2 border-t border-line bg-white px-7 py-4">
                 {footer}
             </footer>
@@ -67,7 +67,7 @@ export function StageTab({
 /** A label and its value, listed in two columns. */
 export function Facts({ items }: { items: { label: string; value: ReactNode }[] }) {
     return (
-        <dl className="m-0 grid grid-cols-[8.5rem_1fr] items-baseline gap-x-4 gap-y-2.5">
+        <dl className="m-0 grid grid-cols-[8.5rem_1fr] items-baseline gap-x-4 gap-y-1.5">
             {items.map((item) => (
                 <div key={item.label} className="contents">
                     <dt className={LABEL_CLASS}>{item.label}</dt>

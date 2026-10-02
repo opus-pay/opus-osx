@@ -182,8 +182,8 @@ function OpenLink({ token }: { token: string }) {
                 </>
             }
         >
-            <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-3">
                     <p className="m-0 text-[17px] font-semibold leading-snug text-ink">
                         {plainTerms(config.reviewWindow)}
                     </p>
@@ -212,23 +212,32 @@ function OpenLink({ token }: { token: string }) {
                 {done.length > 0 && (
                     <section>
                         <SectionLabel>Signed so far</SectionLabel>
-                        <ul className="m-0 list-none space-y-1.5 p-0 text-[14px]">
+                        <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
                             {done.map((item) => {
                                 const url =
                                     item.hash === undefined ? undefined : explorerTx(addresses.chainId, item.hash);
+                                const chip = (
+                                    <>
+                                        <Check size={13} strokeWidth={3} aria-hidden />
+                                        {stepLabel(item.action)}
+                                        {url !== undefined && <ExternalLink size={12} aria-hidden />}
+                                    </>
+                                );
+                                const chipClass =
+                                    "inline-flex items-center gap-1 rounded-full bg-emerald-wash px-2.5 py-1 text-[12.5px] font-medium text-emerald no-underline";
                                 return (
-                                    <li key={item.action} className="flex items-center gap-2">
-                                        <Check className="text-emerald" size={16} strokeWidth={3} aria-hidden />
-                                        <span className="text-ink">{stepLabel(item.action)}</span>
-                                        {url !== undefined && (
+                                    <li key={item.action}>
+                                        {url === undefined ? (
+                                            <span className={chipClass}>{chip}</span>
+                                        ) : (
                                             <a
-                                                className="ml-auto inline-flex items-center gap-1 text-cobalt"
+                                                className={chipClass}
                                                 href={url}
                                                 target="_blank"
                                                 rel="noreferrer"
+                                                title="Open on Polygonscan"
                                             >
-                                                Polygonscan
-                                                <ExternalLink size={13} aria-hidden />
+                                                {chip}
                                             </a>
                                         )}
                                     </li>
