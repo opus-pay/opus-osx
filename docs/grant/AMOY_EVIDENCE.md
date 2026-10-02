@@ -4,6 +4,8 @@ OPUS is an ERC-8183 escrow with no administrator and no protocol fee. A client l
 
 Block explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com).
 
+Each run below is a numbered **Step** in this record. The job number is the id the escrow instance gave the job on chain, read from its `JobCreated` event. The two differ from Step 6 on, because on-chain job 6 was a rehearsal of the payment-link run and is not listed here.
+
 ## Contracts
 
 The deployed contracts are immutable for this record. Each address below opens the verified source.
@@ -16,41 +18,43 @@ The deployed contracts are immutable for this record. Each address below opens t
 | Optimistic evaluator | [`0x65819d9199144a66ec17ad39da6bebabc3eef585`](https://amoy.polygonscan.com/address/0x65819d9199144a66ec17ad39da6bebabc3eef585#code) |
 | Circle Amoy USDC | [`0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`](https://amoy.polygonscan.com/address/0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582) |
 
-## What these jobs show
+## What these steps show
 
 A non-zero evaluation fee moves when the client calls `configure`, while the job is still `Open`. `fund` locks the budget in the instance and does not move that fee. USDC uses 6 decimals.
 
-| Job | Ending | Budget | Evaluation fee |
-| :--- | :--- | :--- | :--- |
-| 1. Client approves | `Completed` | 1.00 USDC to the provider | None |
-| 2. Expiry refund | `Expired` | 1.00 USDC back to the client | 1.00 USDC back to the client. The keeper did not take it |
-| 3. Silent submission | `Completed` | 1.00 USDC to the provider | 0.50 USDC to the operator, 0.50 USDC tip to the keeper |
-| 4. No submission | `Rejected` | 1.00 USDC back to the client | 0.50 USDC to the operator, 0.50 USDC tip to the keeper |
-| 5. Gasless payment | `Completed` | 1.00 USDC to the provider | None. The signing wallets held no POL |
-| 6. Shared payment link | `Completed` | 5.00 USDC to the provider | None |
+| Step | On-chain job | Ending | Budget | Evaluation fee |
+| :--- | :--- | :--- | :--- | :--- |
+| 1. Client approves | 1 | `Completed` | 1.00 USDC to the provider | None |
+| 2. Expiry refund | 2 | `Expired` | 1.00 USDC back to the client | 1.00 USDC back to the client. The keeper did not take it |
+| 3. Silent submission | 3 | `Completed` | 1.00 USDC to the provider | 0.50 USDC to the operator, 0.50 USDC tip to the keeper |
+| 4. No submission | 4 | `Rejected` | 1.00 USDC back to the client | 0.50 USDC to the operator, 0.50 USDC tip to the keeper |
+| 5. Gasless payment | 5 | `Completed` | 1.00 USDC to the provider | None. The signing wallets held no POL |
+| 6. Shared payment link | 7 | `Completed` | 5.00 USDC to the provider | None |
 
-The keeper that sent jobs 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc). The deployer is [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba).
+The keeper that sent steps 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc). The deployer is [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba).
 
 ## Where the USDC went
 
 | Movement | Log | Transaction |
 | :--- | :--- | :--- |
-| Job 1: 1.00 USDC from the instance to the provider | `PaymentReleased` | [`0x9fb80d76…4c954f9c`](https://amoy.polygonscan.com/tx/0x9fb80d767d49a15db8cdab089a4afcc3a9a43274b1ad4b775471f3064c954f9c#eventlog) |
-| Job 2: 1.00 USDC from the client to the evaluator at `configure` | `Transfer` | [`0xfb663371…705ac7ea`](https://amoy.polygonscan.com/tx/0xfb66337163c5d92fa8f2fee7ada7138e9148ed49bc56415beb85061a705ac7ea#eventlog) |
-| Job 2: 1.00 USDC from the client to the instance at `fund` | `JobFunded` | [`0x527252d8…7fac9746`](https://amoy.polygonscan.com/tx/0x527252d85a65ed1df4443db139257871a210873553f63508806b705b7fac9746#eventlog) |
-| Job 2: 1.00 USDC from the instance to the client | `Refunded` | [`0x993153c5…790dcc1e`](https://amoy.polygonscan.com/tx/0x993153c5925677aa09201f46cafa0fa43913641cd9eadfaebbae616a790dcc1e#eventlog) |
-| Job 2: 1.00 USDC from the evaluator to the client | `Swept` | [`0x0725df71…83d63ad4`](https://amoy.polygonscan.com/tx/0x0725df716b5d395412ac5d102a066caeaf8e6be30eb9a678eb4eb9ae83d63ad4#eventlog) |
-| Job 3: 0.50 tip to the keeper, 0.50 fee to the operator, 1.00 budget to the provider | `TipPaid`, `FeePaid`, `PaymentReleased` | [`0x93a058e0…dbec7335`](https://amoy.polygonscan.com/tx/0x93a058e01f2f9ac447e0fd22a2ccc2eca9ae8dd2e557c1fc9668088fdbec7335#eventlog) |
-| Job 4: 0.50 tip to the keeper, 0.50 fee to the operator, 1.00 budget to the client | `TipPaid`, `FeePaid`, `Refunded` | [`0xab783631…7a6991ea`](https://amoy.polygonscan.com/tx/0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea#eventlog) |
-| Job 5: 1.00 USDC from the instance to the provider. The client and provider signed only | `PaymentReleased` | [`0x983c81d0…a45264b7`](https://amoy.polygonscan.com/tx/0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7#eventlog) |
-| Job 6: 5.00 USDC from the client to the instance at `fundWithPermit` | `JobFunded` | [`0x240ff0c2…b705537e`](https://amoy.polygonscan.com/tx/0x240ff0c20f66fb14be4bb5d07578f077d35676c0948b5a4269936471b705537e#eventlog) |
-| Job 6: 5.00 USDC from the instance to the provider | `PaymentReleased` | [`0x5f732701…f78849ef`](https://amoy.polygonscan.com/tx/0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef#eventlog) |
+| Step 1 (job 1): 1.00 USDC from the instance to the provider | `PaymentReleased` | [`0x9fb80d76…4c954f9c`](https://amoy.polygonscan.com/tx/0x9fb80d767d49a15db8cdab089a4afcc3a9a43274b1ad4b775471f3064c954f9c#eventlog) |
+| Step 2 (job 2): 1.00 USDC from the client to the evaluator at `configure` | `Transfer` | [`0xfb663371…705ac7ea`](https://amoy.polygonscan.com/tx/0xfb66337163c5d92fa8f2fee7ada7138e9148ed49bc56415beb85061a705ac7ea#eventlog) |
+| Step 2 (job 2): 1.00 USDC from the client to the instance at `fund` | `JobFunded` | [`0x527252d8…7fac9746`](https://amoy.polygonscan.com/tx/0x527252d85a65ed1df4443db139257871a210873553f63508806b705b7fac9746#eventlog) |
+| Step 2 (job 2): 1.00 USDC from the instance to the client | `Refunded` | [`0x993153c5…790dcc1e`](https://amoy.polygonscan.com/tx/0x993153c5925677aa09201f46cafa0fa43913641cd9eadfaebbae616a790dcc1e#eventlog) |
+| Step 2 (job 2): 1.00 USDC from the evaluator to the client | `Swept` | [`0x0725df71…83d63ad4`](https://amoy.polygonscan.com/tx/0x0725df716b5d395412ac5d102a066caeaf8e6be30eb9a678eb4eb9ae83d63ad4#eventlog) |
+| Step 3 (job 3): 0.50 tip to the keeper, 0.50 fee to the operator, 1.00 budget to the provider | `TipPaid`, `FeePaid`, `PaymentReleased` | [`0x93a058e0…dbec7335`](https://amoy.polygonscan.com/tx/0x93a058e01f2f9ac447e0fd22a2ccc2eca9ae8dd2e557c1fc9668088fdbec7335#eventlog) |
+| Step 4 (job 4): 0.50 tip to the keeper, 0.50 fee to the operator, 1.00 budget to the client | `TipPaid`, `FeePaid`, `Refunded` | [`0xab783631…7a6991ea`](https://amoy.polygonscan.com/tx/0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea#eventlog) |
+| Step 5 (job 5): 1.00 USDC from the instance to the provider. The client and provider signed only | `PaymentReleased` | [`0x983c81d0…a45264b7`](https://amoy.polygonscan.com/tx/0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7#eventlog) |
+| Step 6 (job 7): 5.00 USDC from the client to the instance at `fundWithPermit` | `JobFunded` | [`0x240ff0c2…b705537e`](https://amoy.polygonscan.com/tx/0x240ff0c20f66fb14be4bb5d07578f077d35676c0948b5a4269936471b705537e#eventlog) |
+| Step 6 (job 7): 5.00 USDC from the instance to the provider | `PaymentReleased` | [`0x5f732701…f78849ef`](https://amoy.polygonscan.com/tx/0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef#eventlog) |
 
-## Job 1. The client approves
+## Step 1. The client approves
+
+On-chain job: **1**
 
 The provider submitted and the client approved. The provider received the budget. There was no evaluation fee.
 
-| Step | Transaction |
+| Call | Transaction |
 | :--- | :--- |
 | createJob | [`0x069f81554874b63e4e599537dda0e3959bbbfc3a5cfc8e87ed14f3c7ca82d14d`](https://amoy.polygonscan.com/tx/0x069f81554874b63e4e599537dda0e3959bbbfc3a5cfc8e87ed14f3c7ca82d14d) |
 | configure | [`0xca64f3e128cb902d1a55fa32732b4d3fce1c3b13a22f1887ce201ff30f6defdd`](https://amoy.polygonscan.com/tx/0xca64f3e128cb902d1a55fa32732b4d3fce1c3b13a22f1887ce201ff30f6defdd) |
@@ -59,11 +63,13 @@ The provider submitted and the client approved. The provider received the budget
 | submit | [`0xbb89fc9ec436928def56f276708983fa01c053eb2b0f9d47bc87efc86b1771cf`](https://amoy.polygonscan.com/tx/0xbb89fc9ec436928def56f276708983fa01c053eb2b0f9d47bc87efc86b1771cf) |
 | approve | [`0x9fb80d767d49a15db8cdab089a4afcc3a9a43274b1ad4b775471f3064c954f9c`](https://amoy.polygonscan.com/tx/0x9fb80d767d49a15db8cdab089a4afcc3a9a43274b1ad4b775471f3064c954f9c) |
 
-## Job 2. Expiry returns the fee
+## Step 2. Expiry returns the fee
+
+On-chain job: **2**
 
 The provider never submitted. After expiry the client took the budget back and swept the unused evaluation fee. `configure` had already moved that fee to the evaluator.
 
-| Step | Transaction |
+| Call | Transaction |
 | :--- | :--- |
 | createJob | [`0xe4a2c4f2e68968d83401d734352956de3f68ca45f61f28ff608fecc36b3196dd`](https://amoy.polygonscan.com/tx/0xe4a2c4f2e68968d83401d734352956de3f68ca45f61f28ff608fecc36b3196dd) |
 | configure | [`0xfb66337163c5d92fa8f2fee7ada7138e9148ed49bc56415beb85061a705ac7ea`](https://amoy.polygonscan.com/tx/0xfb66337163c5d92fa8f2fee7ada7138e9148ed49bc56415beb85061a705ac7ea) |
@@ -71,11 +77,13 @@ The provider never submitted. After expiry the client took the budget back and s
 | claimRefund | [`0x993153c5925677aa09201f46cafa0fa43913641cd9eadfaebbae616a790dcc1e`](https://amoy.polygonscan.com/tx/0x993153c5925677aa09201f46cafa0fa43913641cd9eadfaebbae616a790dcc1e) |
 | sweep | [`0x0725df716b5d395412ac5d102a066caeaf8e6be30eb9a678eb4eb9ae83d63ad4`](https://amoy.polygonscan.com/tx/0x0725df716b5d395412ac5d102a066caeaf8e6be30eb9a678eb4eb9ae83d63ad4) |
 
-## Job 3. A keeper completes a silent submission
+## Step 3. A keeper completes a silent submission
+
+On-chain job: **3**
 
 The provider submitted. Nobody reviewed. A keeper that is not the deployer called `finalize`. The provider was paid, and the tip came out of the evaluation fee.
 
-| Step | Transaction |
+| Call | Transaction |
 | :--- | :--- |
 | createJob | [`0x80e0b0a9e852b93115bc5c2c871fde6a85b57c4979fc17e7e584ecef14ed0e0a`](https://amoy.polygonscan.com/tx/0x80e0b0a9e852b93115bc5c2c871fde6a85b57c4979fc17e7e584ecef14ed0e0a) |
 | configure | [`0xae1e0ac0f0609e7dbdfe8bdd7f42ad5df7ece969ba08e42f47f3d93a04975d34`](https://amoy.polygonscan.com/tx/0xae1e0ac0f0609e7dbdfe8bdd7f42ad5df7ece969ba08e42f47f3d93a04975d34) |
@@ -83,22 +91,26 @@ The provider submitted. Nobody reviewed. A keeper that is not the deployer calle
 | submit | [`0xb72db09f86abd8dce1f554de4e636127c1b019d94f07cf41191d271536c78118`](https://amoy.polygonscan.com/tx/0xb72db09f86abd8dce1f554de4e636127c1b019d94f07cf41191d271536c78118) |
 | finalize | [`0x93a058e01f2f9ac447e0fd22a2ccc2eca9ae8dd2e557c1fc9668088fdbec7335`](https://amoy.polygonscan.com/tx/0x93a058e01f2f9ac447e0fd22a2ccc2eca9ae8dd2e557c1fc9668088fdbec7335) |
 
-## Job 4. A keeper rejects a job with no submission
+## Step 4. A keeper rejects a job with no submission
+
+On-chain job: **4**
 
 The provider never submitted. The same keeper called `timeoutNoSubmission`. The budget returned to the client. The tip again came out of the evaluation fee.
 
-| Step | Transaction |
+| Call | Transaction |
 | :--- | :--- |
 | createJob | [`0x5e8bb10744f334abdb61f5ba0fe61ae938fd8ffd764a50d2fd00caad21693bef`](https://amoy.polygonscan.com/tx/0x5e8bb10744f334abdb61f5ba0fe61ae938fd8ffd764a50d2fd00caad21693bef) |
 | configure | [`0x503d32138cfb690873f17a2b549fbb58430ee23a394c55fb0e09ca0e167b4b40`](https://amoy.polygonscan.com/tx/0x503d32138cfb690873f17a2b549fbb58430ee23a394c55fb0e09ca0e167b4b40) |
 | fund | [`0x97e866a4da9cb314c8775e23bf28d2134ce28eced7d3a3ceca59a0a1ca552cb4`](https://amoy.polygonscan.com/tx/0x97e866a4da9cb314c8775e23bf28d2134ce28eced7d3a3ceca59a0a1ca552cb4) |
 | timeoutNoSubmission | [`0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea`](https://amoy.polygonscan.com/tx/0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea) |
 
-## Job 5. A wallet with no POL finishes the job
+## Step 5. A wallet with no POL finishes the job
+
+On-chain job: **5**
 
 The client [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonscan.com/address/0xF304B61b7889B3B11D9F074e049Ee022AcC8830e) and the provider [`0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3`](https://amoy.polygonscan.com/address/0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3) held no POL. They signed. The relayer [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) paid the gas. The provider received 1.00 USDC.
 
-| Step | Transaction |
+| Call | Transaction |
 | :--- | :--- |
 | createJob | [`0x2e174752817f82b9b4396e2908e46b8343464c4c10d5395b0206bc7e2582ae99`](https://amoy.polygonscan.com/tx/0x2e174752817f82b9b4396e2908e46b8343464c4c10d5395b0206bc7e2582ae99) |
 | configure | [`0x9c6af37508c3a91422abaa652c6ef5fe7f7b099d38b4ab9efe72475cc33d164e`](https://amoy.polygonscan.com/tx/0x9c6af37508c3a91422abaa652c6ef5fe7f7b099d38b4ab9efe72475cc33d164e) |
@@ -107,13 +119,14 @@ The client [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonsc
 | submit | [`0xf307c382a673baf4a03ac97b897432b16a49f681084405c7e0f09b7673905694`](https://amoy.polygonscan.com/tx/0xf307c382a673baf4a03ac97b897432b16a49f681084405c7e0f09b7673905694) |
 | approve | [`0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7`](https://amoy.polygonscan.com/tx/0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7) |
 
-## Job 6. Two wallets finish a job from one payment link
+## Step 6. Two wallets finish a job from one payment link
 
-The client filled in the payment link form in the OPUS pay app and sent the link. The terms travel in the link after `#`, so they never reach a server. The client opened the link, read the terms and signed each step from that page, which opened on-chain job **7**. The provider attached the deliverable file and submitted its hash. The client approved, and the provider received the full 5.00 USDC. No evaluation fee was charged.
+On-chain job: **7**
+
+The client filled in the payment link form in the OPUS pay app and sent the link. The terms travel in the link after `#`, so they never reach a server. The client opened the link, read the terms and signed each call from that page, which opened on-chain job 7. The provider attached the deliverable file and submitted its hash. The client approved, and the provider received the full 5.00 USDC. No evaluation fee was charged.
 
 | Term | Value |
 | :--- | :--- |
-| On-chain job id | 7 |
 | Client | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) |
 | Provider | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) |
 | Budget | 5.00 USDC, set by the client before the review rules |
@@ -121,7 +134,7 @@ The client filled in the payment link form in the OPUS pay app and sent the link
 | Agreement | "Deliver a text file whose contents are exactly: Amoy client quote." |
 | Deliverable | [`AmoyClientQuote.txt`](AmoyClientQuote.txt), keccak256 `0x52baa0e5f62955a6f6412081035036f5a0bd99d235d0c3ebd20ff30f6a1dd770` |
 
-| Step | Signer | Time (UTC, 2026-10-01) | Transaction |
+| Call | Signer | Time (UTC, 2026-10-01) | Transaction |
 | :--- | :--- | :--- | :--- |
 | createJob | Client | 12:34:50 | [`0x27235c1f3fb657500e3cca9aeaca05eaabcec30fca2386e787de42fe93dc696c`](https://amoy.polygonscan.com/tx/0x27235c1f3fb657500e3cca9aeaca05eaabcec30fca2386e787de42fe93dc696c) |
 | quote (`setBudget`) | Client | 12:35:09 | [`0x82c6ccc4034b89d7eb51a65e5f58810ef0dd0d176ceba133f6e582fdf65ffc45`](https://amoy.polygonscan.com/tx/0x82c6ccc4034b89d7eb51a65e5f58810ef0dd0d176ceba133f6e582fdf65ffc45) |
