@@ -45,7 +45,7 @@ The protocol stays free, and the pilot charges no fee. Revenue comes from an opt
 
 ## Ask and milestones
 
-We propose the USD 35,000 as an investment rather than a gift. Before the first tranche, the founder signs a letter committing to a SAFE. OPUS's company, formed at the seed round (or within 18 months at the latest), issues the Treasury that SAFE for the full amount, with the valuation cap agreed up front. Until then the founder receives the funds personally, keeps them in a wallet used only for OPUS, and lists every payment from it in the reports.
+We propose the USD 35,000 as an investment rather than a gift. Before the first tranche, the founder signs a letter committing to a SAFE. OPUS's company, formed at the seed round (or within 18 months at the latest), issues the Treasury that SAFE for the full amount, with the valuation cap agreed up front. If the Treasury's programme does not take equity, we accept the same amount as a standard grant on the same milestones. Until then the founder receives the funds personally, keeps them in a wallet used only for OPUS, and lists every payment from it in the reports.
 
 | Milestone | Deliverable | Check | USD |
 | :--- | :--- | :--- | :--- |

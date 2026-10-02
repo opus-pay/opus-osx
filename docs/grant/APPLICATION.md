@@ -5,7 +5,7 @@
 | Project | OPUS, escrow for small cross-border jobs paid in USDC |
 | Category | Stablecoin payments; agentic commerce (ERC-8183) |
 | Network | Polygon PoS. Running on Polygon Amoy (chain id 80002) today |
-| Ask | USD 35,000, paid in POL in three milestone tranches, as an investment that converts to equity (SAFE) when the company is formed |
+| Ask | USD 35,000, paid in POL in three milestone tranches, preferably as an investment that converts to equity (SAFE) when the company is formed, or as a standard grant if the Treasury's programme does not take equity |
 | Use of funds | External security audit, then mainnet launch and a public pilot |
 | Repository | [github.com/opus-pay/opus-osx](https://github.com/opus-pay/opus-osx) |
 | Licence | MIT (`LICENSE.md`). The Solidity files, on Amoy and in the repository, still carry a BUSL-1.1 header so that they match the verified deployment; the header changes to MIT at the post-audit redeploy (M1) |
@@ -154,6 +154,7 @@ We will post an update on the Polygon forum every month during the grant, at eac
     3. The valuation cap and any discount are agreed with the Treasury before the first tranche.
     4. If no company is formed within 18 months of the first tranche, the founder forms one then to issue the SAFE.
     5. The structure is subject to Korean legal review, including the filings needed when a foreign investor holds shares in a Korean company.
+* **If the Treasury does not take equity**, we accept the same amount as a standard grant, on the same milestones, deliverables and reporting. The SAFE steps above then do not apply.
 
 ## 11. Team
 
