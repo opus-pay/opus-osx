@@ -79,12 +79,13 @@ describe("Payment link funding (#27)", () => {
             const step = nextFundingAction(view);
             if (step === "funded") break;
             const opus = step.signer === "client" ? env.clientOpus : env.providerOpus;
-            jobId = await runFundingStep(opus, step.action, {
+            const result = await runFundingStep(opus, step.action, {
                 draft,
                 jobId,
                 now: BigInt(await time.latest()),
                 operator: getAddress(operator.address),
             });
+            jobId = result.jobId;
         }
         const job = await env.clientOpus.job(jobId as bigint);
         expect(job.status).to.equal("Funded");
