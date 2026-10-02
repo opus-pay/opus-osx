@@ -7,10 +7,12 @@ import { toast } from "sonner";
 import { getAddress } from "viem";
 import { useAccount, useConnect, usePublicClient, useWalletClient } from "wagmi";
 
-import { AddressLine } from "../../src/components/address-line";
+import { Balances } from "../../src/components/balances";
+import { JobProgress } from "../../src/components/job-progress";
 import { Stage, primaryButtonClass } from "../../src/components/stage";
 import { decodeDraft, parties } from "../../src/lib/draft";
 import {
+    amountForDraft,
     configForDraft,
     fundingView,
     nextFundingAction,
@@ -133,6 +135,7 @@ function OpenLink() {
     return (
         <Stage
             title="Review the terms"
+            progress={<JobProgress status={funded ? "Funded" : "Open"} phase={funded ? "Funded" : "None"} />}
             footer={
                 funded && jobText !== "" ? (
                     <a
@@ -173,8 +176,16 @@ function OpenLink() {
                     {terms.amountUsd} USD. Preset {terms.preset}. Link expiry{" "}
                     {new Date(terms.expiresAt * 1000).toLocaleString()}.
                 </p>
-                <AddressLine label="Client" address={sides.client} />
-                <AddressLine label="Provider" address={sides.provider} />
+                <Balances
+                    client={sides.client}
+                    provider={sides.provider}
+                    escrow={{
+                        amount: amountForDraft(terms),
+                        note: funded ? "locked in escrow" : "agreed, not locked yet",
+                    }}
+                    me={mine}
+                    tick={tick}
+                />
                 <p className="whitespace-pre-wrap rounded bg-white p-3">{terms.agreement}</p>
                 {!funded && next !== undefined && position !== undefined && (
                     <p className="text-sm">

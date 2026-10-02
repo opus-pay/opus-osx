@@ -3,18 +3,21 @@ import type { ReactNode } from "react";
 /** One recording frame. Title, tabs, body, and the action row stay in the same place on every screen. */
 export function Stage({
     title,
+    progress,
     tabs,
     children,
     footer,
 }: {
     title: string;
+    progress?: ReactNode;
     tabs?: ReactNode;
     children: ReactNode;
     footer: ReactNode;
 }) {
     return (
-        <section className="flex h-[32rem] w-full flex-col">
+        <section className="flex h-[40rem] w-full flex-col">
             <h1 className="text-2xl font-semibold">{title}</h1>
+            {progress != null && <div className="mt-3 shrink-0">{progress}</div>}
             {tabs != null && (
                 <div className="mt-4 flex h-10 shrink-0 items-center gap-2" role="tablist">
                     {tabs}
