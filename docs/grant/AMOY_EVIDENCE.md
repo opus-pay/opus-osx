@@ -27,6 +27,7 @@ A non-zero evaluation fee moves when the client calls `configure`, while the job
 | 3. Silent submission | `Completed` | 1.00 USDC to the provider | 0.50 USDC to the operator, 0.50 USDC tip to the keeper |
 | 4. No submission | `Rejected` | 1.00 USDC back to the client | 0.50 USDC to the operator, 0.50 USDC tip to the keeper |
 | 5. Gasless payment | `Completed` | 1.00 USDC to the provider | None. The signing wallets held no POL |
+| 6. Shared payment link | `Completed` | 5.00 USDC to the provider | None |
 
 The keeper that sent jobs 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc). The deployer is [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba).
 
@@ -42,6 +43,8 @@ The keeper that sent jobs 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882cB
 | Job 3: 0.50 tip to the keeper, 0.50 fee to the operator, 1.00 budget to the provider | `TipPaid`, `FeePaid`, `PaymentReleased` | [`0x93a058e0…dbec7335`](https://amoy.polygonscan.com/tx/0x93a058e01f2f9ac447e0fd22a2ccc2eca9ae8dd2e557c1fc9668088fdbec7335#eventlog) |
 | Job 4: 0.50 tip to the keeper, 0.50 fee to the operator, 1.00 budget to the client | `TipPaid`, `FeePaid`, `Refunded` | [`0xab783631…7a6991ea`](https://amoy.polygonscan.com/tx/0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea#eventlog) |
 | Job 5: 1.00 USDC from the instance to the provider. The client and provider signed only | `PaymentReleased` | [`0x983c81d0…a45264b7`](https://amoy.polygonscan.com/tx/0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7#eventlog) |
+| Job 6: 5.00 USDC from the client to the instance at `fundWithPermit` | `JobFunded` | [`0x240ff0c2…b705537e`](https://amoy.polygonscan.com/tx/0x240ff0c20f66fb14be4bb5d07578f077d35676c0948b5a4269936471b705537e#eventlog) |
+| Job 6: 5.00 USDC from the instance to the provider | `PaymentReleased` | [`0x5f732701…f78849ef`](https://amoy.polygonscan.com/tx/0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef#eventlog) |
 
 ## Job 1. The client approves
 
@@ -104,11 +107,38 @@ The client [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonsc
 | submit | [`0xf307c382a673baf4a03ac97b897432b16a49f681084405c7e0f09b7673905694`](https://amoy.polygonscan.com/tx/0xf307c382a673baf4a03ac97b897432b16a49f681084405c7e0f09b7673905694) |
 | approve | [`0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7`](https://amoy.polygonscan.com/tx/0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7) |
 
+## Job 6. Two wallets finish a job from one payment link
+
+The client filled in the payment link form in the OPUS pay app and sent the link. The terms travel in the link after `#`, so they never reach a server. The client opened the link, read the terms and signed each step from that page, which opened on-chain job **7**. The provider attached the deliverable file and submitted its hash. The client approved, and the provider received the full 5.00 USDC. No evaluation fee was charged.
+
+| Term | Value |
+| :--- | :--- |
+| On-chain job id | 7 |
+| Client | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) |
+| Provider | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) |
+| Budget | 5.00 USDC, set by the client before the review rules |
+| Review rules | `smallNoArbiter`: paid automatically 1 hour after submission unless the client objects |
+| Agreement | "Deliver a text file whose contents are exactly: Amoy client quote." |
+| Deliverable | [`AmoyClientQuote.txt`](AmoyClientQuote.txt), keccak256 `0x52baa0e5f62955a6f6412081035036f5a0bd99d235d0c3ebd20ff30f6a1dd770` |
+
+| Step | Signer | Time (UTC, 2026-10-01) | Transaction |
+| :--- | :--- | :--- | :--- |
+| createJob | Client | 12:34:50 | [`0x27235c1f3fb657500e3cca9aeaca05eaabcec30fca2386e787de42fe93dc696c`](https://amoy.polygonscan.com/tx/0x27235c1f3fb657500e3cca9aeaca05eaabcec30fca2386e787de42fe93dc696c) |
+| quote (`setBudget`) | Client | 12:35:09 | [`0x82c6ccc4034b89d7eb51a65e5f58810ef0dd0d176ceba133f6e582fdf65ffc45`](https://amoy.polygonscan.com/tx/0x82c6ccc4034b89d7eb51a65e5f58810ef0dd0d176ceba133f6e582fdf65ffc45) |
+| configure | Client | 12:35:25 | [`0x71c97b09cba1312d631a7c1a0ad4d4a954935e48a8fc37d7bf9e750f42d9ba3a`](https://amoy.polygonscan.com/tx/0x71c97b09cba1312d631a7c1a0ad4d4a954935e48a8fc37d7bf9e750f42d9ba3a) |
+| fundWithPermit | Client | 12:36:16 | [`0x240ff0c20f66fb14be4bb5d07578f077d35676c0948b5a4269936471b705537e`](https://amoy.polygonscan.com/tx/0x240ff0c20f66fb14be4bb5d07578f077d35676c0948b5a4269936471b705537e) |
+| submit | Provider | 12:37:09 | [`0x0f08a15e4a432eb1e2957f89990fc20838c1968f0851a5deb4b09b0d1c7593ef`](https://amoy.polygonscan.com/tx/0x0f08a15e4a432eb1e2957f89990fc20838c1968f0851a5deb4b09b0d1c7593ef) |
+| approve | Client | 12:37:54 | [`0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef`](https://amoy.polygonscan.com/tx/0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef) |
+
+The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it has no transaction of its own. The `submit` input carries job id 7 and the deliverable hash above, which is the keccak256 of `AmoyClientQuote.txt`. The whole run took three minutes. The client paid 0.0243955 POL in gas over five transactions and the provider 0.0022593 POL, both under one US cent at the time.
+
+Known wallet display issue: the evaluator's `approve(address,uint256)` has the same function selector (`0x095ea7b3`) as the ERC-20 and ERC-721 `approve`. MetaMask therefore showed the client's approval as a token permission request. The call itself is correct, and the funds moved as shown above. Renaming the function is planned before mainnet, and the rename needs a new deployment.
+
 ## Not yet recorded on Amoy
 
 Two demonstrations are still open. Their hashes will be added here after they are sent.
 
 | Demonstration | What it will show |
 | :--- | :--- |
-| Shared payment link | Two wallets finish one job from one link. One run is quoted by the client, and one run is quoted by the provider. |
+| Payment link quoted by the provider | The provider creates the link and sets the amount. The client opens it and funds. |
 | Dispute | The client objects, both sides post a deposit, and an arbiter rules. |
