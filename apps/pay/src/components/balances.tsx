@@ -1,10 +1,12 @@
 "use client";
 
-import { ArrowRight, Lock, LockOpen } from "lucide-react";
+import { ArrowRight, Copy, Lock, LockOpen } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { erc20Abi, formatUnits, getAddress, zeroAddress, type Address } from "viem";
+import { toast } from "sonner";
+import { erc20Abi, getAddress, zeroAddress, type Address } from "viem";
 import { usePublicClient } from "wagmi";
 
+import { usdcText } from "../lib/terms";
 import { addresses } from "../lib/wagmi";
 
 function short(address: Address): string {
@@ -13,8 +15,8 @@ function short(address: Address): string {
 
 function Amount({ value, size }: { value: bigint | undefined; size: "md" | "lg" }) {
     return (
-        <span className={`tabular-nums ${size === "lg" ? "text-[24px] font-bold" : "text-[17px] font-semibold"}`}>
-            {value === undefined ? "…" : formatUnits(value, 6)}
+        <span className={`${size === "lg" ? "text-[24px] font-bold" : "text-[17px] font-semibold"}`}>
+            {value === undefined ? "…" : usdcText(value)}
             <span className="ml-1 text-[12.5px] font-medium text-muted">USDC</span>
         </span>
     );
@@ -41,9 +43,25 @@ function Party({
                     </span>
                 )}
             </div>
-            <div className="truncate font-mono text-[12.5px] text-muted">
-                {who === undefined || who === zeroAddress ? "not set" : short(who)}
-            </div>
+            {who === undefined || who === zeroAddress ? (
+                <div className="font-mono text-[12.5px] text-muted">not set</div>
+            ) : (
+                <button
+                    type="button"
+                    className="group inline-flex items-center gap-1.5 self-start font-mono text-[12.5px] text-muted hover:text-ink"
+                    title={`${getAddress(who)} (click to copy)`}
+                    aria-label={`Copy the ${label.toLowerCase()} address ${getAddress(who)}`}
+                    onClick={() =>
+                        void navigator.clipboard
+                            .writeText(getAddress(who))
+                            .then(() => toast.success(`${label} address copied`))
+                            .catch(() => toast.error("Could not copy the address"))
+                    }
+                >
+                    {short(who)}
+                    <Copy size={12} className="opacity-60 group-hover:opacity-100" aria-hidden />
+                </button>
+            )}
             <Amount value={value} size="md" />
         </div>
     );
@@ -117,7 +135,7 @@ export function Balances({
     );
 
     return (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_1.15fr_auto_1fr]">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_1.3fr_auto_1fr]">
             <Party label="Client" who={client} value={held.client} you={isMe(client)} />
             <Flow />
             {escrowTile}
