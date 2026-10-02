@@ -10,7 +10,7 @@ Recorded 2026-09-26. Primary sources are Polygon Improvement Proposals and the o
 | Solidity | `0.8.24` (pinned `pragma`, no `^`) |
 | OpenZeppelin Contracts | `5.6.1` |
 | Hardhat network `hardfork` | `cancun` |
-| Applies to | `@opus/contracts` and `@opus/token` compiler settings |
+| Applies to | `@opus/contracts` compiler settings |
 
 `cancun` bytecode is valid on Polygon PoS and Amoy today. Those chains have been past Cancun (Napoli) since 2024 and past Pectra (Bhilai) since 2025.
 

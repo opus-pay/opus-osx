@@ -25,7 +25,6 @@
         "keeper": "yarn workspace @opus/keeper",
         "relayer": "yarn workspace @opus/relayer",
         "indexer": "yarn workspace @opus/indexer",
-        "pay": "yarn workspace @opus/pay",
-        "token": "yarn workspace @opus/token"
+        "pay": "yarn workspace @opus/pay"
     }
 }
