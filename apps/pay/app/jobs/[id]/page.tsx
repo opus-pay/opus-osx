@@ -206,7 +206,7 @@ function JobScreen({ id }: { id: string }) {
         <StageTab current={shownRole === role} onClick={() => setTab(role)}>
             {label}
             {myRole === role && (
-                <span className="ml-1.5 rounded-full bg-cobalt-wash px-1.5 text-[11.5px] font-semibold text-cobalt">
+                <span className="ml-1.5 rounded-full bg-cobalt-wash px-1.5 text-[13px] font-semibold text-cobalt">
                     {t("you")}
                 </span>
             )}
@@ -268,11 +268,11 @@ function JobScreen({ id }: { id: string }) {
                                 : "bg-cobalt-wash text-ink"
                         }`}
                     >
-                        <p className="m-0 text-[16px] font-semibold leading-snug">
+                        <p className="m-0 text-[18px] font-semibold leading-snug">
                             {roleGuide(shownRole, job.status, job.phase, job.autoComplete, locale)}
                         </p>
                         {isConnected && !canAct && actions.length > 0 && (
-                            <p className="m-0 mt-1 text-[13.5px] font-medium text-amber">
+                            <p className="m-0 mt-1 text-[15px] font-medium text-amber">
                                 {t("job.switch", { role: t(`role.${shownRole}`) })}
                             </p>
                         )}
@@ -303,7 +303,7 @@ function JobScreen({ id }: { id: string }) {
                             <SectionLabel>{t("job.file")}</SectionLabel>
                             <input
                                 id="proof"
-                                className="block w-full text-[14px] text-ink-soft file:mr-3 file:rounded-lg file:border file:border-line file:bg-white file:px-3 file:py-2 file:text-[14px] file:font-medium file:text-ink"
+                                className="block w-full text-[15.5px] text-ink-soft file:mr-3 file:rounded-lg file:border file:border-line file:bg-white file:px-3 file:py-2 file:text-[15.5px] file:font-medium file:text-ink"
                                 type="file"
                             />
                         </label>
@@ -329,7 +329,7 @@ function JobScreen({ id }: { id: string }) {
                         </label>
                     )}
                     {lastTx !== undefined && (
-                        <p className="m-0 flex items-center gap-2 text-[14px]">
+                        <p className="m-0 flex items-center gap-2 text-[15.5px]">
                             <Check className="text-emerald" size={16} strokeWidth={3} aria-hidden />
                             <span className="text-ink">{t("done", { what: actionLabel(lastTx.action, locale) })}</span>
                             {lastTx.url !== undefined && (
@@ -345,10 +345,10 @@ function JobScreen({ id }: { id: string }) {
                             )}
                         </p>
                     )}
-                    <details className="text-[14px]">
+                    <details className="text-[15.5px]">
                         <summary className="cursor-pointer font-medium text-muted">{t("job.notifications")}</summary>
                         <label className="mt-2 block">
-                            <span className="text-[13px] font-semibold text-ink-soft">{t("job.webhook")}</span>
+                            <span className="text-[14.5px] font-semibold text-ink-soft">{t("job.webhook")}</span>
                             <input
                                 className={fieldClass}
                                 value={webhook}

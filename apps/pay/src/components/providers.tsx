@@ -14,19 +14,19 @@ function Frame({ children }: { children: ReactNode }) {
     return (
         <>
             <header className="border-b border-line bg-white">
-                <div className="mx-auto flex max-w-[44rem] items-center justify-between px-4 py-3">
-                    <a href="/" className="text-[17px] font-bold tracking-tight text-ink no-underline">
+                <div className="mx-auto flex max-w-[58rem] items-center justify-between px-4 py-2.5">
+                    <a href="/" className="text-[19px] font-bold tracking-tight text-ink no-underline">
                         OPUS
                     </a>
                     <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-chain-wash px-3 py-1 text-[12.5px] font-medium text-chain">
+                        <span className="rounded-full bg-chain-wash px-3 py-1 text-[14px] font-medium text-chain">
                             {network}
                         </span>
                         <LanguageSelect />
                     </div>
                 </div>
             </header>
-            <main className="mx-auto max-w-[44rem] px-4 py-8">{children}</main>
+            <main className="mx-auto max-w-[58rem] px-4 py-5">{children}</main>
         </>
     );
 }

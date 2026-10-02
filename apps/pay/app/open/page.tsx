@@ -174,7 +174,7 @@ function OpenLink({ token }: { token: string }) {
                         </button>
                     )}
                     {!isFunded && next !== undefined && position !== undefined && (
-                        <p className="m-0 ml-auto text-right text-[13px] leading-snug text-muted">
+                        <p className="m-0 ml-auto text-right text-[14.5px] leading-snug text-muted">
                             <span className="font-semibold text-ink-soft">
                                 {t("open.stepOf", { index: position.index, total: position.total })}
                             </span>
@@ -188,10 +188,10 @@ function OpenLink({ token }: { token: string }) {
             }
         >
             <div className="flex flex-col gap-5">
-                <div className="flex flex-col gap-3">
-                    <p className="m-0 text-[17px] font-semibold leading-snug text-ink">
-                        {plainTerms(config.reviewWindow, role ?? "anyone", locale)}
-                    </p>
+                <p className="m-0 text-[19px] font-semibold leading-snug text-ink">
+                    {plainTerms(config.reviewWindow, role ?? "anyone", locale)}
+                </p>
+                <div className="grid gap-5 sm:grid-cols-[1.15fr_1fr]">
                     <Facts
                         items={[
                             { label: t("open.amount"), value: `${usdcText(amountForDraft(terms))} USDC` },
@@ -199,11 +199,13 @@ function OpenLink({ token }: { token: string }) {
                             { label: t("open.expires"), value: dateTime(terms.expiresAt) },
                         ]}
                     />
+                    <section>
+                        <SectionLabel>{t("open.agreement")}</SectionLabel>
+                        <p className="m-0 whitespace-pre-wrap rounded-lg bg-canvas px-4 py-3 text-ink">
+                            {terms.agreement}
+                        </p>
+                    </section>
                 </div>
-                <section>
-                    <SectionLabel>{t("open.agreement")}</SectionLabel>
-                    <p className="m-0 whitespace-pre-wrap rounded-lg bg-canvas px-4 py-3 text-ink">{terms.agreement}</p>
-                </section>
                 <section>
                     <SectionLabel>{t("money.title")}</SectionLabel>
                     <Balances
@@ -229,7 +231,7 @@ function OpenLink({ token }: { token: string }) {
                                     </>
                                 );
                                 const chipClass =
-                                    "inline-flex items-center gap-1 rounded-full bg-emerald-wash px-2.5 py-1 text-[12.5px] font-medium text-emerald no-underline";
+                                    "inline-flex items-center gap-1 rounded-full bg-emerald-wash px-2.5 py-1 text-[14px] font-medium text-emerald no-underline";
                                 return (
                                     <li key={item.action}>
                                         {url === undefined ? (

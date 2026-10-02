@@ -40,21 +40,21 @@ export function JobProgress({
                     <li key={step.label} className="relative flex flex-col items-center">
                         {i > 0 && (
                             <span
-                                className={`absolute right-1/2 top-[13px] h-0.5 w-full ${
+                                className={`absolute right-1/2 top-[15px] h-0.5 w-full ${
                                     reached ? "bg-emerald" : "bg-line"
                                 }`}
                                 aria-hidden
                             />
                         )}
                         <span
-                            className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 text-[12.5px] font-semibold tabular-nums ${
+                            className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 text-[14px] font-semibold tabular-nums ${
                                 DOT[step.state]
                             }`}
                             aria-current={step.state === "current" || step.state === "alert" ? "step" : undefined}
                         >
-                            {step.state === "done" ? <Check size={15} strokeWidth={3} aria-hidden /> : i + 1}
+                            {step.state === "done" ? <Check size={17} strokeWidth={3} aria-hidden /> : i + 1}
                         </span>
-                        <span className={`mt-1.5 whitespace-nowrap text-[12.5px] ${LABEL[step.state]}`}>
+                        <span className={`mt-1.5 whitespace-nowrap text-[14px] ${LABEL[step.state]}`}>
                             {step.label}
                         </span>
                     </li>
