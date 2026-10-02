@@ -36,8 +36,8 @@ body:
       label: 연동할 컨트랙트 함수 / 이벤트
       description: 읽을 이벤트와 호출할 함수를 적어주세요.
       placeholder: |
-        예) OpusShop.registerStore(), StoreRegistered 이벤트
-        예) OpusEscrow.createEscrow(), EscrowLocked 이벤트
+        예) OpusAgenticCommerce.createJob(), JobCreated 이벤트
+        예) OptimisticEvaluator.object(), Escalated 이벤트
 
   - type: textarea
     id: tasks

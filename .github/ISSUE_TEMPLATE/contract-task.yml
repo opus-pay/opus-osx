@@ -13,17 +13,11 @@ body:
     attributes:
       label: 대상 컨트랙트
       options:
-        - OpusRoles
-        - OpusToken (OPG)
-        - StablecoinRegistry
-        - OpusPriceOracle
-        - OpusVault
-        - OpusShop
-        - OpusReputation
-        - OpusCredit
-        - OpusEscrow
-        - OpusArbitrator
-        - OpusVesting
+        - OpusAgenticCommerce (에스크로)
+        - OpusACPFactory
+        - OptimisticEvaluator (검토 컨트랙트)
+        - OpusForwarder
+        - KlerosArbiterAdapter (실험)
         - 인터페이스 / 라이브러리
         - 배포 스크립트
         - 기타
