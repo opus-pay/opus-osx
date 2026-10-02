@@ -43,6 +43,24 @@ export function statusLine(input: {
     return parts.join(" · ");
 }
 
+/** The same facts as `statusLine`, as label and value pairs for a two-column list. */
+export function statusFacts(input: {
+    status: CoreStatus;
+    phase: Phase;
+    nextDeadline: bigint | null;
+    now: bigint;
+}): { label: string; value: string }[] {
+    const facts = [
+        { label: "Job", value: input.status },
+        { label: "Review", value: capitalize(PHASE_TEXT[input.phase]) },
+    ];
+    const label = DEADLINE_TEXT[input.phase];
+    if (input.nextDeadline !== null && label !== undefined) {
+        facts.push({ label, value: countdown(input.nextDeadline, input.now) });
+    }
+    return facts;
+}
+
 const ACTION_TEXT: Partial<Record<JobAction, string>> = {
     submit: "Submit the deliverable",
     approve: "Approve and pay",
@@ -101,4 +119,8 @@ export function roleGuide(role: Role, status: CoreStatus, phase: Phase, autoComp
     if (status === "Completed") return "Done. You were paid.";
     if (status === "Rejected") return "Done. The USDC went back to the client.";
     return "The job expired. The USDC went back to the client.";
+}
+
+function capitalize(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
 }

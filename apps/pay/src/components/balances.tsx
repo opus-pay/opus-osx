@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ArrowRight, Lock, LockOpen } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { erc20Abi, formatUnits, getAddress, zeroAddress, type Address } from "viem";
 import { usePublicClient } from "wagmi";
 
@@ -10,11 +11,52 @@ function short(address: Address): string {
     return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
-function usdc(value: bigint | undefined): string {
-    return value === undefined ? "…" : `${formatUnits(value, 6)} USDC`;
+function Amount({ value, size }: { value: bigint | undefined; size: "md" | "lg" }) {
+    return (
+        <span className={`tabular-nums ${size === "lg" ? "text-[24px] font-bold" : "text-[17px] font-semibold"}`}>
+            {value === undefined ? "…" : formatUnits(value, 6)}
+            <span className="ml-1 text-[12.5px] font-medium text-muted">USDC</span>
+        </span>
+    );
 }
 
-/** Wallet balances of both sides, and what this job holds in escrow. Re-read whenever `tick` changes. */
+function Party({
+    label,
+    who,
+    value,
+    you,
+}: {
+    label: string;
+    who: Address | undefined;
+    value: bigint | undefined;
+    you: boolean;
+}) {
+    return (
+        <div className="flex min-w-0 flex-col gap-1 rounded-xl border border-line p-3">
+            <div className="flex items-center gap-2 text-[13px] font-semibold text-ink-soft">
+                {label}
+                {you && (
+                    <span className="rounded-full bg-cobalt-wash px-2 text-[11.5px] font-semibold text-cobalt">
+                        You
+                    </span>
+                )}
+            </div>
+            <div className="truncate font-mono text-[12.5px] text-muted">
+                {who === undefined || who === zeroAddress ? "not set" : short(who)}
+            </div>
+            <Amount value={value} size="md" />
+        </div>
+    );
+}
+
+function Flow() {
+    return <ArrowRight className="hidden self-center text-line sm:block" size={20} strokeWidth={2.5} aria-hidden />;
+}
+
+/**
+ * Where the money is: the client's wallet, this job's escrow, the provider's wallet.
+ * The escrow tile turns emerald while USDC is locked for the job. Re-read whenever `tick` changes.
+ */
 export function Balances({
     client,
     provider,
@@ -52,28 +94,35 @@ export function Balances({
         };
     }, [publicClient, client, provider, tick]);
 
-    const row = (label: string, who: Address | undefined, value: bigint | undefined) => (
-        <tr className="border-t border-stone-200">
-            <td className="py-1 pr-3 text-stone-500">{label}</td>
-            <td className="py-1 pr-3 font-mono">
-                {who === undefined || who === zeroAddress ? "not set" : short(who)}
-                {who !== undefined && me !== undefined && getAddress(who) === me ? " (you)" : ""}
-            </td>
-            <td className="py-1 text-right">{usdc(value)}</td>
-        </tr>
+    const isMe = (who?: Address) =>
+        who !== undefined && who !== zeroAddress && me !== undefined && getAddress(who) === me;
+    const locked = escrow.amount > 0n;
+    const escrowTile: ReactNode = (
+        <div
+            className={`flex min-w-0 flex-col gap-1 rounded-xl border p-3 ${
+                locked ? "border-emerald/50 bg-emerald-wash" : "border-dashed border-line bg-canvas"
+            }`}
+        >
+            <div
+                className={`flex items-center gap-1.5 text-[13px] font-semibold ${
+                    locked ? "text-emerald" : "text-ink-soft"
+                }`}
+            >
+                {locked ? <Lock size={14} strokeWidth={2.5} aria-hidden /> : <LockOpen size={14} aria-hidden />}
+                Escrow
+            </div>
+            <Amount value={escrow.amount} size="lg" />
+            <div className="text-[12.5px] leading-snug text-muted">{escrow.note}</div>
+        </div>
     );
 
     return (
-        <table className="w-full rounded bg-white text-sm">
-            <tbody>
-                {row("Client", client, held.client)}
-                {row("Provider", provider, held.provider)}
-                <tr className="border-t border-stone-200">
-                    <td className="py-1 pr-3 text-stone-500">Escrow</td>
-                    <td className="py-1 pr-3">{escrow.note}</td>
-                    <td className="py-1 text-right">{usdc(escrow.amount)}</td>
-                </tr>
-            </tbody>
-        </table>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_1.15fr_auto_1fr]">
+            <Party label="Client" who={client} value={held.client} you={isMe(client)} />
+            <Flow />
+            {escrowTile}
+            <Flow />
+            <Party label="Provider" who={provider} value={held.provider} you={isMe(provider)} />
+        </div>
     );
 }

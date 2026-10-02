@@ -4,13 +4,11 @@ import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { isAddress } from "viem";
 
-import { Stage, StageTab, primaryButtonClass, secondaryButtonClass } from "../src/components/stage";
+import { Stage, StageTab, fieldClass, primaryButtonClass, secondaryButtonClass } from "../src/components/stage";
 import { suggestCriteria, type CriteriaKind } from "../src/lib/criteria";
 import { encodeDraft, linkFor, PRESETS, type Draft, type PresetName } from "../src/lib/draft";
 
 const STEPS = ["Parties", "Payment", "Agreement"] as const;
-
-const fieldClass = "mt-1 w-full rounded border bg-white p-2";
 
 export default function DraftPage() {
     const [step, setStep] = useState(0);
@@ -80,7 +78,7 @@ export default function DraftPage() {
             }
         >
             {step === 0 && (
-                <div className="space-y-3" role="tabpanel">
+                <div className="flex flex-col gap-5" role="tabpanel">
                     <Field label="You are the">
                         <select
                             className={fieldClass}
@@ -108,7 +106,7 @@ export default function DraftPage() {
                 </div>
             )}
             {step === 1 && (
-                <div className="space-y-3" role="tabpanel">
+                <div className="flex flex-col gap-5" role="tabpanel">
                     <Field label="Amount in USD">
                         <input
                             className={fieldClass}
@@ -149,7 +147,7 @@ export default function DraftPage() {
                 </div>
             )}
             {step === 2 && (
-                <div className="space-y-3" role="tabpanel">
+                <div className="flex flex-col gap-5" role="tabpanel">
                     <Field label="Completion criteria">
                         <select
                             className={fieldClass}
@@ -163,7 +161,7 @@ export default function DraftPage() {
                         </select>
                     </Field>
                     <button
-                        className={secondaryButtonClass}
+                        className={`${secondaryButtonClass} self-start`}
                         type="button"
                         onClick={() =>
                             void suggestCriteria(agreement, criteriaKind, assistant === "" ? undefined : assistant)
@@ -190,7 +188,16 @@ export default function DraftPage() {
                             onChange={(event) => setAgreement(event.target.value)}
                         />
                     </Field>
-                    {link !== "" && <p className="break-all rounded bg-white p-3 font-mono text-sm">{link}</p>}
+                    {link !== "" && (
+                        <div>
+                            <span className="text-[13px] font-semibold text-emerald">
+                                Link copied. Send it to the other side.
+                            </span>
+                            <p className="m-0 mt-1.5 break-all rounded-lg bg-canvas px-3 py-2.5 font-mono text-[12.5px] text-ink-soft">
+                                {link}
+                            </p>
+                        </div>
+                    )}
                 </div>
             )}
         </Stage>
@@ -199,8 +206,8 @@ export default function DraftPage() {
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
     return (
-        <label className="block text-sm">
-            {label}
+        <label className="block">
+            <span className="text-[13px] font-semibold text-ink-soft">{label}</span>
             {children}
         </label>
     );

@@ -1,6 +1,7 @@
 "use client";
 
 import { Opus, evaluatorAbi, type JobAction, type JobStatusName, type PhaseName, type WalletStatus } from "@opus/sdk";
+import { Check, ExternalLink } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -9,10 +10,18 @@ import { useAccount, useConnect, usePublicClient, useWalletClient } from "wagmi"
 
 import { Balances } from "../../../src/components/balances";
 import { JobProgress } from "../../../src/components/job-progress";
-import { Stage, StageTab, primaryButtonClass, secondaryButtonClass } from "../../../src/components/stage";
+import {
+    Facts,
+    SectionLabel,
+    Stage,
+    StageTab,
+    fieldClass,
+    primaryButtonClass,
+    secondaryButtonClass,
+} from "../../../src/components/stage";
 import { dueNotices, notify } from "../../../src/lib/notices";
 import { proofHash, textHash } from "../../../src/lib/proof";
-import { actionLabel, escrowFor, roleGuide, statusLine, type Role } from "../../../src/lib/status-text";
+import { actionLabel, escrowFor, roleGuide, statusFacts, type Role } from "../../../src/lib/status-text";
 import { confirmed, explorerTx } from "../../../src/lib/tx";
 import { addresses } from "../../../src/lib/wagmi";
 
@@ -195,7 +204,11 @@ function JobScreen({ id }: { id: string }) {
     const roleTab = (role: Role, label: string) => (
         <StageTab current={shownRole === role} onClick={() => setTab(role)}>
             {label}
-            {myRole === role ? " (you)" : ""}
+            {myRole === role && (
+                <span className="ml-1.5 rounded-full bg-cobalt-wash px-1.5 text-[11.5px] font-semibold text-cobalt">
+                    You
+                </span>
+            )}
         </StageTab>
     );
 
@@ -223,7 +236,7 @@ function JobScreen({ id }: { id: string }) {
                         {actions.map((action) => (
                             <button
                                 key={action}
-                                className={`${primaryButtonClass} disabled:opacity-50`}
+                                className={primaryButtonClass}
                                 type="button"
                                 disabled={busy || !canAct}
                                 onClick={() => void run(action)}
@@ -232,7 +245,7 @@ function JobScreen({ id }: { id: string }) {
                             </button>
                         ))}
                         <button
-                            className={`${secondaryButtonClass} disabled:opacity-50`}
+                            className={`${secondaryButtonClass} ml-auto`}
                             type="button"
                             disabled={busy}
                             onClick={() => void refresh()}
@@ -244,75 +257,96 @@ function JobScreen({ id }: { id: string }) {
             }
         >
             {job === undefined ? (
-                <p>{loadError ?? "Reading the job from the chain."}</p>
+                <p className="m-0 text-muted">{loadError ?? "Reading the job from the chain."}</p>
             ) : (
-                <div className="space-y-3">
-                    <Balances
-                        client={job.client}
-                        provider={job.provider}
-                        escrow={escrowFor(job.status, job.budget)}
-                        me={me}
-                        tick={tick}
-                    />
-                    <p className="font-medium">{roleGuide(shownRole, job.status, job.phase, job.autoComplete)}</p>
-                    <p className="text-sm text-stone-600">
-                        {statusLine({
+                <div className="flex flex-col gap-6">
+                    <div
+                        className={`rounded-xl px-4 py-3 ${
+                            job.phase === "Escalated" || job.phase === "ArbiterPending"
+                                ? "bg-amber-wash text-amber"
+                                : "bg-cobalt-wash text-ink"
+                        }`}
+                    >
+                        <p className="m-0 text-[16px] font-semibold leading-snug">
+                            {roleGuide(shownRole, job.status, job.phase, job.autoComplete)}
+                        </p>
+                        {isConnected && !canAct && actions.length > 0 && (
+                            <p className="m-0 mt-1 text-[13.5px] font-medium text-amber">
+                                Switch the wallet to the {shownRole} account to act here.
+                            </p>
+                        )}
+                    </div>
+                    <Facts
+                        items={statusFacts({
                             status: job.status,
                             phase: job.phase,
                             nextDeadline: job.nextDeadline,
                             now: job.now,
                         })}
-                    </p>
-                    {isConnected && !canAct && actions.length > 0 && (
-                        <p className="text-sm text-amber-700">
-                            Switch the wallet to the {shownRole} account to act here.
-                        </p>
-                    )}
+                    />
+                    <section>
+                        <SectionLabel>Where the money is</SectionLabel>
+                        <Balances
+                            client={job.client}
+                            provider={job.provider}
+                            escrow={escrowFor(job.status, job.budget)}
+                            me={me}
+                            tick={tick}
+                        />
+                    </section>
                     {shownRole === "provider" && actions.includes("submit") && (
-                        <label className="block text-sm">
-                            Deliverable file
-                            <input id="proof" className="mt-1 block" type="file" />
+                        <label className="block">
+                            <SectionLabel>Deliverable file</SectionLabel>
+                            <input
+                                id="proof"
+                                className="block w-full text-[14px] text-ink-soft file:mr-3 file:rounded-lg file:border file:border-line file:bg-white file:px-3 file:py-2 file:text-[14px] file:font-medium file:text-ink"
+                                type="file"
+                            />
                         </label>
                     )}
                     {shownRole === "client" && actions.includes("object") && (
-                        <label className="block text-sm">
-                            Objection
+                        <label className="block">
+                            <SectionLabel>Objection</SectionLabel>
                             <input
-                                className="mt-1 w-full rounded border bg-white p-2"
+                                className={fieldClass}
                                 value={objection}
                                 onChange={(event) => setObjection(event.target.value)}
                             />
                         </label>
                     )}
                     {shownRole === "client" && actions.includes("extendReview") && (
-                        <label className="block text-sm">
-                            Extend review by seconds
+                        <label className="block">
+                            <SectionLabel>Extend the review by seconds</SectionLabel>
                             <input
-                                className="mt-1 w-full rounded border bg-white p-2"
+                                className={fieldClass}
                                 value={extension}
                                 onChange={(event) => setExtension(event.target.value)}
                             />
                         </label>
                     )}
                     {lastTx !== undefined && (
-                        <p className="text-sm">
-                            {actionLabel(lastTx.action)}: done
+                        <p className="m-0 flex items-center gap-2 text-[14px]">
+                            <Check className="text-emerald" size={16} strokeWidth={3} aria-hidden />
+                            <span className="text-ink">{actionLabel(lastTx.action)}: done</span>
                             {lastTx.url !== undefined && (
-                                <>
-                                    {" "}
-                                    <a className="underline" href={lastTx.url} target="_blank" rel="noreferrer">
-                                        view on Polygonscan
-                                    </a>
-                                </>
+                                <a
+                                    className="ml-auto inline-flex items-center gap-1 text-cobalt"
+                                    href={lastTx.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    Polygonscan
+                                    <ExternalLink size={13} aria-hidden />
+                                </a>
                             )}
                         </p>
                     )}
-                    <details className="text-sm">
-                        <summary className="cursor-pointer text-stone-500">Notifications</summary>
+                    <details className="text-[14px]">
+                        <summary className="cursor-pointer font-medium text-muted">Notifications</summary>
                         <label className="mt-2 block">
-                            Webhook URL
+                            <span className="text-[13px] font-semibold text-ink-soft">Webhook URL</span>
                             <input
-                                className="mt-1 w-full rounded border bg-white p-2"
+                                className={fieldClass}
                                 value={webhook}
                                 onChange={(event) => setWebhook(event.target.value.trim())}
                             />
