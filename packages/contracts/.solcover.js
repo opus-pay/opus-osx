@@ -1,8 +1,6 @@
 module.exports = {
     skipFiles: [
         "mocks",
-        "BootstrapProbe.sol",
-        "BootstrapToken.sol",
         "acp/InterfaceCompileHarness.sol",
         "acp/IACPHook.sol",
         "acp/IAgenticCommerce.sol",

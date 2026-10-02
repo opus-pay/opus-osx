@@ -51,19 +51,11 @@ Confirmed on this target:
 * `ReentrancyGuard`
 * `SafeERC20`
 
-`BootstrapProbe` compiles and exercises those modules. Cancun-only `MCOPY` and transient storage are called in the same contract so a `shanghai` target would fail to compile.
+The deployed contracts (`OpusAgenticCommerce`, `OptimisticEvaluator`, `OpusACPFactory`, `OpusForwarder`) use these modules, and their unit, conformance and invariant tests exercise them on this target. The early `BootstrapProbe` toolchain check was removed once the real contracts covered it.
 
-## Smoke deploy
+## Deploy check
 
-`yarn contracts deploy:amoy` deploys `BootstrapProbe` (skipped if the address is already in `deploy/amoy/deployed_contracts.json`) and runs `runBootstrapProbeSmoke`.
-
-Requires `packages/contracts/env/.amoy.env` with a funded `DEPLOYER` (or Ledger `*_ADDRESS` for every named account). This checkout has no live key, so Amoy was not broadcast from CI. After the first funded deploy, commit the address file and keep the smoke in the deploy script.
-
-```bash
-cp packages/contracts/env/.amoy.env.sample packages/contracts/env/.amoy.env
-# fill DEPLOYER and AMOY_URL
-yarn contracts deploy:amoy
-```
+`yarn contracts deploy:amoy` deploys the protocol and records the addresses in `deploy/amoy/deployed_contracts.json`. `yarn contracts check:deploy` checks that address file and that no contract exposes an owner, role or upgrade function.
 
 ## Sources
 
