@@ -128,7 +128,8 @@ Amounts are USDC. A 0.5 tip is taken from the 1.00 evaluation fee, so the operat
 | Silent submission | 3 | `ipfs://amoy/finalize` | 1.00 | 1.00 | 0.50 | Provider | Operator | Keeper | Completed | Resolved |
 | No submission | 4 | `ipfs://amoy/timeout` | 1.00 | 1.00 | 0.50 | Client | Operator | Keeper | Rejected | Resolved |
 | Gasless | 5 | `ipfs://amoy/gasless` | 1.00 | 0 | 0 | Provider | — | — | Completed | Resolved |
-| Shared link | — | Entered in the form | 1.00 | 0 | 0 | — | — | — | Not run | Not run |
+| Shared link, client quote | 7 | Entered in the form | 5.00 | 0 | 0 | Provider | — | — | Completed | Resolved |
+| Shared link, provider quote | — | Entered in the form | 1.00 | 0 | 0 | — | — | — | Not run | Not run |
 
 Job 2 expired at 2026-10-01 14:01:07 KST (`expiredAt` 1790830867). Job 3's review ended at 2026-10-01 11:53:25 KST (`dueAt` 1790823205). Job 4's submit window ended at 2026-10-01 11:54:39 KST (`dueAt` 1790823279).
 
@@ -145,6 +146,8 @@ These amounts are the `Transfer`, `TipPaid`, `FeePaid`, `Swept`, `PaymentRelease
 | 2 | 1.00 USDC from the evaluator to the client | `Swept` | [`sweep`](https://amoy.polygonscan.com/tx/0x0725df716b5d395412ac5d102a066caeaf8e6be30eb9a678eb4eb9ae83d63ad4#eventlog) |
 | 3 | 0.50 USDC tip to the keeper, 0.50 USDC fee to the operator, 1.00 USDC budget to the provider | `TipPaid`, `FeePaid`, `PaymentReleased` | [`finalize`](https://amoy.polygonscan.com/tx/0x93a058e01f2f9ac447e0fd22a2ccc2eca9ae8dd2e557c1fc9668088fdbec7335#eventlog) |
 | 4 | 0.50 USDC tip to the keeper, 0.50 USDC fee to the operator, 1.00 USDC budget to the client | `TipPaid`, `FeePaid`, `Refunded` | [`timeoutNoSubmission`](https://amoy.polygonscan.com/tx/0xab783631acdb531036eae59bcfb11b0e7e2129f24a08c1c94c54c56b7a6991ea#eventlog) |
+| 7 | 5.00 USDC from the client to the instance | `JobFunded` | [`fundWithPermit`](https://amoy.polygonscan.com/tx/0x240ff0c20f66fb14be4bb5d07578f077d35676c0948b5a4269936471b705537e#eventlog) |
+| 7 | 5.00 USDC from the instance to the provider | `PaymentReleased` | [`approve`](https://amoy.polygonscan.com/tx/0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef#eventlog) |
 
 `finalize` and `timeoutNoSubmission` were sent by the keeper `0x87775F236D38526f48F702EE36FD195c75882cBc`.
 
@@ -296,27 +299,29 @@ If the keeper is running before step 7, it calls `timeoutNoSubmission` and the e
 
 **Purpose.** Two people finish one job from one link: the terms are shared, the job is funded, the provider submits proof, and the client approves. The connected wallets send the transactions, so both need POL. Use the Ledger client and provider. Do not use the zero-POL pair.
 
-**Test.** Not run on Amoy.
+**Test.** The client-quote path ran on Amoy as chain job 7 on 2026-10-01, 21:34:50 to 21:37:54 KST. The provider-quote path has not run. Chain job 6, from 20:39 to 20:49 KST the same evening, was a rehearsal of the client-quote path by the same two wallets. It also completed and paid the provider 5.00 USDC, and it is not used as evidence.
 
 1. Run `NEXT_PUBLIC_RPC_URL=https://polygon-amoy-bor-rpc.publicnode.com yarn pay dev`.
 2. Open `http://localhost:3000` in the client profile.
-3. Enter the client address, the provider address, amount 1 USD, a preset, and the completion criteria.
+3. Enter the client address, the provider address, an amount in USDC, the review rules, and the completion criteria. Job 7 used 5 USDC and `smallNoArbiter`.
 4. Create the link and open it in the provider profile.
-5. Each person connects a wallet and presses `Sign the next step` until the job is funded, the provider submits a proof file, and the client approves.
+5. Each person connects a wallet and presses the sign button, which names the next call ("Sign: Open the job", "Sign: Set the amount", ...), until the job is funded. On the job page the provider submits a proof file from the Provider tab, and the client approves from the Client tab.
 6. Repeat with the budget lock set to "Provider quote, locked after the first quote". The provider signs `setBudget` after `configure`.
 
-**Result.** No Amoy transaction yet. Run both quote paths. When each finishes, the job is `Completed` and the provider has the 1.00 USDC budget.
+**Result.** Client quote: chain job 7 is `Completed` and `Resolved`. The provider received the 5.00 USDC budget in the `approve` transaction, and there was no evaluation fee. The `submit` input carries job id 7 and deliverable `0x52baa0e5f62955a6f6412081035036f5a0bd99d235d0c3ebd20ff30f6a1dd770`, the keccak256 of [`docs/grant/AmoyClientQuote.txt`](../grant/AmoyClientQuote.txt). Every hash below was read back from Polygonscan, and each call's input or `JobCreated` log names job 7. Gas was 0.0243955 POL for the client's five transactions and 0.0022593 POL for the provider's one. Provider quote: not run.
 
-The form default, lock "Client, before the evaluator is configured", makes the client quote.
+The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it has no transaction of its own. MetaMask labels the evaluator `approve` as a token permission request, because its selector `0x095ea7b3` is the same as the ERC-20 and ERC-721 `approve`.
+
+The form default, lock "Client, before the review rules are set", makes the client quote.
 
 | Step | Signer | Payment | Evaluation | Transaction |
 | :--- | :--- | :--- | :--- | :--- |
-| 1. createJob | Client | Open | None | — |
-| 2. quote | Client | Open | None | — |
-| 3. configure | Client | Open | None | — |
-| 4. fundWithPermit | Client | Funded | Funded | — |
-| 5. submit | Provider | Submitted | Submitted | — |
-| 6. approve | Client | Completed | Resolved | — |
+| 1. createJob | Client | Open | None | [`0x27235c1f3fb657500e3cca9aeaca05eaabcec30fca2386e787de42fe93dc696c`](https://amoy.polygonscan.com/tx/0x27235c1f3fb657500e3cca9aeaca05eaabcec30fca2386e787de42fe93dc696c) |
+| 2. quote | Client | Open | None | [`0x82c6ccc4034b89d7eb51a65e5f58810ef0dd0d176ceba133f6e582fdf65ffc45`](https://amoy.polygonscan.com/tx/0x82c6ccc4034b89d7eb51a65e5f58810ef0dd0d176ceba133f6e582fdf65ffc45) |
+| 3. configure | Client | Open | None | [`0x71c97b09cba1312d631a7c1a0ad4d4a954935e48a8fc37d7bf9e750f42d9ba3a`](https://amoy.polygonscan.com/tx/0x71c97b09cba1312d631a7c1a0ad4d4a954935e48a8fc37d7bf9e750f42d9ba3a) |
+| 4. fundWithPermit | Client | Funded | Funded | [`0x240ff0c20f66fb14be4bb5d07578f077d35676c0948b5a4269936471b705537e`](https://amoy.polygonscan.com/tx/0x240ff0c20f66fb14be4bb5d07578f077d35676c0948b5a4269936471b705537e) |
+| 5. submit | Provider | Submitted | Submitted | [`0x0f08a15e4a432eb1e2957f89990fc20838c1968f0851a5deb4b09b0d1c7593ef`](https://amoy.polygonscan.com/tx/0x0f08a15e4a432eb1e2957f89990fc20838c1968f0851a5deb4b09b0d1c7593ef) |
+| 6. approve | Client | Completed | Resolved | [`0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef`](https://amoy.polygonscan.com/tx/0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef) |
 
 The other lock, "Provider quote, locked after the first quote", makes the provider quote after `configure`.
 
