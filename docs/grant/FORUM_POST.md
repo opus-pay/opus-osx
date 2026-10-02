@@ -49,7 +49,7 @@ We propose the USD 35,000 as an investment rather than a gift. Before the first 
 
 | Milestone | Deliverable | Check | USD |
 | :--- | :--- | :--- | :--- |
-| M1. Audit (weeks 0–8) | External audit of about 1,100 lines of core Solidity, fixes, MIT headers, Amoy rerun including a dispute | Public report and new hashes | 22,000 |
+| M1. Audit (weeks 0–8) | Code freeze first (approve renamed, final fee and time bounds, MIT headers), then an external audit of about 1,100 lines of core Solidity, fixes, and an Amoy rerun including a dispute | Public report and new hashes | 22,000 |
 | M2. Mainnet and pilot (weeks 8–14) | Polygon PoS deployment, relayer, keeper and indexer live, pilot in one corridor | ≥ 12 completed jobs, ≥ 10 wallets, ≥ 360 USDC settled, all on chain | 8,000 |
 | M3. Reporting and reuse (weeks 14–20) | Public metrics dashboard, docs and demo, SDK examples, ERC-8183 feedback, final report | URLs and repository | 5,000 |
 

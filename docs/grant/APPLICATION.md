@@ -99,7 +99,7 @@ Weeks count from the first tranche. The first tranche (M1) is paid on approval, 
 
 | Milestone | Deliverables | Acceptance check | USD |
 | :--- | :--- | :--- | :--- |
-| **M1. Audit** (weeks 0–8) | Threat model and audit pack; external audit of about 1,100 lines; fixes; rename the review contract's `approve` so wallets stop showing it as a token permission; MIT headers; lower the fee cap, now a placeholder that allows up to 100 percent of the budget; redeploy on Amoy; rerun all runs, plus the counterparty link and a dispute | Public audit report; fix commits; new Amoy hashes | 22,000 |
+| **M1. Audit** (weeks 0–8) | Before the audit: rename the review contract's `approve` so wallets stop showing it as a token permission; set every bound still marked as a placeholder, including a lower evaluation-fee cap than today's 100 percent of the budget; MIT headers; threat model and audit pack; freeze the code at a tagged commit. Then: external audit of that commit, about 1,100 lines; fixes, re-checked by the auditor; redeploy on Amoy; rerun all six scenarios, plus the counterparty link and a dispute | Public audit report; fix commits; new Amoy hashes | 22,000 |
 | **M2. Mainnet and pilot** (weeks 8–14) | Verified Polygon PoS deployment; relayer, keeper and indexer in production; payment links signed without a gas token; pilot in one corridor | At least 12 completed jobs, 10 distinct wallets and 360 USDC settled, all on chain | 8,000 |
 | **M3. Public reporting and reuse** (weeks 14–20) | Public metrics dashboard; docs site and demo; SDK examples for Polygon builders; ERC-8183 feedback to its authors; final report | Dashboard and docs URLs; examples in the repository | 5,000 |
 | **Total** | | | **35,000** |
@@ -107,7 +107,7 @@ Weeks count from the first tranche. The first tranche (M1) is paid on approval, 
 | Line | USD |
 | :--- | :--- |
 | M1: external audit (estimate for about 1,100 lines; the accepted quote will be published) | 20,000 |
-| M1: fixes, redeploy and reruns | 2,000 |
+| M1: pre-audit changes, fixes, redeploy and reruns | 2,000 |
 | M2: relayer and keeper gas, and RPC, for the pilot | 1,500 |
 | M2: hosting for 20 weeks (keeper, relayer, indexer) | 1,500 |
 | M2: pilot recruiting and user support | 3,500 |
@@ -116,7 +116,7 @@ Weeks count from the first tranche. The first tranche (M1) is paid on approval, 
 | M3: dashboard | 1,500 |
 | M3: SDK examples and ERC-8183 feedback | 1,500 |
 
-* If the audit costs less than the estimate, the difference funds a bug bounty after launch. If it costs more, OPUS pays the difference.
+* The M1 audit line is an estimate today. Before the first tranche it is replaced by the accepted quote, which must include the re-check of fixes, and M1 is adjusted to match. If the final invoice is lower, the difference funds a bug bounty after launch.
 * If M2's targets are not met by week 18, we do not request M3. We publish what happened and why.
 * POL is converted to USDC within 7 days of each tranche, because the audit and hosting are priced in dollars. Each tranche uses the 7-day average POL/USD price before payment, and the conversion transactions are listed in the next report.
 
