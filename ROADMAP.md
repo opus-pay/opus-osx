@@ -29,7 +29,7 @@
 | `packages/keeper` | Calls permissionless deadline triggers | Hosted | M4 |
 | `packages/relayer` | ERC-2771 relay and gas sponsorship | Hosted | M4 |
 | `packages/indexer` | Job and instance index for apps and the keeper | Hosted | M4 |
-| `apps/errands` | Cross-border errand service (team-run service platform) | Hosted | M6 |
+| `opus-errand` (separate repository) | Cross-border errand service (team-run service platform); uses the SDK and contract addresses from this repository by reference only | Hosted | M6 |
 | `packages/verifier` | Isolated test runner for `TestRunnerEvaluator` | Hosted | M13 |
 | `apps/pay` | Escrow payment link web app | Hosted | M5 |
 | `apps/portal` | OPUS Portal: service directory, on-chain stats, my jobs | Hosted (open source) | M12 |
@@ -181,6 +181,13 @@ Priority: `P0` required for the milestone, `P1` should have, `P2` later.
 | **#72** | `Feature` | P0 | On- and off-ramp integration |
 | **#73** | `Feature` | P0 | Wallet onboarding and gasless use |
 | **#74** | `Task` | P0 | Support, dispute operations, default arbiter |
+| **#76** | `Feature` | P0 | Errand app trial: screens and public/private API |
+| **#77** | `Feature` | P0 | Errand app: connect the real escrow |
+| **#78** | `Task` | P0 | Errand data: database and proof storage |
+| **#79** | `Task` | P0 | Errand app: hosting, security and operations |
+| **#80** | `Task` | P0 | Errand content rules, reports and moderation |
+| **#81** | `Feature` | P1 | Errand notifications |
+| **#82** | `Task` | P1 | Errand service name, domain and brand |
 
 ## M7. Validation (weeks 13–16)
 

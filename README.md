@@ -51,7 +51,7 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The refer
 | `packages/relayer` | Gasless relaying (ERC-2771) | M4 | Written; ran on Amoy |
 | `packages/indexer` | Job and instance index for status pages | M4 | Written |
 | `apps/pay` | Escrow payment links | M5 | Written; ran on Amoy |
-| `apps/errands` | Cross-border errand service | M6 | Planned |
+| `opus-errand` (separate repository) | Cross-border errand service, trial | M6 | In progress |
 | `apps/portal` | OPUS Portal: directory of services built on OPUS | M12 | Planned |
 
 Apps use `@opus/sdk` only. Contract types come from typechain output; never copy ABIs by hand.
