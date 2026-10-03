@@ -101,7 +101,14 @@ function OpenLink({ token }: { token: string }) {
         }
         const opus = new Opus(publicClient, addresses, walletClient);
         const jobId = jobText === "" ? undefined : BigInt(jobText);
-        const view = await fundingView(opus, jobId, terms.lock);
+        let view: Awaited<ReturnType<typeof fundingView>>;
+        try {
+            view = await fundingView(opus, jobId, terms.lock);
+        } catch {
+            // A read that fails after every endpoint and retry: say so and let the user try again.
+            toast.error(t("open.readFailed"));
+            return;
+        }
         const step = nextFundingAction(view);
         if (step === "funded") {
             setFunded(true);
