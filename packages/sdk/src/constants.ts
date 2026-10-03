@@ -20,7 +20,8 @@ export const PLACEHOLDER_DISPUTE_DEPOSIT = 0n;
 export const PLACEHOLDER_ARBITER: Address = zeroAddress;
 
 export const MIN_BUDGET_USD = 1n;
-export const MAX_BUDGET_USD = 1_000n;
+/** 100 USD per job until the external audit, matching OpusAgenticCommerce.MAX_BUDGET_USD. */
+export const MAX_BUDGET_USD = 100n;
 
 /** Amoy rejects a tip below 25 gwei. dRPC's quoted price is not usable. */
 export const AMOY_MIN_GAS_PRICE = 25_000_000_000n;

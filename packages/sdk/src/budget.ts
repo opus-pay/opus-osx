@@ -12,10 +12,10 @@ export function assertBudgetInRange(amount: bigint, decimals: number): void {
     const min = tokenUnitsForUsd(MIN_BUDGET_USD, decimals);
     const max = tokenUnitsForUsd(MAX_BUDGET_USD, decimals);
     if (amount < min) throw new Error(`Budget ${amount} is below 1 USD`);
-    if (amount > max) throw new Error(`Budget ${amount} is above 1,000 USD`);
+    if (amount > max) throw new Error(`Budget ${amount} is above ${MAX_BUDGET_USD} USD`);
 }
 
-/** Split work above 1,000 USD into several jobs of at most 1,000. */
+/** Split work above the per-job cap (MAX_BUDGET_USD) into several jobs. */
 export function splitBudgetUsd(amountUsd: number): number[] {
     if (!(amountUsd > 0)) return [];
     const parts: number[] = [];

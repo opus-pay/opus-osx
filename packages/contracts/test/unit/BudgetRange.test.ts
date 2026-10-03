@@ -25,18 +25,18 @@ describe("Budget range (#10)", () => {
             const one = ethers.BigNumber.from(1_000000);
             if (usd === "low") return one.sub(1);
             if (usd === "min") return one;
-            if (usd === "max") return one.mul(1000);
-            return one.mul(1000).add(1);
+            if (usd === "max") return one.mul(100);
+            return one.mul(100).add(1);
         }
         const one = ethers.utils.parseUnits("1", 18);
         if (usd === "low") return ethers.utils.parseUnits("0.999999", 18);
         if (usd === "min") return one;
-        if (usd === "max") return one.mul(1000);
-        return ethers.utils.parseUnits("1000.000001", 18);
+        if (usd === "max") return one.mul(100);
+        return ethers.utils.parseUnits("100.000001", 18);
     }
 
     for (const decimals of [6, 18] as const) {
-        it(`rejects below 1 and above 1,000 USD for ${decimals}-decimal tokens`, async () => {
+        it(`rejects below 1 and above 100 USD for ${decimals}-decimal tokens`, async () => {
             const { core } = await deploy(decimals);
             const expiredAt = await defaultExpiry();
             await core

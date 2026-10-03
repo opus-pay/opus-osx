@@ -121,4 +121,4 @@ To see the attack work, check out the contracts as deployed on Amoy (before comm
 
 ## Next step
 
-An external audit before any large amounts, as planned in `docs/audit/PRE_AUDIT_FREEZE.md`. Until then, a mainnet beta should run with a low per-job cap and invited users only.
+An external audit before any large amounts, as planned in `docs/audit/PRE_AUDIT_FREEZE.md`. Until then the contracts cap each job at 100 USD (`MAX_BUDGET_USD = 100`, raised to 1,000 at the post-audit deployment), and a mainnet beta should be for invited users only.
