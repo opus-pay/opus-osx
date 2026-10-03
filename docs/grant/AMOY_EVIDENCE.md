@@ -212,7 +212,7 @@ The link used the default amount rule, "Client, before the review rules are set"
 | submit | Provider | 02:05:27 | [`0x0ab0e58a40e4f2bb9385311b8de8b8a8453d6ceda84fbbb6df8953d0e692ece1`](https://amoy.polygonscan.com/tx/0x0ab0e58a40e4f2bb9385311b8de8b8a8453d6ceda84fbbb6df8953d0e692ece1) |
 | approve | Client | 02:06:04 | [`0x7402ada71d04c4152da4dbaf98344f4a1bdac184997c5cfce4c41214296f8e9e`](https://amoy.polygonscan.com/tx/0x7402ada71d04c4152da4dbaf98344f4a1bdac184997c5cfce4c41214296f8e9e) |
 
-The whole run took under three minutes. Gas was the same as in step 6: 0.0243955 POL for the client's five transactions and 0.0022593 POL for the provider's one, at 25 gwei. On-chain job 9, a few minutes earlier, was opened by the same link flow and stopped after `configure` when a public RPC endpoint failed a read. It was never funded, so no USDC moved, and it expires unused.
+The whole run took under three minutes. Gas was the same as in step 6: 0.0243955 POL for the client's five transactions and 0.0022593 POL for the provider's one, at 25 gwei. On-chain job 9, about 20 minutes earlier (01:42–01:43 UTC), was opened by the same link flow and stopped after `configure` when a public RPC endpoint failed a read. It was never funded, so no USDC moved, and it expires unused.
 
 ## Not yet recorded on Amoy
 
