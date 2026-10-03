@@ -6,7 +6,7 @@ These files support OPUS's funding request to the Polygon Community Treasury. OP
 | :--- | :--- | :--- |
 | [APPLICATION.md](APPLICATION.md) | The full application: problem, product, evidence, milestones, budget, metrics, risks | Reviewers |
 | [FORUM_POST.md](FORUM_POST.md) | A shorter version, ready to post in the Polygon Community Forum | The forum |
-| [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) | Every Amoy transaction behind the six end-to-end runs | Reviewers who check |
+| [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) | Every Amoy transaction behind the seven end-to-end runs | Reviewers who check |
 | [AmoyClientQuote.txt](AmoyClientQuote.txt) | The deliverable file submitted in step 6 (on-chain job 7) | Hash check below |
 | [APPLICATION.ko.md](APPLICATION.ko.md) | Korean translation of the application | The founder and Korean partners |
 
@@ -33,4 +33,5 @@ These files support OPUS's funding request to the Polygon Community Treasury. OP
 - [ ] Set up a wallet used only for OPUS grant funds, and keep a record of every conversion and payment for tax
 - [ ] Keep `APPLICATION.ko.md` in step with `APPLICATION.md`
 - [ ] Check which Polygon funding programme is open and match its format
-- [ ] Run on Amoy, and add to `AMOY_EVIDENCE.md`: a link opened by the counterparty (provider creates it, client funds), and a dispute. The application promises both by the end of M1; earlier is better
+- [x] Run a dispute on Amoy (step 7, on-chain job 8)
+- [ ] Run on Amoy, and add to `AMOY_EVIDENCE.md`: a link opened by the counterparty (provider creates it, client funds). The application promises it by the end of M1; earlier is better

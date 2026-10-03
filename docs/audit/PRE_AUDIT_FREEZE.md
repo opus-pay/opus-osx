@@ -40,4 +40,4 @@ These are set per job by the SDK and the app, so they do not block the freeze: t
 
 ## After the audit
 
-Fix the findings, have the auditors re-check the fixes, publish the report, redeploy on Amoy, and rerun the six recorded scenarios plus the counterparty payment link and a dispute (`docs/grant/AMOY_EVIDENCE.md`).
+Fix the findings, have the auditors re-check the fixes, publish the report, redeploy on Amoy, and rerun the seven recorded scenarios, including the dispute, plus the counterparty payment link (`docs/grant/AMOY_EVIDENCE.md`).
