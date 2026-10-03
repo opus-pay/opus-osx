@@ -698,6 +698,11 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Present the service as cross-border escrow payments; blockchain as the implementation, not the headline
 * **Acceptance:** The pilot runs under its own name and domain.
 
+* **해결 내용 (일부, 2026-10-03):**
+  - 작업 이름을 **WayHand**(웨이핸드, ウェイハンド)로 정하고 opus-errand 화면, API 이름, 에이전트 안내에 넣었다.
+  - 웹 검색으로 후보를 걸렀다. Lendhand는 미국 가사 서비스 앱 "Lend Hands"와 네덜란드 금융 플랫폼 "Lendahand"와 겹치고, "Lend"가 대출로 읽혀 뺐다. Farhand는 주문형 서비스(farhand.live) 등과 겹쳐 뺐다. Errandia는 같은 이름의 심부름 앱이 있어 뺐다. WayHand는 같은 이름의 앱·회사·상표가 검색되지 않았다.
+  - 남은 것: KIPRIS·USPTO·J-PlatPat 상표 검색(9·35·36·39류), wayhand.com·wayhand.app 도메인과 SNS 계정 확보, 법인 설립(#67) 때 상표 출원.
+
 ---
 
 ## Milestone 7: Validation
