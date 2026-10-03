@@ -19,6 +19,9 @@ function Frame({ children }: { children: ReactNode }) {
                         OPUS
                     </a>
                     <div className="flex items-center gap-2">
+                        <a href="/arbiters" className="text-[14px] font-medium text-muted no-underline hover:text-ink">
+                            {t("nav.arbiters")}
+                        </a>
                         <span className="rounded-full bg-chain-wash px-3 py-1 text-[14px] font-medium text-chain">
                             {network}
                         </span>

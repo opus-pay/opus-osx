@@ -142,6 +142,21 @@ export default function DraftPage() {
                             ))}
                         </select>
                     </Field>
+                    <div>
+                        <span className="flex items-center gap-2 text-[14.5px] font-semibold text-muted">
+                            {t("draft.arbiter")}
+                            <SoonBadge label={t("soon")} />
+                        </span>
+                        <select className={`${fieldClass} cursor-not-allowed bg-canvas text-muted`} disabled>
+                            <option>{t("draft.arbiterNone")}</option>
+                        </select>
+                        <p className="m-0 mt-1.5 text-[14.5px] text-muted">
+                            {t("draft.arbiterNote")}{" "}
+                            <a href="/arbiters" className="text-cobalt">
+                                {t("nav.arbiters")}
+                            </a>
+                        </p>
+                    </div>
                     <Field label={t("draft.hours")}>
                         <input
                             className={fieldClass}
@@ -215,4 +230,9 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
             {children}
         </label>
     );
+}
+
+/** Marks a control that is shown but not yet available. */
+function SoonBadge({ label }: { label: string }) {
+    return <span className="rounded-full bg-canvas px-2 py-0.5 text-[12.5px] font-semibold text-muted">{label}</span>;
 }
