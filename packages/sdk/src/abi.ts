@@ -36,7 +36,7 @@ export const coreAbi = parseAbi([
 export const evaluatorAbi = parseAbi([
     "function configure(address instance, uint256 jobId, (uint32 submitWindow, uint32 reviewWindow, uint32 maxExtension, uint32 depositWindow, uint32 disputeWindow, bool autoCompleteOnSilence, bool defaultComplete, uint8 budgetLock, address arbiter, address operator, uint128 evaluationFee, uint128 keeperTip, uint128 disputeDeposit) cfg)",
     "function configureWithPermit(address instance, uint256 jobId, (uint32 submitWindow, uint32 reviewWindow, uint32 maxExtension, uint32 depositWindow, uint32 disputeWindow, bool autoCompleteOnSilence, bool defaultComplete, uint8 budgetLock, address arbiter, address operator, uint128 evaluationFee, uint128 keeperTip, uint128 disputeDeposit) cfg, uint256 deadline, uint8 v, bytes32 r, bytes32 s)",
-    "function approve(address instance, uint256 jobId)",
+    "function approveJob(address instance, uint256 jobId)",
     "function object(address instance, uint256 jobId, bytes32 evidenceHash)",
     "function extendReview(address instance, uint256 jobId, uint32 secondsExtended)",
     "function withdrawAsProvider(address instance, uint256 jobId)",

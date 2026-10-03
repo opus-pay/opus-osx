@@ -39,7 +39,7 @@ describe("OptimisticEvaluator flow and concession (#15)", () => {
             provider,
             operator.address
         );
-        await expect(first.evaluator.connect(client).approve(first.core.address, approved)).to.emit(
+        await expect(first.evaluator.connect(client).approveJob(first.core.address, approved)).to.emit(
             first.core,
             "JobCompleted"
         );
@@ -85,7 +85,7 @@ describe("OptimisticEvaluator flow and concession (#15)", () => {
             operator.address
         );
         await escalated.evaluator.connect(client).object(escalated.core.address, eId, ethers.utils.id("obj"));
-        await expect(escalated.evaluator.connect(client).approve(escalated.core.address, eId)).to.emit(
+        await expect(escalated.evaluator.connect(client).approveJob(escalated.core.address, eId)).to.emit(
             escalated.evaluator,
             "Conceded"
         );
@@ -313,7 +313,7 @@ describe("OptimisticEvaluator flow and concession (#15)", () => {
                 maxExtension: 3600,
             }
         );
-        await expect(evaluator.connect(stranger).approve(core.address, jobId)).to.be.revertedWithCustomError(
+        await expect(evaluator.connect(stranger).approveJob(core.address, jobId)).to.be.revertedWithCustomError(
             evaluator,
             "Unauthorized"
         );

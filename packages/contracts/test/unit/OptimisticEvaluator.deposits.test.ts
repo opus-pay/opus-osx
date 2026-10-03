@@ -82,7 +82,7 @@ describe("OptimisticEvaluator dispute deposits (#53)", () => {
         const { token, core, evaluator, jobId } = await submittedWithDeposit();
         await evaluator.connect(client).object(core.address, jobId, ethers.utils.id("e"));
         await evaluator.connect(provider).postDeposit(core.address, jobId);
-        await evaluator.connect(client).approve(core.address, jobId);
+        await evaluator.connect(client).approveJob(core.address, jobId);
         expect(await token.balanceOf(arbiter.address)).to.equal(deposit);
         expect(await token.balanceOf(provider.address)).to.equal(budget + deposit);
     });
@@ -112,13 +112,29 @@ describe("OptimisticEvaluator dispute deposits (#53)", () => {
         expect(await token.balanceOf(arbiter.address)).to.equal(0);
     });
 
-    it("schedules the deposit deadline from reviewEnd, not the escalate call time", async () => {
+    it("starts the dispute clocks at a late escalation, so the windows are never already closed", async () => {
         const { core, evaluator, jobId } = await submittedWithDeposit(true);
         const review = (await evaluator.reviewEnd(core.address, jobId)).toNumber();
-        await time.setNextBlockTimestamp(review + 600);
+        const escalatedAt = review + 3601;
+        await time.setNextBlockTimestamp(escalatedAt);
         await evaluator.connect(stranger).escalateOnSilence(core.address, jobId);
-        expect((await evaluator.depositDeadlineOf(core.address, jobId)).toNumber()).to.equal(review + 3600);
-        expect((await evaluator.disputeDeadlineOf(core.address, jobId)).toNumber()).to.equal(review + 7200);
+        expect((await evaluator.depositDeadlineOf(core.address, jobId)).toNumber()).to.equal(escalatedAt + 3600);
+        expect((await evaluator.disputeDeadlineOf(core.address, jobId)).toNumber()).to.equal(escalatedAt + 7200);
+        // The provider can still post, so silence alone does not cost it the job.
+        await expect(evaluator.connect(provider).postDeposit(core.address, jobId)).to.emit(evaluator, "CaseOpened");
+    });
+
+    it("refuses a deposit at the deposit deadline itself, where resolveMissingDeposit takes over", async () => {
+        const { core, evaluator, jobId } = await submittedWithDeposit(true);
+        const review = (await evaluator.reviewEnd(core.address, jobId)).toNumber();
+        await time.setNextBlockTimestamp(review);
+        await evaluator.connect(stranger).escalateOnSilence(core.address, jobId);
+        const deadline = (await evaluator.depositDeadlineOf(core.address, jobId)).toNumber();
+        await time.setNextBlockTimestamp(deadline);
+        await expect(evaluator.connect(provider).postDeposit(core.address, jobId)).to.be.revertedWithCustomError(
+            evaluator,
+            "ReviewEnded"
+        );
     });
 
     it("lets the provider post a deposit with permit", async () => {
@@ -177,7 +193,7 @@ describe("OptimisticEvaluator dispute deposits (#53)", () => {
     it("returns a confirmation-mode prepaid deposit when there is no dispute (D22)", async () => {
         const { token, core, evaluator, jobId } = await submittedWithDeposit(true);
         expect(await evaluator.clientDepositOf(core.address, jobId)).to.equal(deposit);
-        await evaluator.connect(client).approve(core.address, jobId);
+        await evaluator.connect(client).approveJob(core.address, jobId);
         expect(await token.balanceOf(client.address)).to.equal(deposit);
         expect(await token.balanceOf(evaluator.address)).to.equal(0);
     });

@@ -152,7 +152,7 @@ describe("Unit completeness (#18)", () => {
                 ev,
                 "WrongStatus"
             );
-            await expect(ev.connect(client).approve(core.address, 1)).to.be.revertedWithCustomError(ev, "WrongStatus");
+            await expect(ev.connect(client).approveJob(core.address, 1)).to.be.revertedWithCustomError(ev, "WrongStatus");
             await expect(ev.connect(provider).withdrawAsProvider(core.address, 1)).to.be.revertedWithCustomError(
                 ev,
                 "WrongStatus"
@@ -284,7 +284,7 @@ describe("Unit completeness (#18)", () => {
             await core.connect(client).fund(1, 100_000000, EMPTY);
             await core.connect(provider).submit(1, ethers.utils.id("w"), EMPTY);
             await frozen.connect(deployer).setBlacklisted(operator.address, true);
-            await ev.connect(client).approve(core.address, 1);
+            await ev.connect(client).approveJob(core.address, 1);
             expect(await ev.claimable(frozen.address, operator.address)).to.equal(1_000000);
             await frozen.connect(deployer).setBlacklisted(operator.address, false);
             await ev.connect(operator).withdraw(frozen.address, operator.address);

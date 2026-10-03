@@ -159,7 +159,7 @@ describe("OpusForwarder (#12)", () => {
         await token.connect(client).approve(core.address, 100_000000);
         await core.connect(client).fund(1, 100_000000, EMPTY);
         await core.connect(provider).submit(1, ethers.constants.HashZero, EMPTY);
-        const approveData = ev.interface.encodeFunctionData("approve", [core.address, 1]);
+        const approveData = ev.interface.encodeFunctionData("approveJob", [core.address, 1]);
         await forwarder
             .connect(relayer)
             .execute(await signRequest(forwarder, client, ev.address, approveData, deadline));

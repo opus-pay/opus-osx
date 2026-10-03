@@ -75,7 +75,7 @@ interface IOpusEvaluator {
 
     function timeoutNoSubmission(address instance, uint256 jobId) external;
 
-    function approve(address instance, uint256 jobId) external;
+    function approveJob(address instance, uint256 jobId) external;
 
     function withdrawAsProvider(address instance, uint256 jobId) external;
 

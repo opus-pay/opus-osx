@@ -3,7 +3,8 @@ import { defineChain, zeroAddress, type Address } from "viem";
 /** D3 placeholders. Match `OptimisticEvaluator` / `OpusAgenticCommerce`. */
 export const PLACEHOLDER_MIN_WINDOW = 3600;
 export const PLACEHOLDER_MAX_WINDOW = 180 * 24 * 60 * 60;
-export const PLACEHOLDER_SAFETY_MARGIN = 3600;
+/** One day, matching OptimisticEvaluator.PLACEHOLDER_SAFETY_MARGIN. */
+export const PLACEHOLDER_SAFETY_MARGIN = 86400;
 export const PLACEHOLDER_MIN_JOB_DURATION = 3600;
 export const PLACEHOLDER_MAX_JOB_DURATION = 180 * 24 * 60 * 60;
 
