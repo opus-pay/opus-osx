@@ -224,7 +224,7 @@ describe("Relayer on a local Hardhat node (#25)", () => {
                 env.addresses.evaluator,
                 encodeFunctionData({
                     abi: evaluatorAbi,
-                    functionName: "approve",
+                    functionName: "approveJob",
                     args: [env.addresses.instance, jobId],
                 })
             ),

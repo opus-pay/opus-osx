@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -19,10 +19,12 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
     /// @dev D3 — replace after the window-bound decision. Suggested 1 hour / 180 days / 1 hour.
     uint32 public constant PLACEHOLDER_MIN_WINDOW = 1 hours;
     uint32 public constant PLACEHOLDER_MAX_WINDOW = 180 days;
-    uint32 public constant PLACEHOLDER_SAFETY_MARGIN = 1 hours;
+    /// @dev Time left after every window for someone to call finalize/rule/resolve before the instance's
+    ///      permissionless claimRefund opens. One day so a missed keeper run does not cost the provider the job.
+    uint32 public constant PLACEHOLDER_SAFETY_MARGIN = 1 days;
 
-    /// @dev D18 — replace after the fee-cap decision. Suggested 10_000 (fee cannot exceed budget).
-    uint256 public constant PLACEHOLDER_MAX_EVALUATION_FEE_BP = 10_000;
+    /// @dev D18: the evaluation fee may be at most 20% of the budget.
+    uint256 public constant MAX_EVALUATION_FEE_BP = 2_000;
     uint256 public constant MAX_TIPS = 2;
 
     bytes32 public constant REASON_TIMEOUT = keccak256("TIMEOUT_NO_SUBMISSION");
@@ -81,6 +83,8 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
     error BudgetLocked();
     error InvalidDepositConfig();
     error ConfirmationNeedsArbiter();
+    error NoArbiterNeedsDefaultComplete();
+    error TokenChanged();
 
     constructor(address trustedForwarder_) ERC2771Context(trustedForwarder_) {}
 
@@ -115,14 +119,14 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
     }
 
     /// @inheritdoc IOpusEvaluator
-    function approve(address instance, uint256 jobId) external nonReentrant {
+    function approveJob(address instance, uint256 jobId) external nonReentrant {
         Case storage c = _requireOpenCase(instance, jobId);
         IOpusACPExtensions.Job memory job = IOpusACPExtensions(instance).getJob(jobId);
         if (_msgSender() != job.client) revert Unauthorized();
         if (c.submittedAt == 0) revert WrongStatus();
         uint8 loser = c.phase == Phase.ArbiterPending ? 1 : 0;
         if (c.phase == Phase.Escalated || c.phase == Phase.ArbiterPending) {
-            emit Conceded(instance, jobId, msg.sender);
+            emit Conceded(instance, jobId, _msgSender());
         }
         _complete(instance, jobId, c, REASON_APPROVE, loser);
     }
@@ -135,7 +139,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
         if (c.fundedAt == 0) revert WrongStatus();
         uint8 loser = c.phase == Phase.ArbiterPending ? 2 : 0;
         if (c.phase == Phase.Escalated || c.phase == Phase.ArbiterPending) {
-            emit Conceded(instance, jobId, msg.sender);
+            emit Conceded(instance, jobId, _msgSender());
         }
         _reject(instance, jobId, c, REASON_WITHDRAW, loser);
     }
@@ -193,7 +197,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
         if (c.phase != Phase.ArbiterPending) revert WrongStatus();
         if (_msgSender() != c.config.arbiter) revert Unauthorized();
         if (block.timestamp >= c.disputeDeadline) revert ReviewEnded();
-        emit Ruled(instance, jobId, msg.sender, completed, reasonHash);
+        emit Ruled(instance, jobId, _msgSender(), completed, reasonHash);
         if (completed) {
             _complete(instance, jobId, c, reasonHash, 1);
         } else {
@@ -319,6 +323,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
 
         if (selector == IAgenticCommerce.fund.selector) {
             if (!c.configured) revert NotConfigured();
+            if (c.phase != Phase.None) revert WrongStatus();
             _requireArbiterNotParty(c.config.arbiter, job.client, job.provider);
             uint256 needed = uint256(c.config.submitWindow) +
                 uint256(c.config.reviewWindow) +
@@ -336,6 +341,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
 
         if (selector == IAgenticCommerce.submit.selector) {
             if (!c.configured || c.fundedAt == 0) revert NotConfigured();
+            if (c.phase != Phase.Funded) revert WrongStatus();
             if (block.timestamp >= uint256(c.fundedAt) + uint256(c.config.submitWindow)) revert SubmitWindowClosed();
         }
     }
@@ -347,6 +353,8 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
         }
         Case storage c = _cases[msg.sender][jobId];
         if (selector == IAgenticCommerce.submit.selector) {
+            // Only a funded case can become submitted. A caller that skips beforeAction(fund) gets nothing.
+            if (c.phase != Phase.Funded) revert WrongStatus();
             c.submittedAt = uint64(block.timestamp);
             c.phase = Phase.Submitted;
         }
@@ -456,17 +464,19 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
     function _openCase(address instance, uint256 jobId, Case storage c, bytes32 evidenceHash) private {
         bool firstEscalation = c.phase != Phase.Escalated;
         c.phase = Phase.ArbiterPending;
-        _scheduleDeadlines(c);
         if (firstEscalation) emit Escalated(instance, jobId);
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = evidenceHash;
         emit CaseOpened(instance, jobId, c.config.arbiter, c.disputeDeadline, hashes);
     }
 
+    /// @dev The dispute clocks start at the end of the review, or at escalation if that comes later,
+    ///      so a late escalateOnSilence never opens a deposit or ruling window that has already closed.
     function _scheduleDeadlines(Case storage c) private {
         uint256 review = _reviewEnd(c);
-        c.depositDeadline = uint64(review + uint256(c.config.depositWindow));
-        c.disputeDeadline = uint64(review + uint256(c.config.depositWindow) + uint256(c.config.disputeWindow));
+        uint256 start = block.timestamp > review ? block.timestamp : review;
+        c.depositDeadline = uint64(start + uint256(c.config.depositWindow));
+        c.disputeDeadline = uint64(start + uint256(c.config.depositWindow) + uint256(c.config.disputeWindow));
     }
 
     function _configure(address instance, uint256 jobId, Config calldata cfg) private {
@@ -476,9 +486,11 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
         if (_msgSender() != job.client) revert Unauthorized();
         if (job.evaluator != address(this) || job.hook != address(this)) revert NotEvaluator();
         Case storage c = _cases[instance][jobId];
-        if (c.fundedAt != 0) revert ConfigFrozen();
+        if (c.fundedAt != 0 || c.phase != Phase.None) revert ConfigFrozen();
         _validateConfig(cfg, job);
         address token = address(IOpusACPExtensions(instance).token());
+        // A case keeps the token it first held. Changing it would pay old balances in a new currency.
+        if (c.token != address(0) && token != c.token) revert TokenChanged();
         uint128 prepaid = cfg.autoCompleteOnSilence ? uint128(0) : cfg.disputeDeposit;
         _rebalanceHolds(c, token, _msgSender(), cfg.evaluationFee, prepaid);
         c.config = cfg;
@@ -490,7 +502,7 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
     function _postDeposit(address instance, uint256 jobId, IOpusACPExtensions.Job memory job, Case storage c) private {
         if (c.phase != Phase.Escalated) revert WrongStatus();
         if (c.config.disputeDeposit == 0) revert WrongStatus();
-        if (block.timestamp > c.depositDeadline) revert ReviewEnded();
+        if (block.timestamp >= c.depositDeadline) revert ReviewEnded();
         address caller = _msgSender();
         if (caller == job.client) {
             if (c.clientPosted) revert WrongStatus();
@@ -653,6 +665,11 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
         if (uint256(cfg.keeperTip) * MAX_TIPS > cfg.evaluationFee) revert InvalidFeeConfig();
         if (!cfg.autoCompleteOnSilence && cfg.arbiter == address(0)) revert ConfirmationNeedsArbiter();
         if (cfg.disputeDeposit > 0 && cfg.arbiter == address(0)) revert InvalidDepositConfig();
+        // Without an arbiter an objection resolves at once to the default, so the default must pay the provider.
+        if (cfg.arbiter == address(0) && !cfg.defaultComplete) revert NoArbiterNeedsDefaultComplete();
+        // With an arbiter, the arbiter needs time to rule, and each side needs time to post a deposit.
+        if (cfg.arbiter != address(0)) _requireWindow(cfg.disputeWindow, false);
+        if (cfg.disputeDeposit > 0) _requireWindow(cfg.depositWindow, false);
         _requireArbiterNotParty(cfg.arbiter, job.client, job.provider);
         if (job.budget > 0) {
             uint256 cap = _feeCap(job.budget);
@@ -671,6 +688,6 @@ contract OptimisticEvaluator is IOpusEvaluator, IACPHook, ERC2771Context, Reentr
     }
 
     function _feeCap(uint256 budget) private pure returns (uint256) {
-        return (budget * PLACEHOLDER_MAX_EVALUATION_FEE_BP) / 10_000;
+        return (budget * MAX_EVALUATION_FEE_BP) / 10_000;
     }
 }

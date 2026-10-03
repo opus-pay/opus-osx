@@ -99,6 +99,10 @@ export class Opus {
         if (job.budget !== agreedAmount) {
             throw new Error("The funded amount does not match the agreed budget");
         }
+        // A client-chosen hook or evaluator could block payment after the work is delivered.
+        if (!sameAddress(job.evaluator, this.addresses.evaluator) || !sameAddress(job.hook, this.addresses.evaluator)) {
+            throw new Error("The job does not use the OPUS review contract as its evaluator and hook");
+        }
         return this.write(this.addresses.instance, coreAbi, "submit", [jobId, deliverable, EMPTY]);
     }
 
@@ -135,7 +139,7 @@ export class Opus {
     }
 
     approve(jobId: bigint): Promise<Hash> {
-        return this.write(this.addresses.evaluator, evaluatorAbi, "approve", [this.addresses.instance, jobId]);
+        return this.write(this.addresses.evaluator, evaluatorAbi, "approveJob", [this.addresses.instance, jobId]);
     }
 
     object(jobId: bigint, evidenceHash: Hex): Promise<Hash> {
@@ -466,4 +470,8 @@ export class Opus {
 
 function configTuple(config: EvaluatorConfig) {
     return { ...config };
+}
+
+function sameAddress(a: string, b: string): boolean {
+    return a.toLowerCase() === b.toLowerCase();
 }

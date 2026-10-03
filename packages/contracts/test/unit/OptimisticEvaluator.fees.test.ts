@@ -31,7 +31,7 @@ describe("OptimisticEvaluator fees and tips (#16)", () => {
             { evaluationFee: fee }
         );
         expect(await completed.evaluator.feeHeld(completed.core.address, cId)).to.equal(fee);
-        await completed.evaluator.connect(client).approve(completed.core.address, cId);
+        await completed.evaluator.connect(client).approveJob(completed.core.address, cId);
         expect(await completed.token.balanceOf(operator.address)).to.equal(fee);
         expect(await completed.evaluator.feeHeld(completed.core.address, cId)).to.equal(0);
         expect(await completed.token.balanceOf(completed.evaluator.address)).to.equal(0);

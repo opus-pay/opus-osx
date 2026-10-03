@@ -106,7 +106,7 @@ describe("Invariant suite (#19)", () => {
                 const id = pick(count) + 1;
                 if (roll === 2) await maybe(() => core.connect(client).fund(id, 100_000000, EMPTY));
                 else if (roll === 3) await maybe(() => core.connect(provider).submit(id, ethers.utils.id("w"), EMPTY));
-                else if (roll === 4) await maybe(() => ev.connect(client).approve(core.address, id));
+                else if (roll === 4) await maybe(() => ev.connect(client).approveJob(core.address, id));
                 else if (roll === 5) await maybe(() => ev.connect(provider).withdrawAsProvider(core.address, id));
                 else if (roll === 6) await maybe(() => ev.connect(stranger).timeoutNoSubmission(core.address, id));
                 else if (roll === 7) await maybe(() => ev.connect(stranger).finalize(core.address, id));
@@ -240,7 +240,7 @@ describe("Invariant suite (#19)", () => {
         await token.connect(client).approve(core.address, 100_000000);
         await core.connect(client).fund(2, 100_000000, EMPTY);
         await core.connect(provider).submit(2, ethers.utils.id("w"), EMPTY);
-        await ev.connect(client).approve(core.address, 2);
+        await ev.connect(client).approveJob(core.address, 2);
         expect((await core.getJob(2)).status).to.equal(COMPLETED);
         expect(await token.balanceOf(provider.address)).to.equal(100_000000);
     });
