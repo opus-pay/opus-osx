@@ -48,6 +48,9 @@ describe("payment link draft (#27)", () => {
     it("speaks the review window in plain language", () => {
         expect(plainTerms(3 * 24 * 60 * 60)).to.equal("Paid automatically 3 days after submission unless you object.");
         expect(plainTerms(3600)).to.equal("Paid automatically 1 hour after submission unless you object.");
+        expect(plainTerms(3600, "client", "en", false)).to.equal(
+            "Paid to the provider automatically 1 hour after submission. This job has no arbiter, so an objection cannot stop the payment."
+        );
     });
 
     it("keeps the client amount lock ahead of configure, and the provider quote after it", () => {

@@ -5,7 +5,7 @@ import { Check, ExternalLink } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { getAddress } from "viem";
+import { getAddress, zeroAddress } from "viem";
 import { useAccount, useConnect, usePublicClient, useWalletClient } from "wagmi";
 
 import { Balances } from "../../src/components/balances";
@@ -189,7 +189,7 @@ function OpenLink({ token }: { token: string }) {
         >
             <div className="flex flex-col gap-5">
                 <p className="m-0 text-[19px] font-semibold leading-snug text-ink">
-                    {plainTerms(config.reviewWindow, role ?? "anyone", locale)}
+                    {plainTerms(config.reviewWindow, role ?? "anyone", locale, config.arbiter !== zeroAddress)}
                 </p>
                 <div className="grid gap-5 sm:grid-cols-[1.15fr_1fr]">
                     <Facts

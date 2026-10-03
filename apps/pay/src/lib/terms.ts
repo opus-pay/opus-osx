@@ -3,15 +3,16 @@ import { translate, type Locale, type MessageKey } from "./i18n";
 /**
  * The sentence the counterparty reads. The duration is the preset review window.
  * Only the client can object, so the provider, and a reader with no wallet yet, read "the client".
+ * Without an arbiter an objection resolves to payment, so the sentence says so instead.
  */
 export function plainTerms(
     reviewWindowSeconds: number,
     reader: "client" | "provider" | "anyone" = "client",
-    locale: Locale = "en"
+    locale: Locale = "en",
+    hasArbiter = true
 ): string {
-    return translate(locale, reader === "client" ? "terms.you" : "terms.client", {
-        span: span(reviewWindowSeconds, locale),
-    });
+    const key: MessageKey = !hasArbiter ? "terms.noArbiter" : reader === "client" ? "terms.you" : "terms.client";
+    return translate(locale, key, { span: span(reviewWindowSeconds, locale) });
 }
 
 const PRESET: Record<string, MessageKey> = {

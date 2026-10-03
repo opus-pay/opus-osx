@@ -86,7 +86,8 @@ export function roleGuide(
     status: CoreStatus,
     phase: Phase,
     autoComplete: boolean,
-    locale: Locale = "en"
+    locale: Locale = "en",
+    hasArbiter = true
 ): string {
     const t = (key: MessageKey) => translate(locale, key);
     if (phase === "Escalated") return t("guide.dispute");
@@ -94,6 +95,7 @@ export function roleGuide(
     const side = role === "client" ? "client" : "provider";
     if (status === "Open") return t(`guide.${side}.open`);
     if (status === "Funded") return t(`guide.${side}.funded`);
+    if (status === "Submitted" && side === "client" && !hasArbiter) return t("guide.client.submittedNoArbiter");
     if (status === "Submitted") return t(autoComplete ? `guide.${side}.submittedAuto` : `guide.${side}.submitted`);
     if (status === "Completed") return t(`guide.${side}.completed`);
     if (status === "Rejected") return t(`guide.${side}.rejected`);
