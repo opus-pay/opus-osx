@@ -65,6 +65,10 @@ describe("job progress and role tabs (#28)", () => {
         expect(roleGuide("client", "Funded", "Funded", true)).to.contain("Waiting for the provider");
         expect(roleGuide("client", "Submitted", "Submitted", true)).to.contain("Silence pays the provider");
         expect(roleGuide("client", "Submitted", "Submitted", false)).to.not.contain("Silence");
+        expect(roleGuide("client", "Submitted", "Submitted", true, "en", false)).to.contain("cannot stop the payment");
+        expect(roleGuide("provider", "Submitted", "Submitted", true, "en", false)).to.contain(
+            "paid when the review ends"
+        );
         expect(roleGuide("provider", "Submitted", "Escalated", true)).to.contain("dispute");
         expect(roleGuide("provider", "Completed", "Resolved", true)).to.equal("Done. You were paid.");
     });

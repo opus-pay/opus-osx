@@ -43,6 +43,7 @@ type JobView = {
     phase: PhaseName;
     nextDeadline: bigint | null;
     autoComplete: boolean;
+    hasArbiter: boolean;
     actions: Record<Role, JobAction[]>;
     now: bigint;
 };
@@ -93,8 +94,12 @@ function JobScreen({ id }: { id: string }) {
                 args: [addresses.instance, jobId],
             }),
         ]);
+        const hasArbiter = config.arbiter !== zeroAddress;
+        // Without an arbiter an objection only resolves to the default (payment), so the app does not offer it.
         const pick = (role: Role, status?: WalletStatus) =>
-            (status?.actions ?? []).filter((action) => ROLE_ACTIONS[role].has(action));
+            (status?.actions ?? []).filter(
+                (action) => ROLE_ACTIONS[role].has(action) && (hasArbiter || action !== "object")
+            );
         const view: JobView = {
             client: getAddress(core.client),
             provider: core.provider === zeroAddress ? zeroAddress : getAddress(core.provider),
@@ -103,6 +108,7 @@ function JobScreen({ id }: { id: string }) {
             phase: clientStatus.phase,
             nextDeadline: clientStatus.nextDeadline,
             autoComplete: config.autoCompleteOnSilence,
+            hasArbiter,
             actions: { client: pick("client", clientStatus), provider: pick("provider", providerStatus) },
             now: BigInt(Math.floor(Date.now() / 1000)),
         };
@@ -269,7 +275,7 @@ function JobScreen({ id }: { id: string }) {
                         }`}
                     >
                         <p className="m-0 text-[18px] font-semibold leading-snug">
-                            {roleGuide(shownRole, job.status, job.phase, job.autoComplete, locale)}
+                            {roleGuide(shownRole, job.status, job.phase, job.autoComplete, locale, job.hasArbiter)}
                         </p>
                         {isConnected && !canAct && actions.length > 0 && (
                             <p className="m-0 mt-1 text-[15px] font-medium text-amber">

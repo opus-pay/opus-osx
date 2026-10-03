@@ -81,6 +81,8 @@ const en = {
 
     "terms.you": "Paid automatically {span} after submission unless you object.",
     "terms.client": "Paid automatically {span} after submission unless the client objects.",
+    "terms.noArbiter":
+        "Paid to the provider automatically {span} after submission. This job has no arbiter, so an objection cannot stop the payment.",
     "span.hour": "1 hour",
     "span.hours": "{n} hours",
     "span.day": "1 day",
@@ -150,6 +152,8 @@ const en = {
         "Waiting for the provider to submit. If nothing arrives in time, the USDC comes back to you.",
     "guide.client.submittedAuto":
         "Check the deliverable. Approve to pay now, or object before the review ends. Silence pays the provider.",
+    "guide.client.submittedNoArbiter":
+        "Check the deliverable. Approve to pay now; otherwise the provider is paid when the review ends. This job has no arbiter, so an objection cannot stop the payment.",
     "guide.client.submitted": "Check the deliverable. Approve to pay now, or object before the review ends.",
     "guide.client.completed": "Done. The provider was paid.",
     "guide.client.rejected": "Done. The USDC came back to you.",
@@ -271,6 +275,8 @@ const ko: Messages = {
 
     "terms.you": "결과물 제출 후 {span} 안에 이의를 제기하지 않으면 자동으로 지급됩니다.",
     "terms.client": "결과물 제출 후 {span} 안에 의뢰인이 이의를 제기하지 않으면 자동으로 지급됩니다.",
+    "terms.noArbiter":
+        "결과물 제출 후 {span}이 지나면 수행자에게 자동으로 지급됩니다. 이 작업에는 중재인이 없어서 이의를 제기해도 지급을 막을 수 없습니다.",
     "span.hour": "1시간",
     "span.hours": "{n}시간",
     "span.day": "1일",
@@ -338,6 +344,8 @@ const ko: Messages = {
     "guide.client.funded": "수행자의 제출을 기다리는 중입니다. 기한 안에 제출이 없으면 USDC가 돌아옵니다.",
     "guide.client.submittedAuto":
         "결과물을 확인하세요. 지금 승인해 지급하거나, 검토가 끝나기 전에 이의를 제기하세요. 아무것도 하지 않으면 수행자에게 지급됩니다.",
+    "guide.client.submittedNoArbiter":
+        "결과물을 확인하세요. 지금 승인해 지급할 수 있고, 그러지 않으면 검토가 끝날 때 수행자에게 지급됩니다. 이 작업에는 중재인이 없어서 이의를 제기해도 지급을 막을 수 없습니다.",
     "guide.client.submitted": "결과물을 확인하세요. 지금 승인해 지급하거나, 검토가 끝나기 전에 이의를 제기하세요.",
     "guide.client.completed": "완료. 수행자에게 지급되었습니다.",
     "guide.client.rejected": "완료. USDC가 돌아왔습니다.",
@@ -456,6 +464,8 @@ const ja: Messages = {
 
     "terms.you": "成果物の提出後{span}以内に異議を申し立てなければ、自動で支払われます。",
     "terms.client": "成果物の提出後{span}以内に依頼者が異議を申し立てなければ、自動で支払われます。",
+    "terms.noArbiter":
+        "成果物の提出から{span}後に、受託者へ自動で支払われます。この仕事には仲裁人がいないため、異議を申し立てても支払いは止められません。",
     "span.hour": "1時間",
     "span.hours": "{n}時間",
     "span.day": "1日",
@@ -524,6 +534,8 @@ const ja: Messages = {
     "guide.client.funded": "受託者の提出を待っています。期限までに提出がなければ、USDCはあなたに戻ります。",
     "guide.client.submittedAuto":
         "成果物を確認してください。今すぐ承認して支払うか、レビュー終了前に異議を申し立ててください。何もしなければ受託者に支払われます。",
+    "guide.client.submittedNoArbiter":
+        "成果物を確認してください。今すぐ承認して支払うことができ、そうしなければレビュー終了時に受託者に支払われます。この仕事には仲裁人がいないため、異議を申し立てても支払いは止められません。",
     "guide.client.submitted":
         "成果物を確認してください。今すぐ承認して支払うか、レビュー終了前に異議を申し立ててください。",
     "guide.client.completed": "完了しました。受託者に支払われました。",
@@ -643,6 +655,7 @@ const zh: Messages = {
 
     "terms.you": "交付物提交后 {span} 内，若你未提出异议，将自动付款。",
     "terms.client": "交付物提交后 {span} 内，若委托方未提出异议，将自动付款。",
+    "terms.noArbiter": "交付物提交 {span} 后将自动付款给服务方。此任务没有仲裁人，提出异议也无法阻止付款。",
     "span.hour": "1 小时",
     "span.hours": "{n} 小时",
     "span.day": "1 天",
@@ -709,6 +722,8 @@ const zh: Messages = {
     "guide.client.open": "完成付款链接中的步骤，锁定 USDC。",
     "guide.client.funded": "正在等待服务方提交。若到期未提交，USDC 将退还给你。",
     "guide.client.submittedAuto": "请检查交付物。可以现在批准付款，或在审核结束前提出异议。若不操作，将付款给服务方。",
+    "guide.client.submittedNoArbiter":
+        "请检查交付物。可以现在批准付款；若不操作，审核结束时将付款给服务方。此任务没有仲裁人，提出异议也无法阻止付款。",
     "guide.client.submitted": "请检查交付物。可以现在批准付款，或在审核结束前提出异议。",
     "guide.client.completed": "已完成。已付款给服务方。",
     "guide.client.rejected": "已完成。USDC 已退还给你。",
