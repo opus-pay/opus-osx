@@ -129,6 +129,7 @@ Amounts are USDC. A 0.5 tip is taken from the 1.00 evaluation fee, so the operat
 | No submission | 4 | `ipfs://amoy/timeout` | 1.00 | 1.00 | 0.50 | Client | Operator | Keeper | Rejected | Resolved |
 | Gasless | 5 | `ipfs://amoy/gasless` | 1.00 | 0 | 0 | Provider | — | — | Completed | Resolved |
 | Shared link, client quote | 7 | Entered in the form | 5.00 | 0 | 0 | Provider | — | — | Completed | Resolved |
+| Shared link created by the provider, client quote | 10 | Entered in the form | 5.00 | 0 | 0 | Provider | — | — | Completed | Resolved |
 | Shared link, provider quote | — | Entered in the form | 1.00 | 0 | 0 | — | — | — | Not run | Not run |
 | Dispute | 8 | `ipfs://amoy/dispute` | 1.00 | 0 | 0 | Client | — | — | Rejected | Resolved |
 
@@ -300,7 +301,7 @@ If the keeper is running before step 7, it calls `timeoutNoSubmission` and the e
 
 **Purpose.** Two people finish one job from one link: the terms are shared, the job is funded, the provider submits proof, and the client approves. The connected wallets send the transactions, so both need POL. Use the Ledger client and provider. Do not use the zero-POL pair.
 
-**Test.** The client-quote path ran on Amoy as chain job 7 on 2026-10-01, 21:34:50 to 21:37:54 KST. The provider-quote path has not run. Chain job 6, from 20:39 to 20:49 KST the same evening, was a rehearsal of the client-quote path by the same two wallets. It also completed and paid the provider 5.00 USDC, and it is not used as evidence.
+**Test.** The client-quote path ran on Amoy as chain job 7 on 2026-10-01, 21:34:50 to 21:37:54 KST. A link created by the provider, with the same client-quote lock, ran as chain job 10 on 2026-10-03, 11:03:12 to 11:06:04 KST, and is the demo video. Chain job 9, a few minutes earlier, stopped after `configure` when a public RPC endpoint failed a read; it was never funded. The provider-quote lock has not run. Chain job 6, from 20:39 to 20:49 KST the same evening, was a rehearsal of the client-quote path by the same two wallets. It also completed and paid the provider 5.00 USDC, and it is not used as evidence.
 
 1. Run `NEXT_PUBLIC_RPC_URL=https://polygon-amoy-bor-rpc.publicnode.com yarn pay dev`.
 2. Open `http://localhost:3000` in the client profile.

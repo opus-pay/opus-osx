@@ -4,7 +4,7 @@ OPUS is an ERC-8183 escrow with no administrator and no protocol fee. A client l
 
 Block explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com).
 
-Steps are numbered 1–7 in this record. The job number is the id the chain gave the job. Step 6 is on-chain job 7, because on-chain job 6 was a rehearsal of the same payment-link run.
+Steps are numbered 1–8 in this record. The job number is the id the chain gave the job. Step 6 is on-chain job 7, because on-chain job 6 was a rehearsal of the same payment-link run. Step 8 is on-chain job 10; job 9 was an unfunded attempt (see step 8).
 
 ## Contracts
 
@@ -31,6 +31,7 @@ A non-zero evaluation fee moves when the client calls `configure`, while the job
 | 5. Gasless payment | 5 | `Completed` | 1.00 USDC to the provider | None. The signing wallets held no POL |
 | 6. Shared payment link | 7 | `Completed` | 5.00 USDC to the provider | None |
 | 7. Dispute | 8 | `Rejected` | 1.00 USDC back to the client | None. Deposits: the client's 0.10 back to the client, the provider's 0.10 to the arbiter |
+| 8. Provider's link | 10 | `Completed` | 5.00 USDC to the provider | None |
 
 The keeper that sent steps 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc). The deployer is [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba).
 
@@ -52,6 +53,8 @@ The keeper that sent steps 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882c
 | Step 7 (job 8): 1.00 USDC from the client to the instance at `fund` | `JobFunded` | [`0xfbbd3bf3…16ef8f3c`](https://amoy.polygonscan.com/tx/0xfbbd3bf3e9111e9c2c1369275b8225e5d397cd899999c3e1b9ca5c8516ef8f3c#eventlog) |
 | Step 7 (job 8): 0.10 USDC deposit from the provider to the evaluator | `DepositPosted` | [`0x8c959271…039a7246`](https://amoy.polygonscan.com/tx/0x8c95927118d74253390649bf4b9dc177da7810c4630c339a8c95e6a2039a7246#eventlog) |
 | Step 7 (job 8): 1.00 budget and 0.10 deposit to the client, 0.10 deposit to the arbiter | `Ruled`, `Refunded` | [`0xd0d90bd8…13ee16bf`](https://amoy.polygonscan.com/tx/0xd0d90bd8a54f4ea9dd79c76f0b5890ac0b0606315ed96eeb6ac2245c13ee16bf#eventlog) |
+| Step 8 (job 10): 5.00 USDC from the client to the instance at `fundWithPermit` | `JobFunded` | [`0xd2191b97…97984790`](https://amoy.polygonscan.com/tx/0xd2191b97ad51e748a3795258205974636e34af9bfb1cbcf1d7da18f497984790#eventlog) |
+| Step 8 (job 10): 5.00 USDC from the instance to the provider | `PaymentReleased` | [`0x7402ada7…296f8e9e`](https://amoy.polygonscan.com/tx/0x7402ada71d04c4152da4dbaf98344f4a1bdac184997c5cfce4c41214296f8e9e#eventlog) |
 
 ## Step 1. The client approves
 
@@ -183,10 +186,38 @@ The job used `presetPersonToAny`: no evaluation fee, a 0.10 USDC dispute deposit
 
 USDC after the ruling: the client's balance was back where it started, the provider had 0.10 less, and the arbiter held 0.10.
 
+## Step 8. The provider's link, funded by the client
+
+On-chain job: **10**
+
+The provider filled in the payment link form and sent the link to the client. The client opened it in another wallet, read the terms and signed each call, which opened on-chain job 10. The provider submitted the deliverable file, and the client approved. The provider received the full 5.00 USDC, and no evaluation fee was charged. This run is the [demo video](https://www.youtube.com/watch?v=bbnYn5qXpR4).
+
+The link used the default amount rule, "Client, before the review rules are set": the amount is fixed in the link, so the client's wallet sends `setBudget`. The other rule, where the provider sets the price on chain after `configure`, is listed under "Not yet recorded" below.
+
+| Term | Value |
+| :--- | :--- |
+| Client | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) |
+| Provider | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) |
+| Link created by | The provider |
+| Budget | 5.00 USDC |
+| Review rules | `smallNoArbiter`: paid automatically 1 hour after submission. This preset has no arbiter, so an objection resolves to the default, which is payment |
+| Deliverable | [`AmoyClientQuote.txt`](AmoyClientQuote.txt), keccak256 `0x52baa0e5f62955a6f6412081035036f5a0bd99d235d0c3ebd20ff30f6a1dd770` |
+
+| Call | Signer | Time (UTC, 2026-10-03) | Transaction |
+| :--- | :--- | :--- | :--- |
+| createJob | Client | 02:03:12 | [`0x23d836b16ad4e7a99903d88f6b00cfd82844007126548d10028278954fa4a461`](https://amoy.polygonscan.com/tx/0x23d836b16ad4e7a99903d88f6b00cfd82844007126548d10028278954fa4a461) |
+| quote (`setBudget`) | Client | 02:03:32 | [`0xca7b7f713518ebb09c025042d1d5e6efe0755bb3c8060b07414cda587e4fad7f`](https://amoy.polygonscan.com/tx/0xca7b7f713518ebb09c025042d1d5e6efe0755bb3c8060b07414cda587e4fad7f) |
+| configure | Client | 02:03:48 | [`0xf3d581797c9a54cea927b1f611792d447f17ab8ac57924fd95837c29153aeefc`](https://amoy.polygonscan.com/tx/0xf3d581797c9a54cea927b1f611792d447f17ab8ac57924fd95837c29153aeefc) |
+| fundWithPermit | Client | 02:04:16 | [`0xd2191b97ad51e748a3795258205974636e34af9bfb1cbcf1d7da18f497984790`](https://amoy.polygonscan.com/tx/0xd2191b97ad51e748a3795258205974636e34af9bfb1cbcf1d7da18f497984790) |
+| submit | Provider | 02:05:27 | [`0x0ab0e58a40e4f2bb9385311b8de8b8a8453d6ceda84fbbb6df8953d0e692ece1`](https://amoy.polygonscan.com/tx/0x0ab0e58a40e4f2bb9385311b8de8b8a8453d6ceda84fbbb6df8953d0e692ece1) |
+| approve | Client | 02:06:04 | [`0x7402ada71d04c4152da4dbaf98344f4a1bdac184997c5cfce4c41214296f8e9e`](https://amoy.polygonscan.com/tx/0x7402ada71d04c4152da4dbaf98344f4a1bdac184997c5cfce4c41214296f8e9e) |
+
+The whole run took under three minutes. Gas was the same as in step 6: 0.0243955 POL for the client's five transactions and 0.0022593 POL for the provider's one, at 25 gwei. On-chain job 9, a few minutes earlier, was opened by the same link flow and stopped after `configure` when a public RPC endpoint failed a read. It was never funded, so no USDC moved, and it expires unused.
+
 ## Not yet recorded on Amoy
 
-One demonstration is still open. Its hashes will be added here after they are sent.
+One variant is still open. Its hashes will be added here after it is sent.
 
 | Demonstration | What it will show |
 | :--- | :--- |
-| Payment link quoted by the provider | The provider creates the link and sets the amount. The client opens it and funds. |
+| Provider sets the price on chain | The link uses the amount rule "Provider quote, locked after the first quote". The provider's wallet sends `setBudget` after `configure`, then the client funds. |

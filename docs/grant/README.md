@@ -6,7 +6,7 @@ These files support OPUS's funding request to the Polygon Community Treasury. OP
 | :--- | :--- | :--- |
 | [APPLICATION.md](APPLICATION.md) | The full application: problem, product, evidence, milestones, budget, metrics, risks | Reviewers |
 | [FORUM_POST.md](FORUM_POST.md) | A shorter version, ready to post in the Polygon Community Forum | The forum |
-| [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) | Every Amoy transaction behind the seven end-to-end runs | Reviewers who check |
+| [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) | Every Amoy transaction behind the eight end-to-end runs | Reviewers who check |
 | [AmoyClientQuote.txt](AmoyClientQuote.txt) | The deliverable file submitted in step 6 (on-chain job 7) | Hash check below |
 | [APPLICATION.ko.md](APPLICATION.ko.md) | Korean translation of the application | The founder and Korean partners |
 
@@ -25,8 +25,8 @@ These files support OPUS's funding request to the Polygon Community Treasury. OP
 
 ## Before submitting
 
-- [x] Fill the TODOs in `APPLICATION.md` and `FORUM_POST.md` (contact, team). Only the YouTube link remains.
-- [ ] Upload the demo video (`SharedPaymentLink.mp4`, kept out of git) to YouTube and put the link in place of the three `TODO (YouTube link)` markers
+- [x] Fill the TODOs in `APPLICATION.md` and `FORUM_POST.md` (contact, team, demo video)
+- [x] Demo video on YouTube (https://www.youtube.com/watch?v=bbnYn5qXpR4), on-chain job 10
 - [ ] Make the repository public, and check its whole git history for keys first (for example with gitleaks)
 - [ ] Get at least two audit quotes, including the re-check of fixes, and replace the M1 estimate with the one you accept. What must be settled before the code freeze is in [`docs/audit/PRE_AUDIT_FREEZE.md`](../audit/PRE_AUDIT_FREEZE.md)
 ***REMOVED***
@@ -34,4 +34,5 @@ These files support OPUS's funding request to the Polygon Community Treasury. OP
 - [ ] Keep `APPLICATION.ko.md` in step with `APPLICATION.md`
 - [ ] Check which Polygon funding programme is open and match its format
 - [x] Run a dispute on Amoy (step 7, on-chain job 8)
-- [ ] Run on Amoy, and add to `AMOY_EVIDENCE.md`: a link opened by the counterparty (provider creates it, client funds). The application promises it by the end of M1; earlier is better
+- [x] Run a link created by the provider and funded by the client (step 8, on-chain job 10)
+- [ ] Optional: run the amount rule where the provider sets the price on chain (`setBudget` from the provider), and add it to `AMOY_EVIDENCE.md`
