@@ -4,7 +4,7 @@ OPUS is an ERC-8183 escrow with no administrator and no protocol fee. A client l
 
 Block explorer: [amoy.polygonscan.com](https://amoy.polygonscan.com).
 
-Steps are numbered 1–6 in this record. The job number is the id the chain gave the job. Step 6 is on-chain job 7, because on-chain job 6 was a rehearsal of the same payment-link run.
+Steps are numbered 1–7 in this record. The job number is the id the chain gave the job. Step 6 is on-chain job 7, because on-chain job 6 was a rehearsal of the same payment-link run.
 
 ## Contracts
 
@@ -30,6 +30,7 @@ A non-zero evaluation fee moves when the client calls `configure`, while the job
 | 4. No submission | 4 | `Rejected` | 1.00 USDC back to the client | 0.50 USDC to the operator, 0.50 USDC tip to the keeper |
 | 5. Gasless payment | 5 | `Completed` | 1.00 USDC to the provider | None. The signing wallets held no POL |
 | 6. Shared payment link | 7 | `Completed` | 5.00 USDC to the provider | None |
+| 7. Dispute | 8 | `Rejected` | 1.00 USDC back to the client | None. Deposits: the client's 0.10 back to the client, the provider's 0.10 to the arbiter |
 
 The keeper that sent steps 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc). The deployer is [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba).
 
@@ -47,6 +48,10 @@ The keeper that sent steps 3 and 4 is [`0x87775F236D38526f48F702EE36FD195c75882c
 | Step 5 (job 5): 1.00 USDC from the instance to the provider. The client and provider signed only | `PaymentReleased` | [`0x983c81d0…a45264b7`](https://amoy.polygonscan.com/tx/0x983c81d0b76f26f13c964e31d03755a8f5a1ce06e07644bc5a6ebf73a45264b7#eventlog) |
 | Step 6 (job 7): 5.00 USDC from the client to the instance at `fundWithPermit` | `JobFunded` | [`0x240ff0c2…b705537e`](https://amoy.polygonscan.com/tx/0x240ff0c20f66fb14be4bb5d07578f077d35676c0948b5a4269936471b705537e#eventlog) |
 | Step 6 (job 7): 5.00 USDC from the instance to the provider | `PaymentReleased` | [`0x5f732701…f78849ef`](https://amoy.polygonscan.com/tx/0x5f7327017ea1e4efe49b812e82d54f9819b0ea39703106e2eca1d15cf78849ef#eventlog) |
+| Step 7 (job 8): 0.10 USDC deposit from the client to the evaluator at `configure` | `Transfer` | [`0xebf42fde…2b2581cc`](https://amoy.polygonscan.com/tx/0xebf42fdefe9463ad8983f2871fafa6f6f93608df7a7173f1545ed8292b2581cc#eventlog) |
+| Step 7 (job 8): 1.00 USDC from the client to the instance at `fund` | `JobFunded` | [`0xfbbd3bf3…16ef8f3c`](https://amoy.polygonscan.com/tx/0xfbbd3bf3e9111e9c2c1369275b8225e5d397cd899999c3e1b9ca5c8516ef8f3c#eventlog) |
+| Step 7 (job 8): 0.10 USDC deposit from the provider to the evaluator | `DepositPosted` | [`0x8c959271…039a7246`](https://amoy.polygonscan.com/tx/0x8c95927118d74253390649bf4b9dc177da7810c4630c339a8c95e6a2039a7246#eventlog) |
+| Step 7 (job 8): 1.00 budget and 0.10 deposit to the client, 0.10 deposit to the arbiter | `Ruled`, `Refunded` | [`0xd0d90bd8…13ee16bf`](https://amoy.polygonscan.com/tx/0xd0d90bd8a54f4ea9dd79c76f0b5890ac0b0606315ed96eeb6ac2245c13ee16bf#eventlog) |
 
 ## Step 1. The client approves
 
@@ -147,11 +152,41 @@ The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it 
 
 Known wallet display issue: the evaluator's `approve(address,uint256)` has the same function selector (`0x095ea7b3`) as the ERC-20 and ERC-721 `approve`. MetaMask therefore showed the client's approval as a token permission request. The call itself is correct, and the funds moved as shown above. Renaming the function is planned before mainnet, and the rename needs a new deployment.
 
+## Step 7. An arbiter decides a dispute
+
+On-chain job: **8**
+
+The job used `presetPersonToAny`: no evaluation fee, a 0.10 USDC dispute deposit from each side, and an arbiter that is neither the client nor the provider. The client's deposit was taken at `configure`. After the provider submitted, the client objected. The provider posted its deposit, which sent the case to the arbiter. The arbiter ruled for the client: the client got the 1.00 USDC budget and its own deposit back, and the provider's deposit paid the arbiter. The run was sent by `packages/contracts/scripts/amoyDispute.ts` on 2026-10-03, with the keeper stopped.
+
+| Term | Value |
+| :--- | :--- |
+| Client | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) |
+| Provider | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) |
+| Arbiter | [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644) |
+| Budget | 1.00 USDC |
+| Dispute deposit | 0.10 USDC from each side |
+| Ruling | Reject: refund the client |
+
+| Call | Signer | Transaction |
+| :--- | :--- | :--- |
+| createJob | Client | [`0x443bf6e36aae848b80f0af630e804dd513574a9dc0e64172baeaa2a00aac3d60`](https://amoy.polygonscan.com/tx/0x443bf6e36aae848b80f0af630e804dd513574a9dc0e64172baeaa2a00aac3d60) |
+| setBudget | Client | [`0x3cabe093b044aabe7c19b336a51933bd06cc15702d44a029e44f20ec667009ae`](https://amoy.polygonscan.com/tx/0x3cabe093b044aabe7c19b336a51933bd06cc15702d44a029e44f20ec667009ae) |
+| USDC approve (deposit) | Client | [`0x013604cb2e9327a46c111f9d15ab05fff17e5c350314c9abdc2fae2a0f4bc42b`](https://amoy.polygonscan.com/tx/0x013604cb2e9327a46c111f9d15ab05fff17e5c350314c9abdc2fae2a0f4bc42b) |
+| configure | Client | [`0xebf42fdefe9463ad8983f2871fafa6f6f93608df7a7173f1545ed8292b2581cc`](https://amoy.polygonscan.com/tx/0xebf42fdefe9463ad8983f2871fafa6f6f93608df7a7173f1545ed8292b2581cc) |
+| USDC approve (budget) | Client | [`0x160fc5f24b0d049abbf9cbe649b034182d72257678871b722c708c6c546e1c36`](https://amoy.polygonscan.com/tx/0x160fc5f24b0d049abbf9cbe649b034182d72257678871b722c708c6c546e1c36) |
+| fund | Client | [`0xfbbd3bf3e9111e9c2c1369275b8225e5d397cd899999c3e1b9ca5c8516ef8f3c`](https://amoy.polygonscan.com/tx/0xfbbd3bf3e9111e9c2c1369275b8225e5d397cd899999c3e1b9ca5c8516ef8f3c) |
+| submit | Provider | [`0xe82aa1c5e38637d8f4794ec01723c6d1ca7bc4119f359ca079b129faf73638ae`](https://amoy.polygonscan.com/tx/0xe82aa1c5e38637d8f4794ec01723c6d1ca7bc4119f359ca079b129faf73638ae) |
+| object | Client | [`0xbdcbd92358286ea922fa1b651434bd31ce9c3a02d94b04870d0d6902b0443a4d`](https://amoy.polygonscan.com/tx/0xbdcbd92358286ea922fa1b651434bd31ce9c3a02d94b04870d0d6902b0443a4d) |
+| USDC approve (deposit) | Provider | [`0xfd155148c38673ae8c50357c9ed86042c8e083b28f3709c0f207c68d5db8d742`](https://amoy.polygonscan.com/tx/0xfd155148c38673ae8c50357c9ed86042c8e083b28f3709c0f207c68d5db8d742) |
+| postDeposit | Provider | [`0x8c95927118d74253390649bf4b9dc177da7810c4630c339a8c95e6a2039a7246`](https://amoy.polygonscan.com/tx/0x8c95927118d74253390649bf4b9dc177da7810c4630c339a8c95e6a2039a7246) |
+| rule | Arbiter | [`0xd0d90bd8a54f4ea9dd79c76f0b5890ac0b0606315ed96eeb6ac2245c13ee16bf`](https://amoy.polygonscan.com/tx/0xd0d90bd8a54f4ea9dd79c76f0b5890ac0b0606315ed96eeb6ac2245c13ee16bf) |
+
+USDC after the ruling: the client's balance was back where it started, the provider had 0.10 less, and the arbiter held 0.10.
+
 ## Not yet recorded on Amoy
 
-Two demonstrations are still open. Their hashes will be added here after they are sent.
+One demonstration is still open. Its hashes will be added here after they are sent.
 
 | Demonstration | What it will show |
 | :--- | :--- |
 | Payment link quoted by the provider | The provider creates the link and sets the amount. The client opens it and funds. |
-| Dispute | The client objects, both sides post a deposit, and an arbiter rules. |

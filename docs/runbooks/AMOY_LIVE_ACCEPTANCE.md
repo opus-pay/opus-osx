@@ -130,6 +130,7 @@ Amounts are USDC. A 0.5 tip is taken from the 1.00 evaluation fee, so the operat
 | Gasless | 5 | `ipfs://amoy/gasless` | 1.00 | 0 | 0 | Provider | — | — | Completed | Resolved |
 | Shared link, client quote | 7 | Entered in the form | 5.00 | 0 | 0 | Provider | — | — | Completed | Resolved |
 | Shared link, provider quote | — | Entered in the form | 1.00 | 0 | 0 | — | — | — | Not run | Not run |
+| Dispute | 8 | `ipfs://amoy/dispute` | 1.00 | 0 | 0 | Client | — | — | Rejected | Resolved |
 
 Job 2 expired at 2026-10-01 14:01:07 KST (`expiredAt` 1790830867). Job 3's review ended at 2026-10-01 11:53:25 KST (`dueAt` 1790823205). Job 4's submit window ended at 2026-10-01 11:54:39 KST (`dueAt` 1790823279).
 
@@ -336,9 +337,9 @@ The other lock, "Provider quote, locked after the first quote", makes the provid
 
 ## 7. Dispute
 
-**Purpose.** The client objects during review. Both sides post a dispute deposit. The arbiter rules, and the loser's deposit pays the arbiter. This is the path `presetAiToAi` does not take. It has not been run on Amoy.
+**Purpose.** The client objects during review. Both sides post a dispute deposit. The arbiter rules, and the loser's deposit pays the arbiter. This is the path `presetAiToAi` does not take. It ran on Amoy as on-chain job 8.
 
-**Test.** Not run on Amoy. `scripts/amoyDispute.ts` runs the whole case in a few minutes, inside the one-hour windows. The person who runs it chooses an arbiter that is neither the client nor the provider: a third Ledger HD account with about 0.02 POL. The job uses `presetPersonToAny` with a 0.1 USDC dispute deposit and no evaluation fee, so silence escalates instead of auto-completing. The window constants stay unchanged.
+**Test.** Ran on 2026-10-03 as on-chain job 8, with the keeper stopped so it could not close the case early. `scripts/amoyDispute.ts` runs the whole case in a few minutes, inside the one-hour windows. The person who runs it chooses an arbiter that is neither the client nor the provider: a third Ledger HD account with about 0.02 POL. The job uses `presetPersonToAny` with a 0.1 USDC dispute deposit and no evaluation fee, so silence escalates instead of auto-completing. The window constants stay unchanged.
 
 ```bash
 DISPUTE_ARBITER=0x... yarn contracts dispute:amoy                       # run, or continue a stopped run
@@ -354,17 +355,17 @@ DISPUTE_ARBITER=0x... DISPUTE_PHASE=status yarn contracts dispute:amoy  # print 
 5. The provider approves and posts its 0.1 USDC deposit. The case goes to the arbiter.
 6. The arbiter calls `rule`.
 
-**Result.** No Amoy transaction yet.
+**Result.** On-chain job 8 ended `Rejected` and `Resolved`. The arbiter [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644), Ledger account #2, ruled for the client. The client got the 1.00 USDC budget and its 0.10 deposit back. The provider's 0.10 deposit went to the arbiter. Every hash is also in `deploy/amoy/dispute.json`.
 
 | Step | Signer | Payment | Evaluation | Transaction |
 | :--- | :--- | :--- | :--- | :--- |
-| 1. createJob | Client | Open | None | — |
-| 2. configure | Client | Open | None | — |
-| 3. quote and fund | Client | Funded | Funded | — |
-| 4. submit | Provider | Submitted | Submitted | — |
-| 5. object | Client | Submitted | Escalated | — |
-| 6. postDeposit | Client and provider | Submitted | Escalated | — |
-| 7. rule | Arbiter | Completed or Rejected | Resolved | — |
+| 1. createJob | Client | Open | None | [`0x443bf6e3…0aac3d60`](https://amoy.polygonscan.com/tx/0x443bf6e36aae848b80f0af630e804dd513574a9dc0e64172baeaa2a00aac3d60) |
+| 2. configure | Client | Open | None | [`0xebf42fde…2b2581cc`](https://amoy.polygonscan.com/tx/0xebf42fdefe9463ad8983f2871fafa6f6f93608df7a7173f1545ed8292b2581cc) |
+| 3. quote and fund | Client | Funded | Funded | [`0x3cabe093…667009ae`](https://amoy.polygonscan.com/tx/0x3cabe093b044aabe7c19b336a51933bd06cc15702d44a029e44f20ec667009ae), [`0xfbbd3bf3…16ef8f3c`](https://amoy.polygonscan.com/tx/0xfbbd3bf3e9111e9c2c1369275b8225e5d397cd899999c3e1b9ca5c8516ef8f3c) |
+| 4. submit | Provider | Submitted | Submitted | [`0xe82aa1c5…f73638ae`](https://amoy.polygonscan.com/tx/0xe82aa1c5e38637d8f4794ec01723c6d1ca7bc4119f359ca079b129faf73638ae) |
+| 5. object | Client | Submitted | Escalated | [`0xbdcbd923…b0443a4d`](https://amoy.polygonscan.com/tx/0xbdcbd92358286ea922fa1b651434bd31ce9c3a02d94b04870d0d6902b0443a4d) |
+| 6. postDeposit | Provider (the client's deposit was taken at configure) | Submitted | ArbiterPending | [`0x8c959271…039a7246`](https://amoy.polygonscan.com/tx/0x8c95927118d74253390649bf4b9dc177da7810c4630c339a8c95e6a2039a7246) |
+| 7. rule | Arbiter | Rejected | Resolved | [`0xd0d90bd8…13ee16bf`](https://amoy.polygonscan.com/tx/0xd0d90bd8a54f4ea9dd79c76f0b5890ac0b0606315ed96eeb6ac2245c13ee16bf) |
 
 ## Local processes
 

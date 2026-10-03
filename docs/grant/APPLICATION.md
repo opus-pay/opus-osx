@@ -17,7 +17,7 @@
 
 OPUS lets two people who have never met settle a small job, from 1 to 1,000 USD, in USDC on Polygon without trusting each other or a platform. The client locks USDC in an escrow contract. The provider is paid when the client approves, or automatically when the review period ends without an objection. If nothing is delivered in time, the client gets the money back.
 
-The contracts are already live on Polygon's test network. Six test jobs ran end to end. In one, a payment link created by the client paid the provider 5 USDC about three minutes after the job was opened.
+The contracts are already live on Polygon's test network. Seven test jobs ran end to end, including a dispute that an arbiter decided. In one, a payment link created by the client paid the provider 5 USDC about three minutes after the job was opened.
 
 We ask for USD 35,000 to pay for an external audit, a mainnet launch and a public pilot whose numbers anyone can recompute from the chain.
 
@@ -47,7 +47,7 @@ client ── payment link ──> terms reviewed and signed
 
 * **The escrow.** One contract per stablecoin holds every job's money. A USDC instance is deployed today; USDT is planned. The 1 to 1,000 USD limits are written into the code.
 * **No admin.** The contracts have no owner, pause, upgrade or settings function. Escrowed money can only move by the job's rules. The external audit in M1 is meant to confirm this.
-* **Auto-approve review.** If the client does nothing before the review deadline, the provider is paid. If the client objects and the job has an arbiter, a dispute starts: both sides post a deposit and the arbiter decides. The arbiter is an outside arbitration service chosen per job, never the OPUS team. A small job can also be set up with no arbiter; then an objection resolves to the default the job set in advance, which today is payment. Disputes are implemented and tested, but have not yet run on Amoy.
+* **Auto-approve review.** If the client does nothing before the review deadline, the provider is paid. If the client objects and the job has an arbiter, a dispute starts: both sides post a deposit and the arbiter decides. The arbiter is an outside arbitration service chosen per job, never the OPUS team. A small job can also be set up with no arbiter; then an objection resolves to the default the job set in advance, which today is payment. A dispute ran on Amoy in step 7 of [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md): the client objected, both sides posted a deposit, and the arbiter ruled.
 * **Anyone can finish an overdue job.** Payouts and refunds that are due can be triggered by anyone, so jobs finish even if OPUS goes offline. When a job has a review fee, part of it rewards whoever triggers the payout. When the fee is zero, the client or provider sends that one transaction themselves, or, in the pilot, the OPUS keeper does.
 * **No gas token needed.** Users can sign with a wallet that holds only USDC, while a relayer pays the network fee. This ran on Amoy in step 5 of [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md). The relayer refuses signers on a configurable deny-list.
 * **Payment links.** A web app turns the agreed terms into a link that the other party opens, reviews and signs. The terms travel in the part of the URL after `#`, which browsers do not send to servers. The app is in English, Korean, Japanese and Chinese.
@@ -64,7 +64,7 @@ client ── payment link ──> terms reviewed and signed
 | Item | Status | Evidence |
 | :--- | :--- | :--- |
 | Contracts: escrow, factory, review contract, forwarder | Deployed and source-verified on Amoy | [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) |
-| Test jobs on Amoy | 6 runs: approval, refund after expiry, auto-payout after silence, refund after no submission, no-gas-token wallets, payment link | Every transaction hash in [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) |
+| Test jobs on Amoy | 7 runs: approval, refund after expiry, auto-payout after silence, refund after no submission, no-gas-token wallets, payment link, dispute decided by an arbiter | Every transaction hash in [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) |
 | Contract tests | 146 test cases (unit, ERC-8183 conformance, invariants), all passing at commit `36369b5f` | `packages/contracts/test`, run with `yarn contracts test` |
 | Audit scope | About 1,100 lines: `OptimisticEvaluator` 676, `OpusAgenticCommerce` 330, `OpusACPFactory` 69, `OpusForwarder` 9, plus interfaces | `packages/contracts/contracts` |
 | ERC-8183 conformance map | Each MUST and SHOULD mapped to code and tests | `packages/contracts/docs/ERC8183_CONFORMANCE.md` |
@@ -72,7 +72,7 @@ client ── payment link ──> terms reviewed and signed
 | Payment-link app | Written; ran on-chain job 7 | `apps/pay` |
 | Whitepaper | English and Korean | `WHITEPAPER.md`, `WHITEPAPER.ko.md` |
 
-Not yet shown on chain: the counterparty opening a link that the other side created (on-chain job 7 was created and opened by the client), and a dispute. Both will run on Amoy before M1 ends.
+Not yet shown on chain: the counterparty opening a link that the other side created (on-chain job 7 was created and opened by the client). It will run on Amoy before M1 ends.
 
 Demo video: TODO (YouTube link) (5 min 47 s). It records on-chain job 7 from start to finish: the client fills in the payment link and signs, funds 5 USDC with a permit, the provider submits the file, and the client approves.
 
@@ -99,7 +99,7 @@ Weeks count from the first tranche. The first tranche (M1) is paid on approval, 
 
 | Milestone | Deliverables | Acceptance check | USD |
 | :--- | :--- | :--- | :--- |
-| **M1. Audit** (weeks 0–8) | Before the audit: rename the review contract's `approve` so wallets stop showing it as a token permission; set every bound still marked as a placeholder, including a lower evaluation-fee cap than today's 100 percent of the budget; MIT headers; threat model and audit pack; freeze the code at a tagged commit. Then: external audit of that commit, about 1,100 lines; fixes, re-checked by the auditor; redeploy on Amoy; rerun all six scenarios, plus the counterparty link and a dispute | Public audit report; fix commits; new Amoy hashes | 22,000 |
+| **M1. Audit** (weeks 0–8) | Before the audit: rename the review contract's `approve` so wallets stop showing it as a token permission; set every bound still marked as a placeholder, including a lower evaluation-fee cap than today's 100 percent of the budget; MIT headers; threat model and audit pack; freeze the code at a tagged commit. Then: external audit of that commit, about 1,100 lines; fixes, re-checked by the auditor; redeploy on Amoy; rerun all seven scenarios, plus the counterparty link | Public audit report; fix commits; new Amoy hashes | 22,000 |
 | **M2. Mainnet and pilot** (weeks 8–14) | Verified Polygon PoS deployment; relayer, keeper and indexer in production; payment links signed without a gas token; pilot in one corridor | At least 12 completed jobs, 10 distinct wallets and 360 USDC settled, all on chain | 8,000 |
 | **M3. Public reporting and reuse** (weeks 14–20) | Public metrics dashboard; docs site and demo; SDK examples for Polygon builders; ERC-8183 feedback to its authors; final report | Dashboard and docs URLs; examples in the repository | 5,000 |
 | **Total** | | | **35,000** |
@@ -122,7 +122,7 @@ Weeks count from the first tranche. The first tranche (M1) is paid on approval, 
 
 ## 9. Targets and reporting
 
-The targets are set to be met, not to impress. The pilot proves the mechanism with real users: 12 completed jobs, about two a week for six weeks, are enough to see the common endings (approval, auto-payout, refund) in a real corridor. Disputes are shown on Amoy in M1. The USDC figures assume jobs of about 30 USD. After the pilot the weekly pace grows from 5 to 10 completed jobs:
+The targets are set to be met, not to impress. The pilot proves the mechanism with real users: 12 completed jobs, about two a week for six weeks, are enough to see the common endings (approval, auto-payout, refund) in a real corridor. A dispute has already run on Amoy (step 7 in AMOY_EVIDENCE.md). The USDC figures assume jobs of about 30 USD. After the pilot the weekly pace grows from 5 to 10 completed jobs:
 
 | Period | Completed jobs per week | Completed jobs in the period | Cumulative jobs | Cumulative USDC settled | Cumulative distinct wallets |
 | :--- | :--- | :--- | :--- | :--- | :--- |

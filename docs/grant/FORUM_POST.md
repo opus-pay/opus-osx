@@ -8,7 +8,7 @@ How to use this file
 
 # Grant Request | OPUS | Escrow for small cross-border stablecoin payments on Polygon
 
-**TL;DR.** OPUS is escrow for small cross-border jobs (1 to 1,000 USD) paid in USDC on Polygon. It follows the ERC-8183 standard, has no admin keys and no protocol fee, and already runs on Polygon Amoy: six test jobs, including a payment link that paid a provider 5 USDC about three minutes after the job was opened, for 0.0267 POL of gas in total. We ask for **USD 35,000 in POL, in three milestones**, mainly for an external audit before mainnet.
+**TL;DR.** OPUS is escrow for small cross-border jobs (1 to 1,000 USD) paid in USDC on Polygon. It follows the ERC-8183 standard, has no admin keys and no protocol fee, and already runs on Polygon Amoy: seven test jobs, including a dispute decided by an arbiter and a payment link that paid a provider 5 USDC about three minutes after the job was opened, for 0.0267 POL of gas in total. We ask for **USD 35,000 in POL, in three milestones**, mainly for an external audit before mainnet.
 
 ## Problem
 
@@ -32,8 +32,9 @@ When someone pays a stranger far away to buy, ship, film or fetch something, one
 | Refund when nothing was submitted | 4 | Client refunded; the caller received a tip |
 | Wallets holding no POL | 5 | Provider paid; the relayer paid the gas |
 | Payment link, 5 USDC | 7 | Provider paid; gas 0.0244 POL for the client and 0.0023 POL for the provider |
+| Dispute decided by an arbiter | 8 | The client objected, both sides posted a 0.10 USDC deposit, the arbiter ruled for the client: refund, and the provider's deposit paid the arbiter |
 
-Every hash: [docs/grant/AMOY_EVIDENCE.md](https://github.com/opus-pay/opus-osx/blob/main/docs/grant/AMOY_EVIDENCE.md). The contracts are source-verified on Amoy Polygonscan, with 146 contract test cases including ERC-8183 conformance and invariants. Not yet shown on chain: the counterparty opening a link created by the other side, and a dispute. Both will run before M1 ends.
+Every hash: [docs/grant/AMOY_EVIDENCE.md](https://github.com/opus-pay/opus-osx/blob/main/docs/grant/AMOY_EVIDENCE.md). The contracts are source-verified on Amoy Polygonscan, with 146 contract test cases including ERC-8183 conformance and invariants. Not yet shown on chain: the counterparty opening a link created by the other side. It will run before M1 ends.
 
 ## Why Polygon
 
@@ -49,7 +50,7 @@ We propose the USD 35,000 as an investment rather than a gift. Before the first 
 
 | Milestone | Deliverable | Check | USD |
 | :--- | :--- | :--- | :--- |
-| M1. Audit (weeks 0–8) | Code freeze first (approve renamed, final fee and time bounds, MIT headers), then an external audit of about 1,100 lines of core Solidity, fixes, and an Amoy rerun including a dispute | Public report and new hashes | 22,000 |
+| M1. Audit (weeks 0–8) | Code freeze first (approve renamed, final fee and time bounds, MIT headers), then an external audit of about 1,100 lines of core Solidity, fixes, and an Amoy rerun of every scenario | Public report and new hashes | 22,000 |
 | M2. Mainnet and pilot (weeks 8–14) | Polygon PoS deployment, relayer, keeper and indexer live, pilot in one corridor | ≥ 12 completed jobs, ≥ 10 wallets, ≥ 360 USDC settled, all on chain | 8,000 |
 | M3. Reporting and reuse (weeks 14–20) | Public metrics dashboard, docs and demo, SDK examples, ERC-8183 feedback, final report | URLs and repository | 5,000 |
 
