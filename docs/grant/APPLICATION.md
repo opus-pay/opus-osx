@@ -17,7 +17,7 @@
 
 OPUS lets two people who have never met settle a small job, from 1 to 1,000 USD, in USDC on Polygon without trusting each other or a platform. The client locks USDC in an escrow contract. The provider is paid when the client approves, or automatically when the review period ends without an objection. If nothing is delivered in time, the client gets the money back.
 
-The contracts are already live on Polygon's test network. Seven test jobs ran end to end, including a dispute that an arbiter decided. In one, a payment link created by the client paid the provider 5 USDC about three minutes after the job was opened.
+The contracts are already live on Polygon's test network. Eight test jobs ran end to end, including a dispute that an arbiter decided and a payment link that one side created and the other funded. In one, a payment link created by the client paid the provider 5 USDC about three minutes after the job was opened.
 
 We ask for USD 35,000 to pay for an external audit, a mainnet launch and a public pilot whose numbers anyone can recompute from the chain.
 
@@ -64,7 +64,7 @@ client ── payment link ──> terms reviewed and signed
 | Item | Status | Evidence |
 | :--- | :--- | :--- |
 | Contracts: escrow, factory, review contract, forwarder | Deployed and source-verified on Amoy | [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) |
-| Test jobs on Amoy | 7 runs: approval, refund after expiry, auto-payout after silence, refund after no submission, no-gas-token wallets, payment link, dispute decided by an arbiter | Every transaction hash in [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) |
+| Test jobs on Amoy | 8 runs: approval, refund after expiry, auto-payout after silence, refund after no submission, no-gas-token wallets, payment link created by the client, dispute decided by an arbiter, payment link created by the provider and funded by the client | Every transaction hash in [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md) |
 | Contract tests | 146 test cases (unit, ERC-8183 conformance, invariants), all passing at commit `36369b5f` | `packages/contracts/test`, run with `yarn contracts test` |
 | Audit scope | About 1,100 lines: `OptimisticEvaluator` 676, `OpusAgenticCommerce` 330, `OpusACPFactory` 69, `OpusForwarder` 9, plus interfaces | `packages/contracts/contracts` |
 | ERC-8183 conformance map | Each MUST and SHOULD mapped to code and tests | `packages/contracts/docs/ERC8183_CONFORMANCE.md` |
@@ -72,9 +72,7 @@ client ── payment link ──> terms reviewed and signed
 | Payment-link app | Written; ran on-chain job 7 | `apps/pay` |
 | Whitepaper | English and Korean | `WHITEPAPER.md`, `WHITEPAPER.ko.md` |
 
-Not yet shown on chain: the counterparty opening a link that the other side created (on-chain job 7 was created and opened by the client). It will run on Amoy before M1 ends.
-
-Demo video: TODO (YouTube link) (5 min 47 s). It records on-chain job 7 from start to finish: the client fills in the payment link and signs, funds 5 USDC with a permit, the provider submits the file, and the client approves.
+Demo video: [youtube.com/watch?v=bbnYn5qXpR4](https://www.youtube.com/watch?v=bbnYn5qXpR4). It records on-chain job 10 from start to finish: the provider creates the payment link, the client opens it, signs and funds 5 USDC with a permit, the provider submits the file, and the client approves.
 
 ## 6. How OPUS earns money
 
@@ -99,7 +97,7 @@ Weeks count from the first tranche. The first tranche (M1) is paid on approval, 
 
 | Milestone | Deliverables | Acceptance check | USD |
 | :--- | :--- | :--- | :--- |
-| **M1. Audit** (weeks 0–8) | Before the audit: rename the review contract's `approve` so wallets stop showing it as a token permission; set every bound still marked as a placeholder, including a lower evaluation-fee cap than today's 100 percent of the budget; MIT headers; threat model and audit pack; freeze the code at a tagged commit. Then: external audit of that commit, about 1,100 lines; fixes, re-checked by the auditor; redeploy on Amoy; rerun all seven scenarios, plus the counterparty link | Public audit report; fix commits; new Amoy hashes | 22,000 |
+| **M1. Audit** (weeks 0–8) | Before the audit: rename the review contract's `approve` so wallets stop showing it as a token permission; set every bound still marked as a placeholder, including a lower evaluation-fee cap than today's 100 percent of the budget; MIT headers; threat model and audit pack; freeze the code at a tagged commit. Then: external audit of that commit, about 1,100 lines; fixes, re-checked by the auditor; redeploy on Amoy; rerun all eight scenarios | Public audit report; fix commits; new Amoy hashes | 22,000 |
 | **M2. Mainnet and pilot** (weeks 8–14) | Verified Polygon PoS deployment; relayer, keeper and indexer in production; payment links signed without a gas token; pilot in one corridor | At least 12 completed jobs, 10 distinct wallets and 360 USDC settled, all on chain | 8,000 |
 | **M3. Public reporting and reuse** (weeks 14–20) | Public metrics dashboard; docs site and demo; SDK examples for Polygon builders; ERC-8183 feedback to its authors; final report | Dashboard and docs URLs; examples in the repository | 5,000 |
 | **Total** | | | **35,000** |
