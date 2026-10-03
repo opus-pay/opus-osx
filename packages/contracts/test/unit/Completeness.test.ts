@@ -152,7 +152,10 @@ describe("Unit completeness (#18)", () => {
                 ev,
                 "WrongStatus"
             );
-            await expect(ev.connect(client).approveJob(core.address, 1)).to.be.revertedWithCustomError(ev, "WrongStatus");
+            await expect(ev.connect(client).approveJob(core.address, 1)).to.be.revertedWithCustomError(
+                ev,
+                "WrongStatus"
+            );
             await expect(ev.connect(provider).withdrawAsProvider(core.address, 1)).to.be.revertedWithCustomError(
                 ev,
                 "WrongStatus"

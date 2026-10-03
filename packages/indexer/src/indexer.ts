@@ -15,11 +15,7 @@ export class Indexer {
     readonly store = new IndexStore();
     private cursor = 0n;
 
-    constructor(
-        private readonly client: PublicClient,
-        private readonly addresses: IndexAddresses,
-        fromBlock = 0n
-    ) {
+    constructor(private readonly client: PublicClient, private readonly addresses: IndexAddresses, fromBlock = 0n) {
         this.cursor = fromBlock;
     }
 
