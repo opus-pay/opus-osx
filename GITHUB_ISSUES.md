@@ -698,6 +698,11 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Present the service as cross-border escrow payments; blockchain as the implementation, not the headline
 * **Acceptance:** The pilot runs under its own name and domain.
 
+* **해결 내용 (일부, 2026-10-03):**
+  - 작업 이름을 **WayHand**(웨이핸드, ウェイハンド)로 정하고 opus-errand 화면, API 이름, 에이전트 안내에 넣었다.
+  - 이름 후보를 비교해 WayHand로 정했다.
+  - 남은 것: 도메인과 계정 확보, 상표 확인.
+
 ---
 
 ## Milestone 7: Validation
