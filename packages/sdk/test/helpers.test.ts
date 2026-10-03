@@ -60,12 +60,12 @@ function snapshot(over: Partial<JobSnapshot> = {}): JobSnapshot {
 }
 
 describe("@opus/sdk helpers", () => {
-    it("keeps the 1 to 1,000 USD split", () => {
-        expect(splitBudgetUsd(2500)).to.deep.equal([MAX_BUDGET_USD, MAX_BUDGET_USD, 500]);
+    it("keeps the 1 to 100 USD range", () => {
+        expect(splitBudgetUsd(250)).to.deep.equal([MAX_BUDGET_USD, MAX_BUDGET_USD, 50]);
         expect(tokenUnitsForUsd(1n, 6)).to.equal(1_000000n);
         expect(tokenUnitsForUsd(1000n, 18)).to.equal(1000n * 10n ** 18n);
         expect(() => assertBudgetInRange(999999n, 6)).to.throw("below 1 USD");
-        expect(() => assertBudgetInRange(tokenUnitsForUsd(1001n, 6), 6)).to.throw("above 1,000 USD");
+        expect(() => assertBudgetInRange(tokenUnitsForUsd(101n, 6), 6)).to.throw("above 100 USD");
     });
 
     it("hashes a request and keeps a URI or hash", () => {

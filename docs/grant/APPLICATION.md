@@ -45,7 +45,7 @@ client ── payment link ──> terms reviewed and signed
   nothing submitted by the deadline ──> client refunded
 ```
 
-* **The escrow.** One contract per stablecoin holds every job's money. A USDC instance is deployed today; USDT is planned. The 1 to 1,000 USD limits are written into the code.
+* **The escrow.** One contract per stablecoin holds every job's money. A USDC instance is deployed today; USDT is planned. The 1 to 1,000 USD limits are written into the code. Until the external audit, the next deployment caps each job at 100 USD.
 * **No admin.** The contracts have no owner, pause, upgrade or settings function. Escrowed money can only move by the job's rules. The external audit in M1 is meant to confirm this.
 * **Auto-approve review.** If the client does nothing before the review deadline, the provider is paid. If the client objects and the job has an arbiter, a dispute starts: both sides post a deposit and the arbiter decides. The arbiter is an outside arbitration service chosen per job, never the OPUS team. A small job can also be set up with no arbiter; then an objection resolves to the default the job set in advance, which today is payment. A dispute ran on Amoy in step 7 of [AMOY_EVIDENCE.md](AMOY_EVIDENCE.md): the client objected, both sides posted a deposit, and the arbiter ruled.
 * **Anyone can finish an overdue job.** Payouts and refunds that are due can be triggered by anyone, so jobs finish even if OPUS goes offline. When a job has a review fee, part of it rewards whoever triggers the payout. When the fee is zero, the client or provider sends that one transaction themselves, or, in the pilot, the OPUS keeper does.

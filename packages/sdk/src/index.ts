@@ -2,7 +2,7 @@ export const SDK_PACKAGE = "@opus/sdk";
 
 /** Whole-dollar bounds. Token helpers use the bigint constants. */
 export const MIN_BUDGET_USD = 1;
-export const MAX_BUDGET_USD = 1_000;
+export const MAX_BUDGET_USD = 100;
 
 export { coreAbi, erc20Abi, evaluatorAbi, forwarderAbi, opusAbi } from "./abi";
 export { loadAddresses, parseAddresses } from "./addresses";

@@ -76,7 +76,7 @@ function checked(value: unknown): Draft {
         throw new Error("The amount must be a whole number of USD");
     }
     if (row.amountUsd < MIN_BUDGET_USD || row.amountUsd > MAX_BUDGET_USD) {
-        throw new Error("The amount must be from 1 to 1,000 USD");
+        throw new Error("The amount must be from 1 to 100 USD");
     }
     if (row.preset !== "aiToAi" && row.preset !== "aiToPerson" && row.preset !== "smallNoArbiter") {
         throw new Error("The evaluator preset is invalid");

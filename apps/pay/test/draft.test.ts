@@ -35,7 +35,7 @@ describe("payment link draft (#27)", () => {
     it("rejects an expired link and a bad amount", () => {
         const token = encodeDraft(sample());
         expect(() => decodeDraft(token, 2_000)).to.throw("The link has expired");
-        expect(() => encodeDraft(sample({ amountUsd: 1001 }))).to.throw("1,000 USD");
+        expect(() => encodeDraft(sample({ amountUsd: 101 }))).to.throw("100 USD");
         expect(() => decodeDraft("%%%", 1)).to.throw("payment draft");
     });
 

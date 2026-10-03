@@ -21,7 +21,8 @@ contract OpusAgenticCommerce is IAgenticCommerce, IOpusACPExtensions, ERC2771Con
 
     uint256 public constant EVALUATOR_FEE_BP = 0;
     uint256 public constant MIN_BUDGET_USD = 1;
-    uint256 public constant MAX_BUDGET_USD = 1_000;
+    /// @dev 100 USD per job until the external audit; raised to 1,000 at the post-audit deployment.
+    uint256 public constant MAX_BUDGET_USD = 100;
 
     /// @dev D2 — replace after the fee-cap decision. Suggested 1,000 (10%) and 300,000 gas.
     uint256 public constant PLACEHOLDER_MAX_PLATFORM_FEE_BP = 1_000;
