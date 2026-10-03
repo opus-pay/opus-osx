@@ -1,59 +1,59 @@
 {
-  "network": "amoy",
-  "client": "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0",
-  "provider": "0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be",
-  "operator": "0x32Ca3774918733a14Cb7D414E57D96086C1205e9",
-  "jobs": {
-    "approve": {
-      "hashes": {
-        "createJob": "0x069f81554874b63e4e599537dda0e3959bbbfc3a5cfc8e87ed14f3c7ca82d14d",
-        "configure": "0xca64f3e128cb902d1a55fa32732b4d3fce1c3b13a22f1887ce201ff30f6defdd",
-        "quote": "0xed9164458acf936b72b2afaf40f2f907b5a4c2622eaa2559c8667b2ddfaaf8a1",
-        "approveBudget": "0xd72db5e6f68e7e7dfaf20c132894b42e38117caac7f4dab25a92441ea030d39a",
-        "fund": "0xa7142b8dacdede06df163d03863694e27091744d6dcdbb4c018ce63517610467",
-        "submit": "0xbb89fc9ec436928def56f276708983fa01c053eb2b0f9d47bc87efc86b1771cf",
-        "approve": "0x9fb80d767d49a15db8cdab089a4afcc3a9a43274b1ad4b775471f3064c954f9c"
-      },
-      "id": "1"
-    },
-    "sweep": {
-      "hashes": {
-        "createJob": "0xe4a2c4f2e68968d83401d734352956de3f68ca45f61f28ff608fecc36b3196dd",
-        "approveEvaluation": "0x7635ad684bdc363d9012f5755a4bb259d0720b6f58476b0dbcb3cff8aff4a987",
-        "configure": "0xfb66337163c5d92fa8f2fee7ada7138e9148ed49bc56415beb85061a705ac7ea",
-        "quote": "0xb02cf4354c14b401cc33f52c15aab0fa5294e251bcaf2deadfae4c6473645642",
-        "approveBudget": "0xf54feed009019611352e1367b6597e2d5d5bebeeab1eb976e35deb09aa04d2ab",
-        "fund": "0x527252d85a65ed1df4443db139257871a210873553f63508806b705b7fac9746",
-        "claimRefund": "0x993153c5925677aa09201f46cafa0fa43913641cd9eadfaebbae616a790dcc1e",
-        "sweep": "0x0725df716b5d395412ac5d102a066caeaf8e6be30eb9a678eb4eb9ae83d63ad4"
-      },
-      "id": "2",
-      "expiredAt": "1790830867"
-    },
-    "finalize": {
-      "hashes": {
-        "createJob": "0x80e0b0a9e852b93115bc5c2c871fde6a85b57c4979fc17e7e584ecef14ed0e0a",
-        "approveEvaluation": "0x599dad882c784ea46aa1287330b638ce195776ced66276fc2476adb28b7ee825",
-        "configure": "0xae1e0ac0f0609e7dbdfe8bdd7f42ad5df7ece969ba08e42f47f3d93a04975d34",
-        "quote": "0xed7a6a063f7c9f19627c0409b3d2d1917db9740d364e68b006c7ef77debe1fc5",
-        "approveBudget": "0x346cbec969429326bc641d951da528568ae3921577ddf472be7ddca1aec19764",
-        "fund": "0x99d2c9f625911754b351c198ae0c4572dc3fb15d22402bbaca8c17deb1036e03",
-        "submit": "0xb72db09f86abd8dce1f554de4e636127c1b019d94f07cf41191d271536c78118"
-      },
-      "id": "3",
-      "dueAt": "1790823205"
-    },
-    "timeout": {
-      "hashes": {
-        "createJob": "0x5e8bb10744f334abdb61f5ba0fe61ae938fd8ffd764a50d2fd00caad21693bef",
-        "approveEvaluation": "0x054db826c3f8c097752f527c171de6db65eefaaad4b2ae7ee8431ac09675f419",
-        "configure": "0x503d32138cfb690873f17a2b549fbb58430ee23a394c55fb0e09ca0e167b4b40",
-        "quote": "0xe085526a5878fc29313235c097ded4ab16a713430fc1462a1e381ea80b7850c0",
-        "approveBudget": "0xca7fe5ff099b51c235bb3b1395d0cefbf92ac7c78543ef2b39bf4ab416926343",
-        "fund": "0x97e866a4da9cb314c8775e23bf28d2134ce28eced7d3a3ceca59a0a1ca552cb4"
-      },
-      "id": "4",
-      "dueAt": "1790823279"
+    "network": "amoy",
+    "client": "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0",
+    "provider": "0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be",
+    "operator": "0x32Ca3774918733a14Cb7D414E57D96086C1205e9",
+    "jobs": {
+        "approve": {
+            "hashes": {
+                "createJob": "0x069f81554874b63e4e599537dda0e3959bbbfc3a5cfc8e87ed14f3c7ca82d14d",
+                "configure": "0xca64f3e128cb902d1a55fa32732b4d3fce1c3b13a22f1887ce201ff30f6defdd",
+                "quote": "0xed9164458acf936b72b2afaf40f2f907b5a4c2622eaa2559c8667b2ddfaaf8a1",
+                "approveBudget": "0xd72db5e6f68e7e7dfaf20c132894b42e38117caac7f4dab25a92441ea030d39a",
+                "fund": "0xa7142b8dacdede06df163d03863694e27091744d6dcdbb4c018ce63517610467",
+                "submit": "0xbb89fc9ec436928def56f276708983fa01c053eb2b0f9d47bc87efc86b1771cf",
+                "approve": "0x9fb80d767d49a15db8cdab089a4afcc3a9a43274b1ad4b775471f3064c954f9c"
+            },
+            "id": "1"
+        },
+        "sweep": {
+            "hashes": {
+                "createJob": "0xe4a2c4f2e68968d83401d734352956de3f68ca45f61f28ff608fecc36b3196dd",
+                "approveEvaluation": "0x7635ad684bdc363d9012f5755a4bb259d0720b6f58476b0dbcb3cff8aff4a987",
+                "configure": "0xfb66337163c5d92fa8f2fee7ada7138e9148ed49bc56415beb85061a705ac7ea",
+                "quote": "0xb02cf4354c14b401cc33f52c15aab0fa5294e251bcaf2deadfae4c6473645642",
+                "approveBudget": "0xf54feed009019611352e1367b6597e2d5d5bebeeab1eb976e35deb09aa04d2ab",
+                "fund": "0x527252d85a65ed1df4443db139257871a210873553f63508806b705b7fac9746",
+                "claimRefund": "0x993153c5925677aa09201f46cafa0fa43913641cd9eadfaebbae616a790dcc1e",
+                "sweep": "0x0725df716b5d395412ac5d102a066caeaf8e6be30eb9a678eb4eb9ae83d63ad4"
+            },
+            "id": "2",
+            "expiredAt": "1790830867"
+        },
+        "finalize": {
+            "hashes": {
+                "createJob": "0x80e0b0a9e852b93115bc5c2c871fde6a85b57c4979fc17e7e584ecef14ed0e0a",
+                "approveEvaluation": "0x599dad882c784ea46aa1287330b638ce195776ced66276fc2476adb28b7ee825",
+                "configure": "0xae1e0ac0f0609e7dbdfe8bdd7f42ad5df7ece969ba08e42f47f3d93a04975d34",
+                "quote": "0xed7a6a063f7c9f19627c0409b3d2d1917db9740d364e68b006c7ef77debe1fc5",
+                "approveBudget": "0x346cbec969429326bc641d951da528568ae3921577ddf472be7ddca1aec19764",
+                "fund": "0x99d2c9f625911754b351c198ae0c4572dc3fb15d22402bbaca8c17deb1036e03",
+                "submit": "0xb72db09f86abd8dce1f554de4e636127c1b019d94f07cf41191d271536c78118"
+            },
+            "id": "3",
+            "dueAt": "1790823205"
+        },
+        "timeout": {
+            "hashes": {
+                "createJob": "0x5e8bb10744f334abdb61f5ba0fe61ae938fd8ffd764a50d2fd00caad21693bef",
+                "approveEvaluation": "0x054db826c3f8c097752f527c171de6db65eefaaad4b2ae7ee8431ac09675f419",
+                "configure": "0x503d32138cfb690873f17a2b549fbb58430ee23a394c55fb0e09ca0e167b4b40",
+                "quote": "0xe085526a5878fc29313235c097ded4ab16a713430fc1462a1e381ea80b7850c0",
+                "approveBudget": "0xca7fe5ff099b51c235bb3b1395d0cefbf92ac7c78543ef2b39bf4ab416926343",
+                "fund": "0x97e866a4da9cb314c8775e23bf28d2134ce28eced7d3a3ceca59a0a1ca552cb4"
+            },
+            "id": "4",
+            "dueAt": "1790823279"
+        }
     }
-  }
 }

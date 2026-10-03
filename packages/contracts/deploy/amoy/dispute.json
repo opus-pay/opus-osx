@@ -1,21 +1,21 @@
 {
-  "network": "amoy",
-  "client": "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0",
-  "provider": "0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be",
-  "arbiter": "0x31923881A21A28254b2330cd41084Cafe0a64644",
-  "ruling": "reject",
-  "hashes": {
-    "createJob": "0x443bf6e36aae848b80f0af630e804dd513574a9dc0e64172baeaa2a00aac3d60",
-    "setBudget": "0x3cabe093b044aabe7c19b336a51933bd06cc15702d44a029e44f20ec667009ae",
-    "approveDeposit": "0x013604cb2e9327a46c111f9d15ab05fff17e5c350314c9abdc2fae2a0f4bc42b",
-    "configure": "0xebf42fdefe9463ad8983f2871fafa6f6f93608df7a7173f1545ed8292b2581cc",
-    "approveBudget": "0x160fc5f24b0d049abbf9cbe649b034182d72257678871b722c708c6c546e1c36",
-    "fund": "0xfbbd3bf3e9111e9c2c1369275b8225e5d397cd899999c3e1b9ca5c8516ef8f3c",
-    "submit": "0xe82aa1c5e38637d8f4794ec01723c6d1ca7bc4119f359ca079b129faf73638ae",
-    "object": "0xbdcbd92358286ea922fa1b651434bd31ce9c3a02d94b04870d0d6902b0443a4d",
-    "approveDeposit_provider": "0xfd155148c38673ae8c50357c9ed86042c8e083b28f3709c0f207c68d5db8d742",
-    "postDeposit": "0x8c95927118d74253390649bf4b9dc177da7810c4630c339a8c95e6a2039a7246",
-    "rule": "0xd0d90bd8a54f4ea9dd79c76f0b5890ac0b0606315ed96eeb6ac2245c13ee16bf"
-  },
-  "id": "8"
+    "network": "amoy",
+    "client": "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0",
+    "provider": "0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be",
+    "arbiter": "0x31923881A21A28254b2330cd41084Cafe0a64644",
+    "ruling": "reject",
+    "hashes": {
+        "createJob": "0x443bf6e36aae848b80f0af630e804dd513574a9dc0e64172baeaa2a00aac3d60",
+        "setBudget": "0x3cabe093b044aabe7c19b336a51933bd06cc15702d44a029e44f20ec667009ae",
+        "approveDeposit": "0x013604cb2e9327a46c111f9d15ab05fff17e5c350314c9abdc2fae2a0f4bc42b",
+        "configure": "0xebf42fdefe9463ad8983f2871fafa6f6f93608df7a7173f1545ed8292b2581cc",
+        "approveBudget": "0x160fc5f24b0d049abbf9cbe649b034182d72257678871b722c708c6c546e1c36",
+        "fund": "0xfbbd3bf3e9111e9c2c1369275b8225e5d397cd899999c3e1b9ca5c8516ef8f3c",
+        "submit": "0xe82aa1c5e38637d8f4794ec01723c6d1ca7bc4119f359ca079b129faf73638ae",
+        "object": "0xbdcbd92358286ea922fa1b651434bd31ce9c3a02d94b04870d0d6902b0443a4d",
+        "approveDeposit_provider": "0xfd155148c38673ae8c50357c9ed86042c8e083b28f3709c0f207c68d5db8d742",
+        "postDeposit": "0x8c95927118d74253390649bf4b9dc177da7810c4630c339a8c95e6a2039a7246",
+        "rule": "0xd0d90bd8a54f4ea9dd79c76f0b5890ac0b0606315ed96eeb6ac2245c13ee16bf"
+    },
+    "id": "8"
 }
