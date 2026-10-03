@@ -527,6 +527,11 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Legal check of the corridor: stablecoin handling, platform work, consumer protection; for a domestic corridor, domestic virtual-asset rules and a won ↔ USDC on/off-ramp
 * **Acceptance:** Terms and policy published before the pilot.
 
+* **메모 (2026-10-03, 결정 아님):**
+  - 첫 구간은 해외 구매대행·해외 심부름 쪽으로 기울었다. 국내 심부름은 한국 사용자가 USDC를 사야 하는 불편과 기존 서비스와의 경쟁이 크다. D25는 아직 열려 있다.
+  - 투자는 프로토콜(OPUS)이 아니라 심부름 서비스를 운영하는 법인으로 받는 방향이다. OPUS는 운영자 없는 공개 인프라로 남고, 심부름 서비스가 그 첫 사용처다.
+  - 앱 이름은 아직 없다. 화면에는 `[앱 이름]`으로 비워 두었다(#82).
+
 #### [Issue #68] Machine-readable request schema
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #23
 * **Description:** Groundwork for AI assistants (whitepaper §11.4). The same data drives the human interface.
@@ -536,6 +541,10 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Hash of the request document recorded in the job's description; document stored off-chain
   - [ ] Schema published with the SDK docs
 * **Acceptance:** Every pilot job has a valid schema document whose hash matches the job.
+
+* **해결 내용 (일부, 2026-10-03):**
+  - `apps/errand`의 API 타입(`src/api/types.ts`)과 OpenAPI 3.1(`/api/v1/openapi.json`)이 요청 필드(분류, 나라·도시, 기한, 금액, 완료 증빙)를 기계가 읽는 형태로 낸다. 화면도 같은 API를 쓴다(#76).
+  - 남은 것: 요청 종류별 버전 붙은 스키마, 요청 문서 해시를 job description에 기록. 실제 에스크로를 연결할 때 함께 한다.
 
 #### [Issue #69] Provider onboarding and verification
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #67
@@ -556,6 +565,11 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Evaluator preset: human client → confirmation mode with deposit up front (D22); arbiter per #74
 * **Acceptance:** A request goes from posting to `Funded` without the team's manual help.
 
+* **해결 내용 (일부, 시험판, 2026-10-03):**
+  - 등록 → 지원 → 선택 → 예치 → 완료 제출 → 확인 흐름이 화면과 비공개 API로 된다(#76). 지원 메모는 의뢰인만 본다.
+  - 시험판이라 예치는 서버에 기록만 하고 체인에 job을 만들지 않는다(`ERRAND_TRIAL`). 견적(가격 제안)과 당사자 간 메시지는 아직 없다.
+  - **정정:** 위 Evaluator preset 줄은 사람 의뢰인에게 확인 모드 + 선납 보증금(D22) + 중재인(#74)을 쓰라고 했다. 2026-10-03 결정으로 시험판과 첫 시범은 중재인 없이 시작한다. 이의가 있어도 수행자에게 지급되는 규칙(결제 앱 `smallNoArbiter`와 같은 규칙)이고, 한 건 100 USD 상한과 분쟁 예치금이 분쟁을 줄인다. 중재인 선택과 이의 제기는 화면에 "준비 중"으로 비활성 표시한다. 확인 모드는 #74가 끝난 뒤 켠다.
+
 #### [Issue #71] Proof capture
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #70
 * **Tasks:**
@@ -564,6 +578,10 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Proof bundle hash submitted with `submit`
   - [ ] Retention period and deletion rules for proof files
 * **Acceptance:** The client can review every required proof item before approving.
+
+* **해결 내용 (일부, 2026-10-03):**
+  - 수행자는 사진(최대 6장, 브라우저에서 긴 변 1024px로 줄임), 송장번호, 메모를 올린다. 서버는 JPEG·PNG·WebP data URL만 받는다. 증빙은 의뢰인과 수행자만 보고 공개 API에는 나오지 않는다.
+  - 남은 것: 영상과 시간·위치 메타데이터, 송장 상태 조회, 증빙 묶음 해시를 `submit`에 기록, 보관 기간과 삭제 규칙, 사진을 서버 파일 대신 별도 저장소에 두기.
 
 #### [Issue #72] On- and off-ramp integration
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #67, D26
@@ -591,6 +609,94 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Support channel and response times; incident procedure
   - [ ] Notification set (#29) enabled for all errand jobs
 * **Acceptance:** Every pilot dispute is resolved within the evaluator's deadlines with a recorded reason.
+
+* **해결 내용 (일부, 2026-10-03):**
+  - 결제 앱(`3b2e77cf`)과 심부름 앱(#76)에 중재인 선택과 중재인 신청 화면을 "준비 중"으로 비활성 표시했다. 중재인 주소 칸은 항상 "없음"이다.
+  - 운영 원칙 메모: 팀은 판정하지 않는다. 중재인은 의뢰인이 고르고, 서비스는 신청을 받아 목록과 체인 기록(기한 내 판정률, 판정 시간, 불참)만 보여 준다. 진 쪽 보증금이 중재인 보수가 된다. 별점식 평가는 쓰지 않는다.
+
+#### [Issue #76] Errand app trial: screens and public/private API
+* **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #23, #68
+* **Description:** The errand service's web app in `apps/errand`, built API-first so people and AI agents use the same operations (groundwork for #75). Trial mode moves no money.
+* **Tasks:**
+  - [x] Screens: open errands, post, my errands, my jobs, errand, fund, submit proof, confirm; phone and desktop; English, Korean, Japanese, Chinese
+  - [x] Browser wallet connection; my address at the top right; client, provider, arbiter and escrow contract addresses with copy and explorer links
+  - [x] Wallet sign-in (EIP-4361) returning a 24-hour bearer token
+  - [x] Public API (read-only; hides applicant notes and proof), private API for every screen action, OpenAPI with an `operationId` per action, `/llms.txt`, `actions` list on each errand, stable error codes, `Idempotency-Key`
+  - [x] Trial helpers so one person can walk the whole flow
+  - [ ] Replace the JSON file store with a database
+  - [ ] Real escrow: create the job at selection, fund and confirm with transactions, read money state from chain (indexer); request and proof hashes per #68 and #71
+  - [ ] WalletConnect for phones without a wallet browser
+  - [ ] Rate limits on the public and auth endpoints
+* **Acceptance:** An outside tester completes an errand on Amoy through the app, and an agent does the same through the API alone.
+
+* **해결 내용 (진행 중, 2026-10-03):**
+  - 커밋 `48ce9e74`(화면 시험판), `8d657d04`(API·지갑·다국어).
+  - 규칙은 `src/lib/errands.ts`의 순수 함수 하나로 화면·API·테스트가 같이 쓴다. 라우트는 `src/server/service.ts`의 함수 하나씩을 부르는 얇은 껍데기다.
+  - 원칙: 돈과 약속의 증거는 체인, 일의 내용(목록, 지원, 메모, 사진)은 서버. 사진·주소·메시지는 체인에 올리지 않는다.
+  - 테스트 33개(규칙, 권한, 정보 숨김, 시험판 흐름, 서명 위조·재사용 거부, 4개 언어, 동시 저장). 실제 서버에서 에이전트처럼 API로, 테스트 지갑을 넣은 브라우저로 화면에서 전체 흐름을 확인했다. 그 과정에서 새 서버에 요청이 동시에 들어오면 저장이 실패하던 버그를 고쳤다.
+  - **정정:** ROADMAP의 앱 경로 `apps/errands`는 `apps/errand`로 만들었다. ROADMAP을 맞췄다.
+  - **정정 (2026-10-03):** 심부름 앱을 별도 비공개 저장소 `opus-pay/opus-errand`로 옮겼다(커밋 기록 포함). 이 저장소의 `apps/errand`는 지웠다. 새 저장소는 SDK를 `file:../opus-osx/packages/sdk`로, 컨트랙트 주소는 사본(`config/deployments`)으로 참조만 한다. 사본이 이 저장소의 배포 기록과 같은지는 `yarn check:deployments`가 확인하고, CI는 `opus-osx.ref`에 고정한 커밋으로 이 저장소를 받는다. 심부름 서비스는 프로토콜과 따로 운영한다는 M6 원칙과 맞춘 것이다.
+
+#### [Issue #77] Errand app: connect the real escrow
+* **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #76, #68, #71, #25, #26
+* **Description:** Replace the trial's recorded steps with OPUS escrow transactions. Money facts come from the chain; the server keeps the rest (#76 principle).
+* **Tasks:**
+  - [ ] When the client chooses, create the job with the provider set and the agreed amount; store `jobId` with the errand
+  - [ ] Request document hash (#68) in the job's description; proof bundle hash (#71) as the `submit` deliverable
+  - [ ] Evaluator preset for the trial rules (no arbiter, objection pays the provider); confirmation mode only after #74
+  - [ ] `fund` and `confirm` take a transaction hash; the server checks it on chain before changing status
+  - [ ] Read status, deadlines and payouts from the indexer (#26); when the server and the chain differ, show the chain
+  - [ ] Refund path after `expiredAt` shown to the client; keeper (#24) keeps finalizing on time
+  - [ ] Relayed calls (#25) so users need no POL
+  - [ ] Turn `ERRAND_TRIAL` off per environment; keep trial on for demos
+* **Acceptance:** On Amoy, a client and a provider finish an errand through the app and the USDC moves; the app's status matches the chain at every step.
+
+#### [Issue #78] Errand data: database and proof storage
+* **Type:** `Task` / **Priority:** `P0` / **Depends on:** #76
+* **Description:** The trial keeps everything in one JSON file on one server. Move to storage that survives restarts, more than one server, and growth.
+* **Tasks:**
+  - [ ] Database behind the existing `Repository` interface (errands, applicants, idempotency keys); migrations
+  - [ ] Proof photos and video in object storage with signed, expiring links instead of data URLs in the database
+  - [ ] Sign-in nonces in shared storage so several servers can run
+  - [ ] Backups and a tested restore
+  - [ ] Retention and deletion rules for personal data and proof files (with #71 and #67)
+* **Acceptance:** Restarting or adding a server loses nothing; a deleted account's proof files are gone after the retention period.
+
+#### [Issue #79] Errand app: hosting, security and operations
+* **Type:** `Task` / **Priority:** `P0` / **Depends on:** #76, #78
+* **Tasks:**
+  - [ ] Hosting with HTTPS and a domain; `ERRAND_AUTH_SECRET` required outside development (refuse to start without it)
+  - [ ] Rate limits on public, auth and write endpoints; request size limits kept
+  - [ ] CORS policy for the private API (today: any origin) decided and documented
+  - [ ] Error logging and uptime alerts; no personal data or tokens in logs
+  - [ ] Security review of the server code before real money, alongside the contract audit (#39, #40)
+* **Acceptance:** A load and abuse test does not take the service down; secrets live only in the host's settings.
+
+#### [Issue #80] Errand content rules, reports and moderation
+* **Type:** `Task` / **Priority:** `P0` / **Depends on:** #67
+* **Description:** Today anyone with a wallet can post anything. The service needs the prohibited-requests list from #67 enforced in the product.
+* **Tasks:**
+  - [ ] Checks at posting time against the prohibited list (illegal goods, surveillance of people, harassment, etc.)
+  - [ ] Report button on errands and applicants; review queue for the service operator
+  - [ ] Hiding an errand or blocking a wallet in the service's own listings only (the escrow is unaffected, as in #69)
+  - [ ] Personal details (addresses, phone numbers) discouraged in public text, with a warning in the form
+* **Acceptance:** A test post from the prohibited list is refused or hidden, and a report reaches the operator within the published response time.
+
+#### [Issue #81] Errand notifications
+* **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #76, #29
+* **Tasks:**
+  - [ ] Events: new applicant, chosen, funded, proof submitted, review deadline approaching, paid, refunded
+  - [ ] Channels: email first; web push or a messenger later (#29 uses webhooks)
+  - [ ] Users choose which events they get; every message links to the errand
+* **Acceptance:** In the pilot, both sides learn about each step without opening the app.
+
+#### [Issue #82] Errand service name, domain and brand
+* **Type:** `Task` / **Priority:** `P1` / **Depends on:** #67
+* **Tasks:**
+  - [ ] Service name in the four languages; trademark check in Korea and the first corridor
+  - [ ] Domain; replace `[App name]` placeholders in the app
+  - [ ] Present the service as cross-border escrow payments; blockchain as the implementation, not the headline
+* **Acceptance:** The pilot runs under its own name and domain.
 
 ---
 
@@ -796,6 +902,10 @@ After mainnet. The errand service already stores requests in a machine-readable 
   - [ ] Spending limits and confirmation steps set by the human user
   - [ ] Human-protective evaluator presets applied when the provider is a person
 * **Acceptance:** An assistant completes an errand end to end on testnet on a user's instruction.
+
+* **해결 내용 (일부, 앞당김, 2026-10-03):**
+  - #76의 API가 이 도구의 바탕이다. 요청 등록, 지원자 목록, 선택, 예치, 증빙 읽기, 승인이 HTTP API로 있고, OpenAPI `operationId`를 도구 이름으로 쓸 수 있다. 에이전트용 안내는 `/llms.txt`.
+  - 남은 것: MCP 서버로 감싸기, 사람이 정하는 지출 한도와 확인 단계, 이의 제기(#74 이후).
 
 #### [Issue #49] ERC-8004 reputation integration
 * **Type:** `Feature` / **Priority:** `P2`
