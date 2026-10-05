@@ -30,6 +30,14 @@ export type ServerOptions = {
 
 export const MAX_PAGE = 1000;
 
+/** Reads `?limit=` (default and most 1000) and `?offset=`. */
+export function pageOf(params: URLSearchParams): { limit: number; offset: number } {
+    const wanted = Number(params.get("limit") ?? MAX_PAGE);
+    const limit = Number.isInteger(wanted) && wanted >= 1 ? Math.min(wanted, MAX_PAGE) : MAX_PAGE;
+    const skipped = Number(params.get("offset") ?? 0);
+    return { limit, offset: Number.isInteger(skipped) && skipped >= 0 ? skipped : 0 };
+}
+
 function json(value: unknown): string {
     return JSON.stringify(value, (_key, item) => (typeof item === "bigint" ? item.toString() : item));
 }
@@ -44,15 +52,6 @@ function allowed(expected: string, header: string | undefined): boolean {
     const left = Buffer.from(expected);
     const right = Buffer.from(given);
     return left.length > 0 && left.length === right.length && timingSafeEqual(left, right);
-}
-
-/** Cuts a list with `?limit=` (default and most 1000) and `?offset=`; the full count goes in `X-Total-Count`. */
-export function page<T>(all: T[], params: URLSearchParams): { items: T[]; total: number } {
-    const wanted = Number(params.get("limit") ?? MAX_PAGE);
-    const limit = Number.isInteger(wanted) && wanted >= 1 ? Math.min(wanted, MAX_PAGE) : MAX_PAGE;
-    const skipped = Number(params.get("offset") ?? 0);
-    const offset = Number.isInteger(skipped) && skipped >= 0 ? skipped : 0;
-    return { items: all.slice(offset, offset + limit), total: all.length };
 }
 
 /**
@@ -80,16 +79,21 @@ export function healthOf(status: IndexerStatus, now: number) {
 
 export function createIndexerServer(store: IndexStore, options: ServerOptions = {}): Server {
     const now = options.now ?? Date.now;
-    return createServer((req, res) => handle(store, options, now, req, res));
+    return createServer((req, res) => {
+        handle(store, options, now, req, res).catch((error: unknown) => {
+            console.error(error instanceof Error ? error.message : error);
+            if (!res.headersSent) send(res, 500, { error: "index unavailable" });
+        });
+    });
 }
 
-function handle(
+async function handle(
     store: IndexStore,
     options: ServerOptions,
     now: () => number,
     req: IncomingMessage,
     res: ServerResponse
-) {
+): Promise<void> {
     if (req.method !== "GET" || req.url === undefined) {
         send(res, 404, { error: "not found" });
         return;
@@ -109,7 +113,7 @@ function handle(
         return;
     }
     if (url.pathname === "/instances") {
-        const { items, total } = page(store.instances(), url.searchParams);
+        const { items, total } = await store.instances(pageOf(url.searchParams));
         send(res, 200, items, { "x-total-count": String(total) });
         return;
     }
@@ -119,7 +123,7 @@ function handle(
             send(res, 400, { error: "account is required" });
             return;
         }
-        const { items, total } = page(store.jobsFor(getAddress(account)), url.searchParams);
+        const { items, total } = await store.jobsFor(getAddress(account), pageOf(url.searchParams));
         send(res, 200, items, { "x-total-count": String(total) });
         return;
     }
@@ -130,12 +134,12 @@ function handle(
             send(res, 400, { error: "instance and evaluator are required" });
             return;
         }
-        send(res, 200, store.activeJobs(getAddress(instance), getAddress(evaluator)));
+        send(res, 200, await store.activeJobs(getAddress(instance), getAddress(evaluator)));
         return;
     }
     const jobPath = /^\/jobs\/(0x[0-9a-fA-F]{40})\/(\d+)$/.exec(url.pathname);
     if (jobPath !== null) {
-        const job = store.job(getAddress(jobPath[1] as Address), BigInt(jobPath[2]));
+        const job = await store.job(getAddress(jobPath[1] as Address), BigInt(jobPath[2]));
         if (job === undefined) {
             send(res, 404, { error: "job not in the index" });
             return;

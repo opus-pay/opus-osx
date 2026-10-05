@@ -42,6 +42,14 @@ export type KeeperOptions = {
     /** After a send that was not seen in a block, do not send the same call again for this long. Default 10 min. */
     pendingTtlMs?: number;
     now?: () => number;
+    /**
+     * Which jobs to look at, instead of every job. Return the ids of jobs that are funded or submitted, or
+     * `undefined` to scan them all (for example when the index is behind or down). The keeper still reads each
+     * job and asks `Opus.status` on the chain before it sends anything; the list only narrows the reading.
+     */
+    activeJobs?: () => Promise<bigint[] | undefined>;
+    /** Scan every job on the chain at least once per this many passes, as a check on the list. Default 20. */
+    fullScanEvery?: number;
 };
 
 export type TickResult = {
@@ -52,6 +60,8 @@ export type TickResult = {
     /** Jobs looked at in this pass, and how many were skipped as finished or not this keeper's. */
     checked: number;
     skipped: number;
+    /** Where the list of jobs came from: the index, or a scan of the chain. */
+    source: "index" | "scan";
 };
 
 /**
@@ -66,6 +76,8 @@ export class Keeper {
     private readonly receiptTimeoutMs: number;
     private readonly pendingTtlMs: number;
     private readonly now: () => number;
+    private readonly fullScanEvery: number;
+    private passes = 0;
     /** Finished jobs and jobs of another evaluator: neither changes, so they are read once. */
     private readonly settled = new Set<bigint>();
     /** Calls sent but not yet seen in a block, by `job:action`. */
@@ -83,6 +95,7 @@ export class Keeper {
         this.receiptTimeoutMs = options.receiptTimeoutMs ?? 90_000;
         this.pendingTtlMs = options.pendingTtlMs ?? 600_000;
         this.now = options.now ?? Date.now;
+        this.fullScanEvery = options.fullScanEvery ?? 20;
     }
 
     /** How many calls are waiting for a block, for the health check. */
@@ -116,7 +129,22 @@ export class Keeper {
         });
         const now = (await this.opus.publicClient.getBlock()).timestamp;
 
-        for (let jobId = 1n; jobId <= count; jobId++) {
+        // Ask the index which jobs are live; every so often (and whenever it cannot answer) look at all of them.
+        this.passes += 1;
+        const full = this.options.activeJobs === undefined || this.passes % this.fullScanEvery === 1;
+        let listed: bigint[] | undefined;
+        if (!full) {
+            try {
+                listed = await this.options.activeJobs!();
+            } catch {
+                listed = undefined;
+            }
+        }
+        const ids: bigint[] = listed ?? Array.from({ length: Number(count) }, (_, index) => BigInt(index + 1));
+        const source: TickResult["source"] = listed === undefined ? "scan" : "index";
+
+        for (const jobId of ids) {
+            if (jobId < 1n || jobId > count) continue;
             if (this.settled.has(jobId)) {
                 skipped += 1;
                 continue;
@@ -156,7 +184,7 @@ export class Keeper {
                 this.alert(alerts, { kind: "job-error", jobId, message });
             }
         }
-        return { calls, alerts, errors, checked, skipped };
+        return { calls, alerts, errors, checked, skipped, source };
     }
 
     private async send(action: KeeperTrigger, jobId: bigint): Promise<Hash> {

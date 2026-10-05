@@ -159,3 +159,32 @@ describe("keeper health", () => {
         }
     });
 });
+
+describe("keeper with an index", () => {
+    it("reads only the listed jobs, scans all when the index cannot answer, and checks everything now and then", async () => {
+        const f = fake({ 1: live(), 2: live(), 3: live(), 4: live() }, { due: { 3: ["finalize"] } });
+        let answer: bigint[] | undefined = [3n];
+        const keeper = new Keeper(f.opus, KEEPER, { activeJobs: async () => answer, fullScanEvery: 3 });
+        // Pass 1 is a full scan: it learns about every job.
+        expect((await keeper.tick()).source).to.equal("scan");
+        f.reads.length = 0;
+        const second = await keeper.tick();
+        expect(second.source).to.equal("index");
+        // Only job 3 was listed; the others are not read again.
+        expect(f.reads).to.deep.equal([3n]);
+        answer = undefined;
+        expect((await keeper.tick()).source).to.equal("scan");
+    });
+
+    it("falls back to a scan when asking the index throws", async () => {
+        const f = fake({ 1: live() });
+        const keeper = new Keeper(f.opus, KEEPER, {
+            fullScanEvery: 100,
+            activeJobs: async () => {
+                throw new Error("indexer down");
+            },
+        });
+        await keeper.tick();
+        expect((await keeper.tick()).source).to.equal("scan");
+    });
+});

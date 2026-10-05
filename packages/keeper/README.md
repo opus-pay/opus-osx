@@ -52,6 +52,7 @@ docker compose stop keeper
 ## 운영
 
 -   **끝난 작업은 한 번만 읽습니다.** `Completed`, `Rejected`, `Expired` 작업과 다른 평가자의 작업은 처음 본 뒤 건너뜁니다. 작업이 쌓여도 한 주기에 읽는 양은 진행 중인 작업만큼입니다.
+-   **indexer를 쓰면 더 가볍습니다.** `KEEPER_INDEXER_URL`을 정하면 indexer의 `/active`에서 진행 중인 작업만 받아 그 작업들만 읽습니다 (`KEEPER_INDEXER_TOKEN`으로 인증). indexer가 응답하지 않거나 `synced`가 아니면 체인 전체를 훑고, 정상일 때도 `KEEPER_FULL_SCAN_EVERY`(기본 20)번째 주기마다 전체를 훑어 목록이 빠뜨린 작업을 확인합니다. 보낼지 말지는 어느 경우에도 체인의 `Opus.status`로 정합니다. `/health`의 `source`가 이번 주기에 목록이 어디서 왔는지(`index` 또는 `scan`) 알려 줍니다.
 -   **작업 하나가 실패해도 주기는 계속됩니다.** 한 작업을 읽지 못하면 그 작업만 `job-error` 경고로 남기고 나머지를 처리합니다.
 -   **보낸 호출이 블록에 안 보이면 다시 보내지 않습니다.** `KEEPER_RECEIPT_TIMEOUT_MS`(90초) 안에 영수증이 없으면 `call-pending` 경고를 남기고 `KEEPER_PENDING_TTL_MS`(10분) 동안 같은 호출을 건너뜁니다. 같은 호출을 두 번 보내 가스를 낭비하지 않기 위해서입니다.
 -   **경고는 같은 것이 반복되지 않습니다.** 같은 종류의 경고는 작업마다 `KEEPER_ALERT_COOLDOWN_MS`(1시간)에 한 번만 나갑니다. `KEEPER_ALERT_WEBHOOK_URL`을 정하면 JSON `{service, text, alert}`를 POST합니다 (Slack, Discord 호환). 웹훅이 실패해도 키퍼는 멈추지 않습니다.
@@ -61,20 +62,21 @@ docker compose stop keeper
 
 ## 환경 변수
 
-| 변수 | 필수 | 의미 |
-| :--- | :--- | :--- |
-| `KEEPER_PRIVATE_KEY` | 예 | `0x`와 64자리 hex. 프로세스 환경에만 둔다 |
-| `DEPLOYER_ADDRESS` | 예, 배포자와 구분할 때 | 키에서 나온 주소와 같으면 시작 거부 |
-| `KEEPER_ADDRESSES` | 예 | `addresses.json`. 샘플은 `../contracts/deploy/amoy/addresses.json` |
-| `KEEPER_RPC_URL` | 아니오 | 비우면 체인 기본 RPC. `chainId`가 80002이면 Amoy |
-| `KEEPER_LOW_BALANCE_WEI` | 아니오 | 경고 기준. 비우면 `50000000000000000` (0.05 POL) |
-| `KEEPER_EXPIRY_MARGIN_SECONDS` | 아니오 | 만료 경고 여유. 비우면 3600 |
-| `KEEPER_POLL_MS` | 아니오 | 주기. 비우면 30000 |
-| `KEEPER_ALERT_WEBHOOK_URL` | 아니오 | 경고를 보낼 웹훅 |
-| `KEEPER_ALERT_COOLDOWN_MS` | 아니오 | 같은 경고의 간격. 비우면 3600000 |
-| `KEEPER_RECEIPT_TIMEOUT_MS` | 아니오 | 영수증 대기. 비우면 90000 |
-| `KEEPER_PENDING_TTL_MS` | 아니오 | 보류 호출을 다시 보내지 않는 시간. 비우면 600000 |
-| `KEEPER_HEALTH_HOST`, `KEEPER_HEALTH_PORT` | 아니오 | 상태 확인 주소. 기본 `127.0.0.1:8789`, 포트에 `off`면 끔 |
+| 변수                                                                   | 필수                   | 의미                                                               |
+| :--------------------------------------------------------------------- | :--------------------- | :----------------------------------------------------------------- |
+| `KEEPER_PRIVATE_KEY`                                                   | 예                     | `0x`와 64자리 hex. 프로세스 환경에만 둔다                          |
+| `DEPLOYER_ADDRESS`                                                     | 예, 배포자와 구분할 때 | 키에서 나온 주소와 같으면 시작 거부                                |
+| `KEEPER_ADDRESSES`                                                     | 예                     | `addresses.json`. 샘플은 `../contracts/deploy/amoy/addresses.json` |
+| `KEEPER_RPC_URL`                                                       | 아니오                 | 비우면 체인 기본 RPC. `chainId`가 80002이면 Amoy                   |
+| `KEEPER_LOW_BALANCE_WEI`                                               | 아니오                 | 경고 기준. 비우면 `50000000000000000` (0.05 POL)                   |
+| `KEEPER_EXPIRY_MARGIN_SECONDS`                                         | 아니오                 | 만료 경고 여유. 비우면 3600                                        |
+| `KEEPER_POLL_MS`                                                       | 아니오                 | 주기. 비우면 30000                                                 |
+| `KEEPER_ALERT_WEBHOOK_URL`                                             | 아니오                 | 경고를 보낼 웹훅                                                   |
+| `KEEPER_ALERT_COOLDOWN_MS`                                             | 아니오                 | 같은 경고의 간격. 비우면 3600000                                   |
+| `KEEPER_RECEIPT_TIMEOUT_MS`                                            | 아니오                 | 영수증 대기. 비우면 90000                                          |
+| `KEEPER_PENDING_TTL_MS`                                                | 아니오                 | 보류 호출을 다시 보내지 않는 시간. 비우면 600000                   |
+| `KEEPER_INDEXER_URL`, `KEEPER_INDEXER_TOKEN`, `KEEPER_FULL_SCAN_EVERY` | 아니오                 | indexer에서 진행 중인 작업 목록을 받음. 전체 확인 주기는 기본 20   |
+| `KEEPER_HEALTH_HOST`, `KEEPER_HEALTH_PORT`                             | 아니오                 | 상태 확인 주소. 기본 `127.0.0.1:8789`, 포트에 `off`면 끔           |
 
 ## 테스트
 
