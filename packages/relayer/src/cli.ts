@@ -1,83 +1,15 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "http";
 import { readFileSync } from "fs";
 
-import { amoy, loadAddresses, localHardhat, type ForwardRequest } from "@opus/sdk";
-import { getAddress, isAddress, type Hex } from "viem";
+import { amoy, loadAddresses, localHardhat } from "@opus/sdk";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 import { parseIntegrators } from "./limits";
-import { Relayer, RelayRejected } from "./relayer";
+import { Relayer } from "./relayer";
+import { createRelayerServer } from "./server";
+import { readBudgets, writeBudgets } from "./state";
 import { parseSanctionsList } from "./sanctions";
 import { relayerAccountFromEnv } from "./wallet";
-
-type Body = { integratorId?: unknown; request?: Record<string, unknown> };
-
-function readBody(req: IncomingMessage): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const chunks: Buffer[] = [];
-        req.on("data", (chunk: Buffer) => chunks.push(chunk));
-        req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-        req.on("error", reject);
-    });
-}
-
-function asRequest(value: Record<string, unknown> | undefined): ForwardRequest {
-    if (value === undefined) throw new RelayRejected("The forward request is missing");
-    const from = value.from;
-    const to = value.to;
-    if (typeof from !== "string" || !isAddress(from) || typeof to !== "string" || !isAddress(to)) {
-        throw new RelayRejected("The forward request has a bad address");
-    }
-    if (typeof value.data !== "string" || typeof value.signature !== "string") {
-        throw new RelayRejected("The forward request is missing data");
-    }
-    return {
-        from: getAddress(from),
-        to: getAddress(to),
-        value: BigInt(String(value.value ?? "")),
-        gas: BigInt(String(value.gas ?? "")),
-        deadline: Number(value.deadline),
-        data: value.data as Hex,
-        signature: value.signature as Hex,
-    };
-}
-
-export function startServer(relayer: Relayer, host: string, port: number): Promise<void> {
-    const server = createServer((req, res) => {
-        void handle(relayer, req, res);
-    });
-    return new Promise((resolve) => {
-        server.listen(port, host, () => resolve());
-    });
-}
-
-async function handle(relayer: Relayer, req: IncomingMessage, res: ServerResponse): Promise<void> {
-    if (req.method === "GET" && req.url === "/health") {
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end('{"ok":true}');
-        return;
-    }
-    if (req.method !== "POST" || req.url !== "/relay") {
-        res.writeHead(404);
-        res.end();
-        return;
-    }
-    try {
-        const body = JSON.parse(await readBody(req)) as Body;
-        const header = req.headers.authorization ?? "";
-        const bearer = header.startsWith("Bearer ") ? header.slice("Bearer ".length) : "";
-        const integratorId = typeof body.integratorId === "string" ? body.integratorId : "";
-        const hash = await relayer.submit(asRequest(body.request), integratorId, bearer);
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hash }));
-    } catch (error) {
-        const status = error instanceof RelayRejected ? 400 : 500;
-        const message = error instanceof Error ? error.message : "relay failed";
-        res.writeHead(status, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: message }));
-    }
-}
 
 async function main(): Promise<void> {
     const account = relayerAccountFromEnv(process.env);
@@ -95,13 +27,48 @@ async function main(): Promise<void> {
     const signer = privateKeyToAccount(account.privateKey);
     const publicClient = createPublicClient({ chain, transport });
     const walletClient = createWalletClient({ account: signer, chain, transport });
+    const stateFile = process.env.RELAYER_STATE_FILE?.trim();
+    const log = (entry: Record<string, unknown>) =>
+        console.log(
+            JSON.stringify({ t: new Date().toISOString(), ...entry }, (_k, v) =>
+                typeof v === "bigint" ? v.toString() : v
+            )
+        );
+    const number = (name: string): number | undefined => {
+        const raw = process.env[name]?.trim();
+        if (raw === undefined || raw === "") return undefined;
+        if (!/^\d+$/.test(raw)) throw new Error(`${name} must be a whole number`);
+        return Number(raw);
+    };
+    const wei = (name: string): bigint | undefined => {
+        const raw = process.env[name]?.trim();
+        if (raw === undefined || raw === "") return undefined;
+        if (!/^\d+$/.test(raw)) throw new Error(`${name} must be a whole number`);
+        return BigInt(raw);
+    };
     const relayer = new Relayer(publicClient, walletClient, addresses, {
         integrators: parseIntegrators(integratorsJson),
         blocked,
+        maxGas: wei("RELAYER_MAX_GAS"),
+        receiptTimeoutMs: number("RELAYER_RECEIPT_TIMEOUT_MS"),
+        minBalanceWei: wei("RELAYER_MIN_BALANCE_WEI"),
+        restoredBudgets: stateFile === undefined || stateFile === "" ? undefined : readBudgets(stateFile),
+        onBudgets: stateFile === undefined || stateFile === "" ? undefined : (left) => writeBudgets(stateFile, left),
+        log,
     });
     const host = process.env.RELAYER_HOST?.trim() || "127.0.0.1";
     const port = Number(process.env.RELAYER_PORT ?? "8787");
-    await startServer(relayer, host, port);
+    const server = createRelayerServer(relayer, { log });
+    await new Promise<void>((resolve) => server.listen(port, host, () => resolve()));
+    // Stop taking requests on SIGTERM/SIGINT, let the ones in flight finish, then leave.
+    const stop = () => {
+        log({ event: "stopping" });
+        server.close();
+        void relayer.idle().then(() => process.exit(0));
+        setTimeout(() => process.exit(1), 30_000).unref();
+    };
+    process.on("SIGTERM", stop);
+    process.on("SIGINT", stop);
     console.log("relayer started");
     console.log(`wallet ${account.address}`);
     console.log(`network ${addresses.network} chain ${chain.id} ${chain.name}`);
