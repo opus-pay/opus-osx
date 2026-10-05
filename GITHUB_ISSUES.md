@@ -639,6 +639,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - 테스트 33개(규칙, 권한, 정보 숨김, 시험판 흐름, 서명 위조·재사용 거부, 4개 언어, 동시 저장). 실제 서버에서 에이전트처럼 API로, 테스트 지갑을 넣은 브라우저로 화면에서 전체 흐름을 확인했다. 그 과정에서 새 서버에 요청이 동시에 들어오면 저장이 실패하던 버그를 고쳤다.
   - **정정:** ROADMAP의 앱 경로 `apps/errands`는 `apps/errand`로 만들었다. ROADMAP을 맞췄다.
   - **정정 (2026-10-03):** 심부름 앱을 별도 비공개 저장소 `opus-pay/opus-errand`로 옮겼다(커밋 기록 포함). 이 저장소의 `apps/errand`는 지웠다. 새 저장소는 SDK를 `file:../opus-osx/packages/sdk`로, 컨트랙트 주소는 사본(`config/deployments`)으로 참조만 한다. 사본이 이 저장소의 배포 기록과 같은지는 `yarn check:deployments`가 확인하고, CI는 `opus-osx.ref`에 고정한 커밋으로 이 저장소를 받는다. 심부름 서비스는 프로토콜과 따로 운영한다는 M6 원칙과 맞춘 것이다.
+  - **정정 (2026-10-05):** 저장소 이름을 `opus-pay/wayhand`로 바꿨다. OPUS는 중립 프로토콜이고 WayHand는 그 위의 서비스이므로 `opus-` 접두어를 뺐다. 위 기록의 `opus-errand`는 같은 저장소다.
 
 #### [Issue #77] Errand app: connect the real escrow
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #76, #68, #71, #25, #26
