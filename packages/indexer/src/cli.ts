@@ -6,7 +6,8 @@ import { createPublicClient, http } from "viem";
 
 import { Indexer } from "./indexer";
 import { createIndexerServer, type IndexerStatus, type ServerOptions } from "./server";
-import { loadState, saveState } from "./state";
+import { MemoryLedger, type Ledger } from "./ledger";
+import { postgresDb, SqlLedger, sqliteDb } from "./sql-ledger";
 import type { IndexStore, InstanceView, JobView } from "./store";
 
 function fromBlock(chainId: number): bigint {
@@ -39,6 +40,15 @@ const whole = (name: string): number | undefined => {
     return Number(raw);
 };
 
+/** PostgreSQL if `INDEXER_DATABASE_URL` is set, else a SQLite file if `INDEXER_DB_FILE` is set, else memory. */
+export async function openLedger(env: NodeJS.ProcessEnv): Promise<Ledger> {
+    const url = env.INDEXER_DATABASE_URL?.trim();
+    if (url !== undefined && url !== "") return SqlLedger.open(await postgresDb(url));
+    const file = env.INDEXER_DB_FILE?.trim();
+    if (file !== undefined && file !== "") return SqlLedger.open(await sqliteDb(file));
+    return new MemoryLedger();
+}
+
 async function main(): Promise<void> {
     const path = process.env.INDEXER_ADDRESSES?.trim();
     if (path === undefined || path === "") throw new Error("INDEXER_ADDRESSES is required");
@@ -47,23 +57,29 @@ async function main(): Promise<void> {
     const rpc = process.env.INDEXER_RPC_URL?.trim() || chain.rpcUrls.default.http[0];
     // A block can be replaced shortly after it appears. On a public chain stay a few blocks behind the head.
     const confirmations = BigInt(whole("INDEXER_CONFIRMATIONS") ?? (addresses.chainId === 80002 ? 5 : 0));
-    const stateFile = process.env.INDEXER_STATE_FILE?.trim();
     const key = `${addresses.chainId}:${addresses.factory}:${addresses.instance}:${addresses.evaluator}`;
-    let indexer: Indexer;
-    const persist = () => {
-        if (stateFile !== undefined && stateFile !== "") saveState(stateFile, indexer.snapshot(key));
-    };
-    indexer = new Indexer(
+    const ledger = await openLedger(process.env);
+    // A database that belongs to other contracts would mix two ledgers. Refuse rather than wipe it.
+    const owner = await ledger.getMeta("key");
+    if (owner !== undefined && owner !== key) {
+        throw new Error("The index database was made for other contracts or another chain; use an empty database");
+    }
+    await ledger.setMeta("key", key);
+    const indexer = new Indexer(
         createPublicClient({ chain, transport: http(rpc) }),
         addresses,
         fromBlock(addresses.chainId),
-        { confirmations, onProgress: persist }
+        {
+            confirmations,
+            ledger,
+            onReorg: (fork, from) =>
+                console.warn(`chain reorganised: took back blocks ${fork + 1n}..${from - 1n} and read them again`),
+        }
     );
-    const saved = stateFile === undefined || stateFile === "" ? undefined : loadState(stateFile, key);
-    if (saved !== undefined) {
-        indexer.restore(saved);
-        console.log(`resumed from block ${saved.cursor} with ${saved.store.jobs.length} jobs`);
-    }
+    await indexer.load();
+    const resumed = await indexer.store.cursor();
+    if (resumed !== undefined)
+        console.log(`resuming from block ${resumed} with ${await indexer.store.jobCount()} jobs`);
     const host = process.env.INDEXER_HOST?.trim() || "127.0.0.1";
     const port = Number(process.env.INDEXER_PORT ?? "8788");
     const poll = whole("INDEXER_POLL_MS") ?? 15_000;
@@ -72,7 +88,7 @@ async function main(): Promise<void> {
         head: 0n,
         indexedTo: indexer.progress().indexedTo,
         failures: 0,
-        jobs: indexer.store.jobCount,
+        jobs: await indexer.store.jobCount(),
         staleMs: Math.max(120_000, 4 * poll),
         caughtUpWithin: confirmations + 3n,
     };
@@ -96,7 +112,7 @@ async function main(): Promise<void> {
             status.head = progress.head;
             status.indexedTo = progress.indexedTo;
             status.lastOkAt = progress.lastOkAt;
-            status.jobs = indexer.store.jobCount;
+            status.jobs = await indexer.store.jobCount();
             status.failures = 0;
             status.lastError = undefined;
         } catch (error) {
@@ -114,7 +130,7 @@ async function main(): Promise<void> {
             await new Promise((resolve) => setTimeout(resolve, Math.min(1_000, wait - waited)));
         }
     }
-    persist();
+    await ledger.close();
     console.log("indexer stopped");
     process.exit(0);
 }

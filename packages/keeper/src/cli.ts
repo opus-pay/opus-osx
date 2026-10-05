@@ -9,6 +9,30 @@ import { describe, Keeper } from "./keeper";
 import { createNotifier } from "./notify";
 import { keeperAccountFromEnv } from "./wallet";
 
+/**
+ * The ids of live jobs from the indexer, or `undefined` if it is not reachable or has not caught up (a list read
+ * before then may be missing jobs, so the keeper scans the chain instead).
+ */
+async function activeFromIndex(
+    base: string,
+    token: string | undefined,
+    instance: string,
+    evaluator: string
+): Promise<bigint[] | undefined> {
+    const headers: Record<string, string> =
+        token === undefined || token === "" ? {} : { authorization: `Bearer ${token}` };
+    const health = await fetch(`${base}/health`, { signal: AbortSignal.timeout(5_000) });
+    const state = (await health.json()) as { ok?: boolean; synced?: boolean };
+    if (!health.ok || state.ok !== true || state.synced !== true) return undefined;
+    const response = await fetch(`${base}/active?instance=${instance}&evaluator=${evaluator}`, {
+        headers,
+        signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) return undefined;
+    const jobs = (await response.json()) as { jobId: string }[];
+    return jobs.map((job) => BigInt(job.jobId));
+}
+
 async function main(): Promise<void> {
     const account = keeperAccountFromEnv(process.env);
     const path = process.env.KEEPER_ADDRESSES?.trim();
@@ -33,7 +57,14 @@ async function main(): Promise<void> {
         webhookUrl: process.env.KEEPER_ALERT_WEBHOOK_URL?.trim(),
         cooldownMs: number("KEEPER_ALERT_COOLDOWN_MS"),
     });
+    const indexerUrl = process.env.KEEPER_INDEXER_URL?.trim();
+    const indexerToken = process.env.KEEPER_INDEXER_TOKEN?.trim();
     const keeper = new Keeper(opus, account.address, {
+        fullScanEvery: number("KEEPER_FULL_SCAN_EVERY"),
+        activeJobs:
+            indexerUrl === undefined || indexerUrl === ""
+                ? undefined
+                : () => activeFromIndex(indexerUrl, indexerToken, addresses.instance, addresses.evaluator),
         lowBalanceWei: low === undefined || low === "" ? undefined : BigInt(low),
         marginSeconds: margin === undefined || margin === "" ? undefined : BigInt(margin),
         receiptTimeoutMs: number("KEEPER_RECEIPT_TIMEOUT_MS"),
@@ -72,6 +103,7 @@ async function main(): Promise<void> {
             for (const call of result.calls) {
                 console.log(`${call.action} job ${call.jobId} ${call.hash}`);
             }
+            status.source = result.source;
             status.failures = 0;
             status.lastError = undefined;
             status.checked = result.checked;

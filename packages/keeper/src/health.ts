@@ -9,6 +9,8 @@ export type KeeperStatus = {
     checked: number;
     skipped: number;
     pendingCalls: number;
+    /** Where the last pass got its list of jobs: the index or a scan of the chain. */
+    source?: "index" | "scan";
 };
 
 export type HealthView = { ok: boolean; reasons: string[] };
@@ -46,6 +48,7 @@ export function createHealthServer(read: () => KeeperStatus, staleMs: number, no
                 checked: status.checked,
                 skipped: status.skipped,
                 pendingCalls: status.pendingCalls,
+                source: status.source,
             })
         );
     });
