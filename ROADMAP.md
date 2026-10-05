@@ -315,7 +315,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | # | Decision | Status | Blocks |
 | :--- | :--- | :--- | :--- |
 | D1 | EVM target and OZ version | **Decided: Solidity 0.8.24, `evmVersion` `cancun`, OpenZeppelin 5.6.1** | — |
-| D2 | `MAX_PLATFORM_FEE_BP`, `HOOK_GAS_LIMIT` | Open | #7, #9 |
+| D2 | `MAX_PLATFORM_FEE_BP`, `HOOK_GAS_LIMIT` | **Proposed (2026-10-05): fee cap 1,000 (10%)** as a user-protection ceiling; each service picks its own rate below it (WayHand: 5% on completion only). Confirm with `HOOK_GAS_LIMIT` before #42 | #7, #9, #42 |
 | D3 | Job duration bounds; evaluator window bounds; safety margin | Open | #6, #14 |
 | D4 | Budget range | **Decided: 1–1,000 USD per job, fixed constant** | — |
 | D5 | Foundry for invariant tests | Open | #19 |
@@ -335,14 +335,16 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D21 | Voluntary concession | **Decided: client may approve any time after submission; provider may withdraw any time** | — |
 | D22 | Client deposit in confirmation mode | **Decided: posted up front at configuration, returned if no dispute** | #53 |
 | D23 | Service metadata registration method | Open | #62 |
-| D24 | Portal role | **Decided: directory of services only; no matching, no custody, no special rights** | — |
-| D25 | First errand corridor | **Deferred** — cross-border or domestic (region ↔ large city) both allowed; decide before starting #67 (about week 9); development until then does not depend on it | #67 |
+| D24 | Portal role | **Decided: directory of services only; no matching, no custody, no special rights.** The team's platform app (non-custodial wallet, push, SDK, on-ramp links, per-service instances) is a separate product outside this repository, not the OPUS Portal (D32) | — |
+| D25 | First errand corridor | **Decided (2026-10-05): Korea–Japan.** The errand service opens countries by a setting; local checks and shipping only, buying stays closed until arbiters exist (#74) | #67 |
 | D26 | On- and off-ramp partners | Open | #72 |
-| D27 | Wallet onboarding approach | Open | #73 |
+| D27 | Wallet onboarding approach | **Direction (2026-10-05): non-custodial embedded wallets** from a proven provider, exposed through the standard EIP-1193 / EIP-6963 provider so one web app works in browsers, wallet apps and the platform app. No team-held keys | #73 |
 | D28 | Business focus | **Decided: cross-border errands first; AI assistants as the growth path on the same standard** | — |
 | D29 | Money in and out | **Decided: OPUS and its services never hold licences for card, bank, or exchange flows. Equity funding pays for integrations with licensed partners (card/bank on-ramps, exchanges for cash-out, later won stablecoin issuers and payment gateways). Until then, pilots use users who already buy USDC on exchanges** | #43, #72, D26 |
 | D30 | Payment-link draft custody | **Decided: the unsigned draft is the URL fragment. No server stores it. The chain stores only the description hash** | #27 |
 | D31 | Pilot notification channel | **Decided: HTTPS webhook first. Email and Telegram wait** | #29 |
+| D32 | Where new ideas attach | **Decided (2026-10-05): the core stays frozen.** Platform fees and fee splitting (instance treasury → a splitter), platform arbitration (evaluator or arbiter address), cross-service reputation (indexer), policy checks (hooks) all attach to the factory, evaluators and hooks. Splitters, platform evaluators and policy hooks are periphery contracts kept outside this repository; this repository's deployments keep a 0% fee. A core v2 is considered only when pilots show a need the existing pieces cannot meet (top-up after funding, deadline extension, partial release) | — |
+| D33 | Audit timing | **Decided (2026-10-05): mainnet pilot before the external audit.** Before it: AI deep review (independent reviewers, attack tests, fuzzing, published report); 100 USD per-job cap kept; services cap the total funded value at once, invite users and state that the contracts are not externally audited; indexer alerts; a prepared move to a new deployment. External audit (#40) after revenue or investment, then the cap rises to 1,000 USD | #40, #42 |
 
 ---
 
