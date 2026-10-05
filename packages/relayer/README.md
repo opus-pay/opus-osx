@@ -40,7 +40,7 @@ docker compose stop relayer
 
 ## HTTP
 
-`GET /health` → `200` `{"ok":true}`
+`GET /health` → 가스 지갑 잔고와 노드 응답을 보고 `200` `{"ok":true,"rpc":true,"wallet":"0x…","balanceWei":"…","lowBalance":false}`. 노드가 응답하지 않거나 잔고가 `RELAYER_MIN_BALANCE_WEI` 이하이면 `503`입니다. 답은 10초 동안 재사용해서 감시가 노드를 몰아세우지 않습니다. 잔고가 바닥나기 전에 알림을 받는 용도로 감시 서비스에 등록하세요.
 
 `POST /relay`
 
@@ -77,6 +77,18 @@ docker compose stop relayer
 | 전달자 `verify` 실패 | `The forwarder rejected the signature` |
 | 가스 예산이 모자람 | `The integrator budget is spent` |
 | 전달된 호출이 되돌아옴 | `The forwarded call reverted` |
+| 한 요청이 `RELAYER_MAX_GAS`(기본 1,500,000)보다 많은 가스를 요구함 | `The request asks for more gas than the relayer allows` |
+| 서명의 `deadline`이 지남 | `The forward request has expired` |
+| 본문이 JSON이 아니거나 필드가 잘못됨 | `The request body is not valid JSON`, `The forward request has a bad …` (모두 `400`) |
+
+그 밖의 상태: 본문이 64KB보다 크면 `413`. 가스 지갑이 바닥이면 `503` `The relayer is out of gas funds`. 트랜잭션은 보냈지만 `RELAYER_RECEIPT_TIMEOUT_MS`(기본 120초) 안에 블록에 들어가지 않으면 `504`와 `hash`를 줍니다. 나중에 들어갈 수 있으므로 가스 예산은 그대로 잡아 둡니다. `500`은 내부 사유를 응답에 싣지 않고 로그에만 남깁니다.
+
+## 운영
+
+-   요청마다 한 줄 JSON 로그를 찍습니다 (`event`, 연동사 id, 서명자, 상태, 걸린 시간, 해시, 사유). 토큰과 키는 없습니다.
+-   `RELAYER_STATE_FILE`을 정하면 연동사별 남은 가스 예산을 파일에 보관해, 재시작해도 예산이 다시 가득 차지 않습니다. 설정한 예산보다 큰 값은 쓰지 않습니다.
+-   `SIGTERM`/`SIGINT`를 받으면 새 요청을 받지 않고, 진행 중인 요청을 마친 뒤 종료합니다 (30초 안에).
+-   느리거나 멈춘 연결은 15초 뒤 끊습니다.
 
 ## 한도
 
