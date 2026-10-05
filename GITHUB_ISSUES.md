@@ -766,6 +766,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 * **Tasks:**
   - [ ] Scope: core, factory, forwarder, `OptimisticEvaluator` (including fees, tips, deposits, permit paths). `TestRunnerEvaluator` and any arbiter adapter are audited separately when they are built (the Kleros adapter is in `contracts/experimental/` and out of scope)
   - [ ] Fix findings; publish the report
+  - **결정 (2026-10-05, D33):** 외부 감사는 수익이 나거나 투자를 받은 뒤에 한다. 그 전에는 #42의 조건으로 메인넷 시범 운영을 한다. 감사 후 건당 상한을 100달러에서 1,000달러로 올린 버전을 배포한다.
 * **Acceptance:** No open high or medium findings.
 
 #### [Issue #41] Bug bounty
@@ -773,10 +774,14 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 * **Acceptance:** Public programme with a severity ladder.
 
 #### [Issue #42] Mainnet deployment
-* **Type:** `Release` / **Priority:** `P0` / **Depends on:** #40, ERC-8183 interface stable
+* **Type:** `Release` / **Priority:** `P0` / **Depends on:** #39, ERC-8183 interface stable (#40 after revenue, D33)
 * **Tasks:**
   - [ ] Deploy and verify on Polygon (`POLYGON_USDC` and any other stablecoins injected per D8); budget range 1–1,000 USD enforced; D2, D3, D18 placeholders replaced with decided values first
   - [ ] Public page: addresses, stablecoin list, budget range, "no admin, no protocol fee" statement
+  - [ ] Before deploying without #40 (D33): AI deep review with independent reviewers, attack tests and fuzzing; report published
+  - [ ] Keep the 100 USD per-job cap until #40; services cap the total funded value at once, start with invited users, and state that the contracts are not externally audited
+  - [ ] Indexer alerts for unexpected payouts or balance mismatches; written steps to move services to a new deployment
+  - **결정 (2026-10-05):** 감사 전 메인넷 시범 운영을 허용한다(D33). 이 저장소가 만드는 기준 에스크로는 수수료 0%를 유지하고, 서비스별 수수료 에스크로와 Splitter는 서비스 쪽 저장소에서 만든다(D32).
 * **Acceptance:** First mainnet job completed.
 
 ---
