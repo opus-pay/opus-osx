@@ -4,7 +4,9 @@ import { amoy, loadAddresses, localHardhat, Opus } from "@opus/sdk";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-import { Keeper } from "./keeper";
+import { createHealthServer, type KeeperStatus } from "./health";
+import { describe, Keeper } from "./keeper";
+import { createNotifier } from "./notify";
 import { keeperAccountFromEnv } from "./wallet";
 
 async function main(): Promise<void> {
@@ -21,15 +23,32 @@ async function main(): Promise<void> {
     const opus = new Opus(publicClient, addresses, walletClient);
     const low = process.env.KEEPER_LOW_BALANCE_WEI?.trim();
     const margin = process.env.KEEPER_EXPIRY_MARGIN_SECONDS?.trim();
+    const number = (name: string): number | undefined => {
+        const raw = process.env[name]?.trim();
+        if (raw === undefined || raw === "") return undefined;
+        if (!/^\d+$/.test(raw)) throw new Error(`${name} must be a whole number`);
+        return Number(raw);
+    };
+    const notify = createNotifier({
+        webhookUrl: process.env.KEEPER_ALERT_WEBHOOK_URL?.trim(),
+        cooldownMs: number("KEEPER_ALERT_COOLDOWN_MS"),
+    });
     const keeper = new Keeper(opus, account.address, {
         lowBalanceWei: low === undefined || low === "" ? undefined : BigInt(low),
         marginSeconds: margin === undefined || margin === "" ? undefined : BigInt(margin),
-        onAlert: (alert) =>
-            console.error(
-                JSON.stringify(alert, (_key, value) => (typeof value === "bigint" ? value.toString() : value))
-            ),
+        receiptTimeoutMs: number("KEEPER_RECEIPT_TIMEOUT_MS"),
+        pendingTtlMs: number("KEEPER_PENDING_TTL_MS"),
+        onAlert: notify,
     });
-    const poll = Number(process.env.KEEPER_POLL_MS ?? "30000");
+    const poll = number("KEEPER_POLL_MS") ?? 30_000;
+    const status: KeeperStatus = { startedAt: Date.now(), failures: 0, checked: 0, skipped: 0, pendingCalls: 0 };
+    const healthPort = process.env.KEEPER_HEALTH_PORT?.trim();
+    if (healthPort !== "off") {
+        const host = process.env.KEEPER_HEALTH_HOST?.trim() || "127.0.0.1";
+        const port = Number(healthPort || "8789");
+        // Healthy when a pass finished cleanly within three poll periods (at least two minutes).
+        createHealthServer(() => status, Math.max(120_000, 3 * poll)).listen(port, host);
+    }
     console.log("keeper started");
     console.log(`wallet ${account.address}`);
     console.log(`network ${addresses.network} chain ${chain.id} ${chain.name}`);
@@ -40,24 +59,42 @@ async function main(): Promise<void> {
     console.log(`factory ${addresses.factory}`);
     console.log(`usdc ${addresses.usdc}`);
     console.log(`poll ${poll}ms`);
-    for (;;) {
+    let stopping = false;
+    const stop = () => {
+        // Finish the pass in progress, then leave; never cut a sent call off halfway.
+        stopping = true;
+    };
+    process.on("SIGTERM", stop);
+    process.on("SIGINT", stop);
+    while (!stopping) {
         try {
             const result = await keeper.tick();
             for (const call of result.calls) {
                 console.log(`${call.action} job ${call.jobId} ${call.hash}`);
             }
+            status.failures = 0;
+            status.lastError = undefined;
+            status.checked = result.checked;
+            status.skipped = result.skipped;
+            // A pass with job-level errors still ran; only a failed pass counts toward "not healthy".
+            status.lastOkAt = Date.now();
         } catch (error) {
-            console.error(`tick failed: ${describeFailure(error)}`);
+            status.failures += 1;
+            status.lastError = describe(error);
+            console.error(`tick failed: ${status.lastError}`);
+            if (status.failures === 3 || status.failures % 20 === 0) {
+                notify({ kind: "tick-failing", failures: status.failures, message: status.lastError });
+            }
         }
-        await new Promise((resolve) => setTimeout(resolve, poll));
+        status.pendingCalls = keeper.pendingCalls;
+        // After failures wait longer (up to 5 minutes) so a down node is not hit every 30 seconds.
+        const wait = Math.min(poll * 2 ** Math.min(status.failures, 4), Math.max(poll, 300_000));
+        for (let waited = 0; waited < wait && !stopping; waited += 1_000) {
+            await new Promise((resolve) => setTimeout(resolve, Math.min(1_000, wait - waited)));
+        }
     }
-}
-
-function describeFailure(error: unknown): string {
-    const message = error instanceof Error ? error.message : String(error);
-    const first = message.split("\n").find((line) => line.trim() !== "") ?? "unknown";
-    const details = message.match(/Details: ([^\n]+)/)?.[1];
-    return details === undefined ? first : `${first} ${details}`;
+    console.log("keeper stopped");
+    process.exit(0);
 }
 
 if (require.main === module) {
