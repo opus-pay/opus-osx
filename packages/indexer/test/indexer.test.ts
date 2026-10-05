@@ -110,7 +110,8 @@ describe("@opus/indexer", () => {
         expect(store.instances()).to.deep.equal([{ instance, token, treasury: client, feeBP: 0n }]);
     });
 
-    it("starts the log scan at the given block", async () => {
+    it("starts the log scan at the given block", async function () {
+        this.timeout(30_000);
         const { Indexer } = await import("../src/indexer");
         const seen: bigint[] = [];
         const client = {
@@ -125,7 +126,9 @@ describe("@opus/indexer", () => {
         expect(seen[0]).to.equal(5n);
     });
 
-    it("serves the job page from the store", async () => {
+    it("serves the job page from the store", async function () {
+        // The first import compiles the server with ts-node, which takes longer than the default 2 s.
+        this.timeout(30_000);
         const { startServer } = await import("../src/cli");
         const store = new IndexStore();
         feed(store, instance, "JobCreated", {

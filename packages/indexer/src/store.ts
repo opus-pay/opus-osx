@@ -32,6 +32,8 @@ export type InstanceView = {
     feeBP: bigint;
 };
 
+export type StoreData = { jobs: JobView[]; instances: InstanceView[]; applied: number };
+
 type Args = Record<string, unknown>;
 
 const ACTIVE = new Set<JobStatusName>(["Funded", "Submitted"]);
@@ -99,6 +101,25 @@ export class IndexStore {
 
     instances(): InstanceView[] {
         return [...this.created.values()];
+    }
+
+    /** Everything the store holds, as plain data, so it can be saved and loaded again. */
+    export(): StoreData {
+        return { jobs: [...this.jobs.values()], instances: [...this.created.values()], applied: this.applied };
+    }
+
+    /** Replaces the contents with saved data. */
+    load(data: StoreData): void {
+        this.jobs.clear();
+        this.created.clear();
+        for (const job of data.jobs) this.jobs.set(key(job.instance, job.jobId), job);
+        for (const instance of data.instances) this.created.set(instance.instance, instance);
+        this.applied = data.applied;
+    }
+
+    /** How many jobs are held, for health and paging. */
+    get jobCount(): number {
+        return this.jobs.size;
     }
 
     private project(emitter: Address, name: string, args: Args): boolean {

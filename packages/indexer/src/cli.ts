@@ -1,11 +1,12 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "http";
+import type { Server } from "http";
 import { readFileSync } from "fs";
 
 import { amoy, loadAddresses, localHardhat } from "@opus/sdk";
-import { getAddress, isAddress, type Address } from "viem";
 import { createPublicClient, http } from "viem";
 
 import { Indexer } from "./indexer";
+import { createIndexerServer, type IndexerStatus, type ServerOptions } from "./server";
+import { loadState, saveState } from "./state";
 import type { IndexStore, InstanceView, JobView } from "./store";
 
 function fromBlock(chainId: number): bigint {
@@ -18,67 +19,25 @@ function fromBlock(chainId: number): bigint {
     return BigInt(raw);
 }
 
-function json(value: unknown): string {
-    return JSON.stringify(value, (_key, item) => (typeof item === "bigint" ? item.toString() : item));
-}
-
-function send(res: ServerResponse, status: number, body: unknown): void {
-    res.writeHead(status, { "content-type": "application/json" });
-    res.end(json(body));
-}
-
-export function startServer(store: IndexStore, host: string, port: number): Promise<Server> {
-    const server = createServer((req, res) => handle(store, req, res));
+/** Starts the HTTP face of an index. Kept for callers that only need the server. */
+export function startServer(
+    store: IndexStore,
+    host: string,
+    port: number,
+    options: ServerOptions = {}
+): Promise<Server> {
+    const server = createIndexerServer(store, options);
     return new Promise((resolve) => {
         server.listen(port, host, () => resolve(server));
     });
 }
 
-function handle(store: IndexStore, req: IncomingMessage, res: ServerResponse): void {
-    if (req.method !== "GET" || req.url === undefined) {
-        send(res, 404, { error: "not found" });
-        return;
-    }
-    const url = new URL(req.url, "http://indexer");
-    if (url.pathname === "/health") {
-        send(res, 200, { ok: true });
-        return;
-    }
-    if (url.pathname === "/instances") {
-        send(res, 200, store.instances());
-        return;
-    }
-    if (url.pathname === "/jobs") {
-        const account = url.searchParams.get("account");
-        if (account === null || !isAddress(account)) {
-            send(res, 400, { error: "account is required" });
-            return;
-        }
-        send(res, 200, store.jobsFor(getAddress(account)));
-        return;
-    }
-    if (url.pathname === "/active") {
-        const instance = url.searchParams.get("instance");
-        const evaluator = url.searchParams.get("evaluator");
-        if (instance === null || evaluator === null || !isAddress(instance) || !isAddress(evaluator)) {
-            send(res, 400, { error: "instance and evaluator are required" });
-            return;
-        }
-        send(res, 200, store.activeJobs(getAddress(instance), getAddress(evaluator)));
-        return;
-    }
-    const jobPath = /^\/jobs\/(0x[0-9a-fA-F]{40})\/(\d+)$/.exec(url.pathname);
-    if (jobPath !== null) {
-        const job = store.job(getAddress(jobPath[1] as Address), BigInt(jobPath[2]));
-        if (job === undefined) {
-            send(res, 404, { error: "job not in the index" });
-            return;
-        }
-        send(res, 200, job);
-        return;
-    }
-    send(res, 404, { error: "not found" });
-}
+const whole = (name: string): number | undefined => {
+    const raw = process.env[name]?.trim();
+    if (raw === undefined || raw === "") return undefined;
+    if (!/^\d+$/.test(raw)) throw new Error(`${name} must be a whole number`);
+    return Number(raw);
+};
 
 async function main(): Promise<void> {
     const path = process.env.INDEXER_ADDRESSES?.trim();
@@ -86,21 +45,78 @@ async function main(): Promise<void> {
     const addresses = loadAddresses(readFileSync(path, "utf8"));
     const chain = addresses.chainId === 80002 ? amoy : localHardhat;
     const rpc = process.env.INDEXER_RPC_URL?.trim() || chain.rpcUrls.default.http[0];
-    const indexer = new Indexer(
+    // A block can be replaced shortly after it appears. On a public chain stay a few blocks behind the head.
+    const confirmations = BigInt(whole("INDEXER_CONFIRMATIONS") ?? (addresses.chainId === 80002 ? 5 : 0));
+    const stateFile = process.env.INDEXER_STATE_FILE?.trim();
+    const key = `${addresses.chainId}:${addresses.factory}:${addresses.instance}:${addresses.evaluator}`;
+    let indexer: Indexer;
+    const persist = () => {
+        if (stateFile !== undefined && stateFile !== "") saveState(stateFile, indexer.snapshot(key));
+    };
+    indexer = new Indexer(
         createPublicClient({ chain, transport: http(rpc) }),
         addresses,
-        fromBlock(addresses.chainId)
+        fromBlock(addresses.chainId),
+        { confirmations, onProgress: persist }
     );
+    const saved = stateFile === undefined || stateFile === "" ? undefined : loadState(stateFile, key);
+    if (saved !== undefined) {
+        indexer.restore(saved);
+        console.log(`resumed from block ${saved.cursor} with ${saved.store.jobs.length} jobs`);
+    }
     const host = process.env.INDEXER_HOST?.trim() || "127.0.0.1";
     const port = Number(process.env.INDEXER_PORT ?? "8788");
-    const poll = Number(process.env.INDEXER_POLL_MS ?? "15000");
-    await startServer(indexer.store, host, port);
+    const poll = whole("INDEXER_POLL_MS") ?? 15_000;
+    const status: IndexerStatus = {
+        startedAt: Date.now(),
+        head: 0n,
+        indexedTo: indexer.progress().indexedTo,
+        failures: 0,
+        jobs: indexer.store.jobCount,
+        staleMs: Math.max(120_000, 4 * poll),
+        caughtUpWithin: confirmations + 3n,
+    };
+    await startServer(indexer.store, host, port, {
+        status: () => status,
+        token: process.env.INDEXER_API_TOKEN?.trim(),
+    });
     console.log(`indexer listening on ${host}:${port}`);
-    for (;;) {
-        const added = await indexer.sync();
-        if (added > 0) console.log(`indexed ${added}`);
-        await new Promise((resolve) => setTimeout(resolve, poll));
+    let stopping = false;
+    const stop = () => {
+        // Finish the range in progress (it is saved as it completes), then leave.
+        stopping = true;
+    };
+    process.on("SIGTERM", stop);
+    process.on("SIGINT", stop);
+    while (!stopping) {
+        try {
+            const added = await indexer.sync();
+            if (added > 0) console.log(`indexed ${added}`);
+            const progress = indexer.progress();
+            status.head = progress.head;
+            status.indexedTo = progress.indexedTo;
+            status.lastOkAt = progress.lastOkAt;
+            status.jobs = indexer.store.jobCount;
+            status.failures = 0;
+            status.lastError = undefined;
+        } catch (error) {
+            // A failed request is retried later: ranges are applied whole, so nothing is counted twice.
+            status.failures += 1;
+            status.lastError = error instanceof Error ? error.message.split("\n")[0] : String(error);
+            const progress = indexer.progress();
+            status.head = progress.head;
+            status.indexedTo = progress.indexedTo;
+            console.error(`sync failed (${status.failures} in a row): ${status.lastError}`);
+        }
+        // Wait longer after failures (up to 5 minutes) so a struggling node is not hit every 15 seconds.
+        const wait = Math.min(poll * 2 ** Math.min(status.failures, 5), Math.max(poll, 300_000));
+        for (let waited = 0; waited < wait && !stopping; waited += 1_000) {
+            await new Promise((resolve) => setTimeout(resolve, Math.min(1_000, wait - waited)));
+        }
     }
+    persist();
+    console.log("indexer stopped");
+    process.exit(0);
 }
 
 if (require.main === module) {
