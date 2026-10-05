@@ -5,7 +5,7 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc -p tsconfig.json",
+        "build": "tsc -p tsconfig.build.json",
         "clean": "rm -rf dist",
         "start": "ts-node src/cli.ts",
         "test": "mocha --require ts-node/register 'test/**/*.ts'",

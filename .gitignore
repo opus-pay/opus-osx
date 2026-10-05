@@ -22,6 +22,7 @@ slither-report.json
 !**/env/.*.env.sample
 /config/keeper.env
 /config/relayer.env
+/config/indexer.env
 
 # 이관 참고용 기존 프로젝트. 각자 별도 저장소이므로 추적하지 않습니다.
 /legacy/

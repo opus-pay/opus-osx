@@ -93,12 +93,14 @@ set -a && source packages/relayer/env/.env && set +a && yarn relayer start
 set -a && source packages/indexer/env/.env && set +a && yarn indexer start
 ```
 
-Keeper and relayer can instead run as daemons. Images are `mukeunkim/opus-keeper` and `mukeunkim/opus-relayer`, tagged with the 12-character commit hash. `packages/<name>/docker-build.sh` pushes that tag; `docker-buildx.sh` also pushes `linux/amd64` and `linux/arm64` as `latest`. `compose.yaml` restarts them unless they are stopped. It reads `config/keeper.env` and `config/relayer.env`, and mounts `config/addresses.json` plus `config/sanctions.txt`. The `config` directory is not copied into the image. Keys are not copied into the image. The relayer is published only on `127.0.0.1:8787`.
+The keeper, the relayer and the indexer can run as daemons, each in its own image: `mukeunkim/opus-keeper`, `mukeunkim/opus-relayer` and `mukeunkim/opus-indexer`, tagged with the 12-character commit hash. The Dockerfile has one target per service (`docker build --target relayer .`). Each image holds only that service, the SDK and its production dependencies, runs compiled JavaScript on Node 22, runs as a non-root user and has a health check. `docker/build-all.sh` builds the three locally without pushing; `packages/<name>/docker-build.sh` pushes that tag and `latest`, and `docker-buildx.sh` also builds `linux/amd64` and `linux/arm64`.
+
+`compose.yaml` restarts the daemons unless they are stopped. It reads `config/keeper.env`, `config/relayer.env` and `config/indexer.env` (copy the `.sample` files), and mounts `config/addresses.json` plus `config/sanctions.txt`. The `config` directory and keys are not copied into the image. The ledger of the indexer (SQLite) and the remaining gas budgets of the relayer live in the volumes `indexer-data` and `relayer-state`. The keeper health check (8789), the relayer (8787) and the indexer (8788) are published on `127.0.0.1` only; put a reverse proxy with TLS in front before exposing the relayer or the indexer. After a new deployment, update `config/addresses.json` and set `INDEXER_FROM_BLOCK` to the factory's block.
 
 ```bash
-docker compose up -d --build keeper relayer
-docker compose logs -f keeper relayer
-docker compose stop keeper relayer
+docker compose up -d --build keeper relayer indexer
+docker compose logs -f keeper relayer indexer
+docker compose stop keeper relayer indexer
 ```
 
 
