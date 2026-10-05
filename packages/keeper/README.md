@@ -49,6 +49,16 @@ docker compose stop keeper
 
 전송이 네트워크에서 실패하면 1초, 2초, 4초를 두고 최대 4번 다시 시도합니다. 컨트랙트가 상태나 기한으로 거절하거나 영수증이 실패하면 그 호출은 다시 보내지 않습니다. 한 주기의 읽기나 전송이 끝까지 실패하면 이유를 한 줄로 찍고, 프로세스는 다음 주기까지 살아 있습니다. 다음 주기에서 상태가 여전히 그 호출을 허용하면 다시 시도합니다.
 
+## 운영
+
+-   **끝난 작업은 한 번만 읽습니다.** `Completed`, `Rejected`, `Expired` 작업과 다른 평가자의 작업은 처음 본 뒤 건너뜁니다. 작업이 쌓여도 한 주기에 읽는 양은 진행 중인 작업만큼입니다.
+-   **작업 하나가 실패해도 주기는 계속됩니다.** 한 작업을 읽지 못하면 그 작업만 `job-error` 경고로 남기고 나머지를 처리합니다.
+-   **보낸 호출이 블록에 안 보이면 다시 보내지 않습니다.** `KEEPER_RECEIPT_TIMEOUT_MS`(90초) 안에 영수증이 없으면 `call-pending` 경고를 남기고 `KEEPER_PENDING_TTL_MS`(10분) 동안 같은 호출을 건너뜁니다. 같은 호출을 두 번 보내 가스를 낭비하지 않기 위해서입니다.
+-   **경고는 같은 것이 반복되지 않습니다.** 같은 종류의 경고는 작업마다 `KEEPER_ALERT_COOLDOWN_MS`(1시간)에 한 번만 나갑니다. `KEEPER_ALERT_WEBHOOK_URL`을 정하면 JSON `{service, text, alert}`를 POST합니다 (Slack, Discord 호환). 웹훅이 실패해도 키퍼는 멈추지 않습니다.
+-   **연속 실패는 간격을 늘립니다.** 한 주기 전체가 실패하면 주기를 두 배씩, 최대 5분까지 늘려 죽은 노드를 계속 두드리지 않습니다. 3번 연속 실패하면 `tick-failing` 경고를 냅니다.
+-   **상태 확인:** `GET /health`(기본 `127.0.0.1:8789`, `KEEPER_HEALTH_PORT=off`로 끔). 최근 3주기(최소 2분) 안에 깨끗한 주기가 있고 연속 실패가 5번 미만이면 200, 아니면 이유와 함께 503입니다. 감시 서비스에 등록하세요.
+-   **종료:** `SIGTERM`/`SIGINT`를 받으면 진행 중인 주기를 마친 뒤 종료합니다.
+
 ## 환경 변수
 
 | 변수 | 필수 | 의미 |
@@ -60,6 +70,11 @@ docker compose stop keeper
 | `KEEPER_LOW_BALANCE_WEI` | 아니오 | 경고 기준. 비우면 `50000000000000000` (0.05 POL) |
 | `KEEPER_EXPIRY_MARGIN_SECONDS` | 아니오 | 만료 경고 여유. 비우면 3600 |
 | `KEEPER_POLL_MS` | 아니오 | 주기. 비우면 30000 |
+| `KEEPER_ALERT_WEBHOOK_URL` | 아니오 | 경고를 보낼 웹훅 |
+| `KEEPER_ALERT_COOLDOWN_MS` | 아니오 | 같은 경고의 간격. 비우면 3600000 |
+| `KEEPER_RECEIPT_TIMEOUT_MS` | 아니오 | 영수증 대기. 비우면 90000 |
+| `KEEPER_PENDING_TTL_MS` | 아니오 | 보류 호출을 다시 보내지 않는 시간. 비우면 600000 |
+| `KEEPER_HEALTH_HOST`, `KEEPER_HEALTH_PORT` | 아니오 | 상태 확인 주소. 기본 `127.0.0.1:8789`, 포트에 `off`면 끔 |
 
 ## 테스트
 
