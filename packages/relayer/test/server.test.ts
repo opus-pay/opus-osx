@@ -227,4 +227,32 @@ describe("relayer http", () => {
             await down.close();
         }
     });
+
+    it("exposes metrics for Prometheus: wallet, budgets and the traffic by status", async () => {
+        const s = await serve({ balance: 2n * 10n ** 18n }, { minBalanceWei: 10n ** 17n });
+        try {
+            await s.post(JSON.stringify({ integratorId: "errands", request: wire() }));
+            await s.post("not json");
+            const res = await fetch(`${s.url}/metrics`);
+            expect(res.status).to.equal(200);
+            expect(res.headers.get("content-type")).to.contain("text/plain");
+            const text = await res.text();
+            expect(text).to.contain("opus_relayer_up 1");
+            expect(text).to.contain(`opus_relayer_wallet_balance_coins{wallet="${WALLET}"} 2`);
+            expect(text).to.contain("opus_relayer_wallet_min_balance_coins 0.1");
+            expect(text).to.contain('opus_relayer_requests_total{integrator="errands",status="200"} 1');
+            expect(text).to.contain('opus_relayer_requests_total{integrator="",status="400"} 1');
+            expect(text).to.contain('opus_relayer_budget_total_coins{integrator="errands"}');
+            expect(text).to.not.contain(TOKEN);
+        } finally {
+            await s.close();
+        }
+        const down = await serve({ nodeDown: true });
+        try {
+            const text = await (await fetch(`${down.url}/metrics`)).text();
+            expect(text).to.contain("opus_relayer_up 0").and.to.contain("opus_relayer_rpc_up 0");
+        } finally {
+            await down.close();
+        }
+    });
 });

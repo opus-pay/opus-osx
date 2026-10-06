@@ -147,6 +147,10 @@ export class IndexStore {
         return this.ledger.instances(page);
     }
 
+    jobsByStatus(): Promise<Record<string, number>> {
+        return this.ledger.jobsByStatus();
+    }
+
     jobCount(): Promise<number> {
         return this.ledger.jobCount();
     }

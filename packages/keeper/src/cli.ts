@@ -72,7 +72,19 @@ async function main(): Promise<void> {
         onAlert: notify,
     });
     const poll = number("KEEPER_POLL_MS") ?? 30_000;
-    const status: KeeperStatus = { startedAt: Date.now(), failures: 0, checked: 0, skipped: 0, pendingCalls: 0 };
+    const status: KeeperStatus = {
+        startedAt: Date.now(),
+        failures: 0,
+        checked: 0,
+        skipped: 0,
+        pendingCalls: 0,
+        wallet: account.address,
+        minBalanceWei: keeper.minBalanceWei,
+        passes: 0,
+        callsSent: {},
+        alerts: {},
+        jobErrors: 0,
+    };
     const healthPort = process.env.KEEPER_HEALTH_PORT?.trim();
     if (healthPort !== "off") {
         const host = process.env.KEEPER_HEALTH_HOST?.trim() || "127.0.0.1";
@@ -104,6 +116,13 @@ async function main(): Promise<void> {
                 console.log(`${call.action} job ${call.jobId} ${call.hash}`);
             }
             status.source = result.source;
+            status.passes = (status.passes ?? 0) + 1;
+            status.balanceWei = result.balance;
+            status.jobErrors = (status.jobErrors ?? 0) + result.errors.length;
+            for (const call of result.calls)
+                status.callsSent = { ...status.callsSent, [call.action]: (status.callsSent?.[call.action] ?? 0) + 1 };
+            for (const alert of result.alerts)
+                status.alerts = { ...status.alerts, [alert.kind]: (status.alerts?.[alert.kind] ?? 0) + 1 };
             status.failures = 0;
             status.lastError = undefined;
             status.checked = result.checked;
@@ -115,6 +134,7 @@ async function main(): Promise<void> {
             status.lastError = describe(error);
             console.error(`tick failed: ${status.lastError}`);
             if (status.failures === 3 || status.failures % 20 === 0) {
+                status.alerts = { ...status.alerts, "tick-failing": (status.alerts?.["tick-failing"] ?? 0) + 1 };
                 notify({ kind: "tick-failing", failures: status.failures, message: status.lastError });
             }
         }
