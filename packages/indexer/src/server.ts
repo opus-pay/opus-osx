@@ -83,19 +83,33 @@ export function healthOf(status: IndexerStatus, now: number) {
 }
 
 /** What Prometheus scrapes: whether the loop is healthy and caught up, how far behind it is, and what the ledger holds. */
-export async function indexerMetrics(store: IndexStore, status: IndexerStatus | undefined, now: number): Promise<string> {
+export async function indexerMetrics(
+    store: IndexStore,
+    status: IndexerStatus | undefined,
+    now: number
+): Promise<string> {
     const samples: Sample[] = [];
     if (status !== undefined) {
         const view = healthOf(status, now);
         samples.push(
-            { name: "opus_indexer_up", help: "1 when the sync loop is healthy.", type: "gauge", value: view.ok ? 1 : 0 },
+            {
+                name: "opus_indexer_up",
+                help: "1 when the sync loop is healthy.",
+                type: "gauge",
+                value: view.ok ? 1 : 0,
+            },
             {
                 name: "opus_indexer_synced",
                 help: "1 when the ledger has caught up with the chain.",
                 type: "gauge",
                 value: view.synced ? 1 : 0,
             },
-            { name: "opus_indexer_head_block", help: "The chain head the indexer last saw.", type: "gauge", value: status.head },
+            {
+                name: "opus_indexer_head_block",
+                help: "The chain head the indexer last saw.",
+                type: "gauge",
+                value: status.head,
+            },
             {
                 name: "opus_indexer_indexed_block",
                 help: "The last block the ledger has read.",
