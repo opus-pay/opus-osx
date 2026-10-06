@@ -42,6 +42,8 @@ docker compose stop relayer
 
 `GET /health` → 가스 지갑 잔고와 노드 응답을 보고 `200` `{"ok":true,"rpc":true,"wallet":"0x…","balanceWei":"…","lowBalance":false}`. 노드가 응답하지 않거나 잔고가 `RELAYER_MIN_BALANCE_WEI` 이하이면 `503`입니다. 답은 10초 동안 재사용해서 감시가 노드를 몰아세우지 않습니다. 잔고가 바닥나기 전에 알림을 받는 용도로 감시 서비스에 등록하세요.
 
+`GET /metrics` → Prometheus가 읽는 지표입니다. `opus_relayer_up`, 노드 응답, 가스 지갑 잔고와 최소 잔고(POL), 통합 서비스별 가스 예산의 남은 양과 총량, 통합 서비스·HTTP 상태별 요청 횟수와 처리 시간을 줍니다. 토큰은 지표에 나오지 않습니다. 이 서버는 외부에도 열릴 수 있으니 프록시에서 `/metrics`는 내부 망에서만 닿게 하세요.
+
 `POST /relay`
 
 헤더 `Authorization: Bearer <연동사 token>`과 `Content-Type: application/json`.

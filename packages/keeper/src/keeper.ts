@@ -62,6 +62,8 @@ export type TickResult = {
     skipped: number;
     /** Where the list of jobs came from: the index, or a scan of the chain. */
     source: "index" | "scan";
+    /** The keeper wallet's balance read at the start of the pass, in wei. */
+    balance: bigint;
 };
 
 /**
@@ -96,6 +98,11 @@ export class Keeper {
         this.pendingTtlMs = options.pendingTtlMs ?? 600_000;
         this.now = options.now ?? Date.now;
         this.fullScanEvery = options.fullScanEvery ?? 20;
+    }
+
+    /** The least the wallet should hold; below it the keeper raises a low-balance alert. */
+    get minBalanceWei(): bigint {
+        return this.lowBalanceWei;
     }
 
     /** How many calls are waiting for a block, for the health check. */
@@ -184,7 +191,7 @@ export class Keeper {
                 this.alert(alerts, { kind: "job-error", jobId, message });
             }
         }
-        return { calls, alerts, errors, checked, skipped, source };
+        return { calls, alerts, errors, checked, skipped, source, balance };
     }
 
     private async send(action: KeeperTrigger, jobId: bigint): Promise<Hash> {

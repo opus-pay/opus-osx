@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import type { ForwardRequest } from "@opus/sdk";
 import { getAddress, isAddress, type Address, type Hex } from "viem";
 
+import { coins, METRICS_CONTENT_TYPE, renderMetrics, type Sample } from "./metrics";
 import { RelayPending, RelayRejected, RelayUnavailable, type RelayLog, type Relayer } from "./relayer";
 
 /** Bodies larger than this are refused before they are read in full. A forward request is well under 2 KB. */
@@ -94,6 +95,10 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
     const cacheMs = options.healthCacheMs ?? 10_000;
     const limit = options.maxBodyBytes ?? MAX_BODY_BYTES;
     let cached: { at: number; status: number; body: unknown } | undefined;
+    // Totals since start, for `/metrics`: answers by integrator and status code, and how long they took.
+    const answers = new Map<string, number>();
+    let seconds = 0;
+    let handled = 0;
 
     async function health(): Promise<{ status: number; body: unknown }> {
         if (cached !== undefined && now() - cached.at < cacheMs) return cached;
@@ -120,11 +125,96 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
         return result;
     }
 
+    /** What Prometheus scrapes: whether the node answers, the gas wallet and the budgets, and the traffic. */
+    async function metrics(): Promise<string> {
+        const view = await health();
+        const body = view.body as { rpc?: boolean; wallet?: string; balanceWei?: string };
+        const samples: Sample[] = [
+            {
+                name: "opus_relayer_up",
+                help: "1 when the node answers and the gas wallet holds more than its minimum.",
+                type: "gauge",
+                value: view.status === 200 ? 1 : 0,
+            },
+            {
+                name: "opus_relayer_rpc_up",
+                help: "1 when the relayer could read the node on the last health look.",
+                type: "gauge",
+                value: body.rpc === true ? 1 : 0,
+            },
+            {
+                name: "opus_relayer_requests_seconds_total",
+                help: "Time spent answering relay requests, since start.",
+                type: "counter",
+                value: seconds,
+            },
+            {
+                name: "opus_relayer_requests_handled_total",
+                help: "Relay requests answered, since start.",
+                type: "counter",
+                value: handled,
+            },
+        ];
+        if (body.balanceWei !== undefined)
+            samples.push({
+                name: "opus_relayer_wallet_balance_coins",
+                help: "Balance of the relayer gas wallet in POL.",
+                type: "gauge",
+                value: coins(BigInt(body.balanceWei)),
+                labels: body.wallet === undefined ? {} : { wallet: body.wallet },
+            });
+        try {
+            const minimum = (await relayer.walletBalance()).minBalanceWei;
+            samples.push({
+                name: "opus_relayer_wallet_min_balance_coins",
+                help: "The least POL the gas wallet keeps; below it the relayer says it is unavailable.",
+                type: "gauge",
+                value: coins(minimum),
+            });
+        } catch {
+            // The node is down: `opus_relayer_rpc_up` already says so.
+        }
+        const left = relayer.budgetsLeft();
+        const given = relayer.budgetsConfigured();
+        for (const [integrator, wei] of Object.entries(left)) {
+            samples.push({
+                name: "opus_relayer_budget_left_coins",
+                help: "Gas budget an integrator has left, in POL.",
+                type: "gauge",
+                value: coins(wei),
+                labels: { integrator },
+            });
+            if (given[integrator] !== undefined)
+                samples.push({
+                    name: "opus_relayer_budget_total_coins",
+                    help: "Gas budget an integrator was given, in POL.",
+                    type: "gauge",
+                    value: coins(given[integrator]),
+                    labels: { integrator },
+                });
+        }
+        for (const [key, count] of answers) {
+            const [integrator, status] = key.split("\u0000");
+            samples.push({
+                name: "opus_relayer_requests_total",
+                help: "Relay requests answered, by integrator and HTTP status.",
+                type: "counter",
+                value: count,
+                labels: { integrator, status },
+            });
+        }
+        return renderMetrics(samples);
+    }
+
     async function relay(req: IncomingMessage, res: ServerResponse): Promise<void> {
         const started = now();
         let integratorId = "";
         let from: string | undefined;
         const finish = (status: number, body: Record<string, unknown>, reason?: string) => {
+            const key = `${integratorId}\u0000${status}`;
+            answers.set(key, (answers.get(key) ?? 0) + 1);
+            seconds += (now() - started) / 1000;
+            handled += 1;
             log({
                 event: "relay",
                 integrator: integratorId,
@@ -168,6 +258,16 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
     const server = createServer((req, res) => {
         if (req.method === "GET" && req.url === "/health") {
             void health().then((result) => send(res, result.status, result.body));
+            return;
+        }
+        if (req.method === "GET" && req.url === "/metrics") {
+            metrics().then(
+                (text) => {
+                    res.writeHead(200, { "content-type": METRICS_CONTENT_TYPE });
+                    res.end(text);
+                },
+                () => send(res, 500, { error: "metrics unavailable" })
+            );
             return;
         }
         if (req.method === "POST" && req.url === "/relay") {
