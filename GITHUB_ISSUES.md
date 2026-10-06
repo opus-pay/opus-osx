@@ -864,13 +864,15 @@ Keep closed until pilot users ask for them.
 
 A directory of services that use OPUS escrow (D24). It shows on-chain data only; it does not match parties, hold funds, or have special rights.
 
-#### [Issue #62] Service metadata registration
-* **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #11, D23
+#### [Issue #62] Service listing by contact and agreement
+* **Type:** `Task` / **Priority:** `P1` / **Depends on:** D23
+* **Decision (2026-10-07, D23):** The Portal does not read its list from the chain. An open on-chain registry cannot stop abuse (spam, copies of real services, scams), so a service is listed only after the operator has talked with the team behind it and agreed terms.
 * **Tasks:**
-  - [ ] A service registers name, description, category, link, and logo for its instance
-  - [ ] Authorized by the instance's fee recipient (signed message) or through an admin-free on-chain registry that only emits events
-  - [ ] Services can update their own metadata; no one else can
-* **Acceptance:** A new instance appears in the Portal with its metadata without any action by the Portal operator.
+  - [ ] A "list your service" contact on the Portal
+  - [ ] Written listing terms: what is checked before listing (who runs it, the instance address, what it does), what is expected of a listed service, and when it is removed
+  - [ ] Each listing is an entry in a public file in the Portal repository (name, description in four languages, category, link, logo, instance address) added by pull request, so every change is visible
+  - [ ] A service can ask to change or remove its entry; the operator can remove one under the display policy (#66)
+* **Acceptance:** Every service on the Portal has an agreed listing and a public entry; nobody can list a service without the operator's action.
 
 #### [Issue #63] Service directory and on-chain statistics
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #26, #62

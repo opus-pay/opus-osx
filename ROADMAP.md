@@ -93,7 +93,7 @@ No role grants. No post-deploy configuration calls.
 → **D19**
 
 ## B.5 OPUS Portal (M12)
-* **Q19. Service metadata.** How a service registers its name, description, and link: a signed message from the instance's fee recipient stored off-chain, or a tiny admin-free on-chain registry that only emits events. → **D23**
+* **Q19. Service metadata.** How a service registers its name, description, and link: a signed message from the instance's fee recipient stored off-chain, or a tiny admin-free on-chain registry that only emits events. → **D23** (decided: by contact and agreement)
 * **Q20. Display policy.** Grounds for hiding a service from the Portal, how reports are handled, and how the policy is published.
 * **Q21. Hosting.** Conventional hosting plus an IPFS mirror so the Portal stays available.
 
@@ -231,7 +231,7 @@ Priority: `P0` required for the milestone, `P1` should have, `P2` later.
 
 | # | Type | P | Title |
 | :--- | :--- | :--- | :--- |
-| **#62** | `Feature` | P1 | Service metadata registration (D23) |
+| **#62** | `Task` | P1 | Service listing by contact and agreement (D23) |
 | **#63** | `Feature` | P1 | Service directory and on-chain statistics |
 | **#64** | `Feature` | P1 | My jobs across services |
 | **#65** | `Feature` | P2 | Evaluator and arbiter directory |
@@ -334,7 +334,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D20 | Evaluator stake asset | **Decided: USDC first, OPG only after the Court works and legal review** | #55, #52 |
 | D21 | Voluntary concession | **Decided: client may approve any time after submission; provider may withdraw any time** | — |
 | D22 | Client deposit in confirmation mode | **Decided: posted up front at configuration, returned if no dispute** | #53 |
-| D23 | Service metadata registration method | Open | #62 |
+| D23 | Service metadata registration method | **Decided (2026-10-07): by contact and agreement, not on-chain.** A listing registry that anyone can write to cannot stop abuse (spam, copies of real services, scams), and one that only an admin can write to is the same as a curated list. So the Portal lists a service only after the operator has talked with the team behind it and agreed terms; the entry is added by hand to a public file in the Portal repository. On-chain data is still used for the statistics of listed services (#63). Reverse this only when an on-chain way exists that abuse cannot defeat | #62 |
 | D24 | Portal role | **Decided: directory of services only; no matching, no custody, no special rights.** The team's platform app (non-custodial wallet, push, SDK, on-ramp links, per-service instances) is a separate product outside this repository, not the OPUS Portal (D32) | — |
 | D25 | First errand corridor | **Decided (2026-10-05): Korea–Japan.** The errand service opens countries by a setting; local checks and shipping only, buying stays closed until arbiters exist (#74) | #67 |
 | D26 | On- and off-ramp partners | Open | #72 |
