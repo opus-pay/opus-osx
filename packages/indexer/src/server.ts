@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 
 import { getAddress, isAddress, type Address } from "viem";
 
+import { METRICS_CONTENT_TYPE, renderMetrics, type Sample } from "./metrics";
 import type { IndexStore } from "./store";
 
 /** What the sync loop tells the health check. */
@@ -18,6 +19,10 @@ export type IndexerStatus = {
     staleMs: number;
     /** Blocks behind the head that still count as caught up (the confirmation depth plus a little). */
     caughtUpWithin: bigint;
+    /** Totals since start, for `/metrics`: syncs that finished, syncs that failed, chain reorganisations undone. */
+    syncs?: number;
+    syncFailures?: number;
+    reorgs?: number;
 };
 
 export type ServerOptions = {
@@ -77,6 +82,87 @@ export function healthOf(status: IndexerStatus, now: number) {
     };
 }
 
+/** What Prometheus scrapes: whether the loop is healthy and caught up, how far behind it is, and what the ledger holds. */
+export async function indexerMetrics(store: IndexStore, status: IndexerStatus | undefined, now: number): Promise<string> {
+    const samples: Sample[] = [];
+    if (status !== undefined) {
+        const view = healthOf(status, now);
+        samples.push(
+            { name: "opus_indexer_up", help: "1 when the sync loop is healthy.", type: "gauge", value: view.ok ? 1 : 0 },
+            {
+                name: "opus_indexer_synced",
+                help: "1 when the ledger has caught up with the chain.",
+                type: "gauge",
+                value: view.synced ? 1 : 0,
+            },
+            { name: "opus_indexer_head_block", help: "The chain head the indexer last saw.", type: "gauge", value: status.head },
+            {
+                name: "opus_indexer_indexed_block",
+                help: "The last block the ledger has read.",
+                type: "gauge",
+                value: status.indexedTo,
+            },
+            {
+                name: "opus_indexer_lag_blocks",
+                help: "Blocks between the chain head and the ledger.",
+                type: "gauge",
+                value: view.lag,
+            },
+            {
+                name: "opus_indexer_last_ok_age_seconds",
+                help: "Seconds since the last clean sync (since start before the first one).",
+                type: "gauge",
+                value: Math.round((now - (status.lastOkAt ?? status.startedAt)) / 1000),
+            },
+            {
+                name: "opus_indexer_failed_syncs",
+                help: "Syncs that failed in a row.",
+                type: "gauge",
+                value: status.failures,
+            },
+            {
+                name: "opus_indexer_syncs_total",
+                help: "Syncs finished since start.",
+                type: "counter",
+                value: status.syncs ?? 0,
+            },
+            {
+                name: "opus_indexer_sync_failures_total",
+                help: "Syncs that failed since start.",
+                type: "counter",
+                value: status.syncFailures ?? 0,
+            },
+            {
+                name: "opus_indexer_reorgs_total",
+                help: "Times blocks the chain replaced were taken back out of the ledger.",
+                type: "counter",
+                value: status.reorgs ?? 0,
+            },
+            {
+                name: "opus_indexer_start_time_seconds",
+                help: "When the indexer started, in Unix seconds.",
+                type: "gauge",
+                value: Math.round(status.startedAt / 1000),
+            }
+        );
+    }
+    samples.push({
+        name: "opus_indexer_instances",
+        help: "Instances the factory has announced.",
+        type: "gauge",
+        value: (await store.instances({ limit: 1, offset: 0 })).total,
+    });
+    for (const [jobStatus, count] of Object.entries(await store.jobsByStatus()))
+        samples.push({
+            name: "opus_indexer_jobs",
+            help: "Jobs in the ledger, by status.",
+            type: "gauge",
+            value: count,
+            labels: { status: jobStatus },
+        });
+    return renderMetrics(samples);
+}
+
 export function createIndexerServer(store: IndexStore, options: ServerOptions = {}): Server {
     const now = options.now ?? Date.now;
     return createServer((req, res) => {
@@ -110,6 +196,11 @@ async function handle(
     }
     if (options.token !== undefined && options.token !== "" && !allowed(options.token, req.headers.authorization)) {
         send(res, 401, { error: "unauthorized" });
+        return;
+    }
+    if (url.pathname === "/metrics") {
+        res.writeHead(200, { "content-type": METRICS_CONTENT_TYPE });
+        res.end(await indexerMetrics(store, options.status?.(), now()));
         return;
     }
     if (url.pathname === "/instances") {

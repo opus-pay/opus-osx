@@ -142,6 +142,11 @@ export class SqlLedger implements Ledger {
         return count((await this.db.query("SELECT COUNT(*) AS n FROM jobs")).rows);
     }
 
+    async jobsByStatus() {
+        const rows = (await this.db.query("SELECT status, COUNT(*) AS n FROM jobs GROUP BY status")).rows;
+        return Object.fromEntries(rows.map((row) => [text(row, "status"), Number(row.n)]));
+    }
+
     async getMeta(key: string) {
         const rows = (await this.db.query("SELECT value FROM meta WHERE key = $1", [key])).rows;
         return rows[0] === undefined ? undefined : text(rows[0], "value");

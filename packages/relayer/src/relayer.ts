@@ -185,6 +185,11 @@ export class Relayer {
         return Object.fromEntries([...this.budgets].map(([id, budget]) => [id, budget.remaining]));
     }
 
+    /** The gas budget each integrator was given, by id (what `budgetsLeft` counts down from). */
+    budgetsConfigured(): Record<string, bigint> {
+        return Object.fromEntries([...this.integrators].map(([id, integrator]) => [id, integrator.budgetWei]));
+    }
+
     private changed(): void {
         this.onBudgets?.(this.budgetsLeft());
     }
