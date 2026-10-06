@@ -53,6 +53,8 @@ indexer는 구간마다 마지막 블록의 해시를 기억하고, 매 주기�
 
 `/health`는 인증 없이 열려 있습니다. 최근 `max(2분, 4주기)` 안에 깨끗한 동기화가 있고 연속 실패가 5번 미만이면 `200`, 아니면 이유와 함께 `503`입니다. 본문에 `synced`가 있어서, 처음 읽는 중이라 장부가 아직 불완전한지(`false`) 따라잡았는지(`true`)를 알 수 있습니다. `head`, `indexedTo`, `lag`, `jobs`, `lastOkAgeSeconds`, `lastError`도 줍니다. 읽는 서비스는 `synced`가 `true`일 때만 `/jobs` 결과를 신뢰하세요.
 
+`GET /metrics`는 Prometheus가 읽는 지표입니다. `opus_indexer_up`, `opus_indexer_synced`, 체인 머리·읽은 블록·뒤처진 블록 수, 마지막 깨끗한 동기화 이후 초, 연속 실패, 동기화·실패·reorg 누적 횟수, 인스턴스 수, 상태별 작업 수를 줍니다. `INDEXER_API_TOKEN`을 정했다면 `/health`와 달리 이 경로도 토큰이 필요하므로, Prometheus의 `authorization`에 같은 토큰을 넣으세요.
+
 ## 조회
 
 모두 `GET`입니다. 정수 필드는 10진 문자열입니다.

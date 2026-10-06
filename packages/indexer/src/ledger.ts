@@ -28,6 +28,8 @@ export interface Ledger {
     /** Funded and submitted jobs of one instance and evaluator. */
     activeJobs(instance: Address, evaluator: Address): Promise<JobView[]>;
     jobCount(): Promise<number>;
+    /** How many jobs are in each status, for monitoring. */
+    jobsByStatus(): Promise<Record<string, number>>;
 
     getMeta(key: string): Promise<string | undefined>;
     setMeta(key: string, value: string): Promise<void>;
@@ -110,6 +112,11 @@ export class MemoryLedger implements Ledger {
     }
     async jobCount() {
         return this.jobs.size;
+    }
+    async jobsByStatus() {
+        const counts: Record<string, number> = {};
+        for (const job of this.jobs.values()) counts[job.status] = (counts[job.status] ?? 0) + 1;
+        return counts;
     }
 
     async getMeta(key: string) {

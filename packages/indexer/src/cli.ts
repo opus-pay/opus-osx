@@ -72,8 +72,10 @@ async function main(): Promise<void> {
         {
             confirmations,
             ledger,
-            onReorg: (fork, from) =>
-                console.warn(`chain reorganised: took back blocks ${fork + 1n}..${from - 1n} and read them again`),
+            onReorg: (fork, from) => {
+                status.reorgs = (status.reorgs ?? 0) + 1;
+                console.warn(`chain reorganised: took back blocks ${fork + 1n}..${from - 1n} and read them again`);
+            },
         }
     );
     await indexer.load();
@@ -107,6 +109,7 @@ async function main(): Promise<void> {
     while (!stopping) {
         try {
             const added = await indexer.sync();
+            status.syncs = (status.syncs ?? 0) + 1;
             if (added > 0) console.log(`indexed ${added}`);
             const progress = indexer.progress();
             status.head = progress.head;
@@ -118,6 +121,7 @@ async function main(): Promise<void> {
         } catch (error) {
             // A failed request is retried later: ranges are applied whole, so nothing is counted twice.
             status.failures += 1;
+            status.syncFailures = (status.syncFailures ?? 0) + 1;
             status.lastError = error instanceof Error ? error.message.split("\n")[0] : String(error);
             const progress = indexer.progress();
             status.head = progress.head;
