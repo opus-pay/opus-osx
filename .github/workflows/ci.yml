@@ -23,7 +23,11 @@ jobs:
       - name: Check formatting
         run: yarn formatting:check
 
-      - name: Lint contracts
+      # The app type-checks against the built SDK, so build it before the lint step.
+      - name: Build the SDK
+        run: yarn workspace @opus/sdk build
+
+      - name: Lint
         run: yarn lint
 
       - name: Build
