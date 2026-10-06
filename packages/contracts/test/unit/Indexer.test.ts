@@ -26,19 +26,25 @@ describe("Indexer on a local Hardhat node (#26)", () => {
         const again = await indexer.sync();
         expect(again).to.equal(0);
 
-        const page = indexer.store.job(getAddress(core.address), BigInt(jobId));
+        const page = await indexer.store.job(getAddress(core.address), BigInt(jobId));
         expect(page?.status).to.equal("Submitted");
         expect(page?.client).to.equal(getAddress(client.address));
         expect(page?.provider).to.equal(getAddress(provider.address));
         expect(page?.budget).to.equal(100_000000n);
         expect(page?.expiredAt).to.be.greaterThan(0n);
-        expect(indexer.store.activeJobs(getAddress(core.address), getAddress(evaluator.address))).to.have.length(1);
-        expect(indexer.store.jobsFor(getAddress(client.address)).map((job) => job.status)).to.deep.equal(["Submitted"]);
+        expect(await indexer.store.activeJobs(getAddress(core.address), getAddress(evaluator.address))).to.have.length(
+            1
+        );
+        expect((await indexer.store.jobsFor(getAddress(client.address))).items.map((job) => job.status)).to.deep.equal([
+            "Submitted",
+        ]);
         expect(page).to.not.have.property("logs");
 
         await core.connect(evaluator).complete(jobId, ethers.constants.HashZero, EMPTY);
         await indexer.sync();
-        expect(indexer.store.job(getAddress(core.address), BigInt(jobId))?.status).to.equal("Completed");
-        expect(indexer.store.activeJobs(getAddress(core.address), getAddress(evaluator.address))).to.deep.equal([]);
+        expect((await indexer.store.job(getAddress(core.address), BigInt(jobId)))?.status).to.equal("Completed");
+        expect(await indexer.store.activeJobs(getAddress(core.address), getAddress(evaluator.address))).to.deep.equal(
+            []
+        );
     });
 });
