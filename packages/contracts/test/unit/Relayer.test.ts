@@ -107,6 +107,8 @@ describe("Relayer on a local Hardhat node (#25)", () => {
         const relayer = new Relayer(publicClient, walletFor(gasPayer.privateKey), addresses, {
             integrators: [{ id: "errands", token: "secret", budgetWei, maxRequests: 20, windowSeconds: 3600 }],
             blocked: new Set([getAddress(operator.address)]),
+            // The requests below ask for 2,000,000 gas, more than the relayer's default cap of 1,500,000.
+            maxGas: 3_000_000n,
         });
         return { token, core, publicClient, addresses, relayer };
     }
