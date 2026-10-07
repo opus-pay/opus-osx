@@ -214,3 +214,58 @@ describe("push receipts", () => {
         expect(calls[0].body).to.deep.equal({ ids: ["a", "b", "c"] });
     });
 });
+
+import { deviceMessage, MessageRelayerClient, MessageRelayerError, muteMessage } from "../src";
+
+describe("message relayer client and signed messages", () => {
+    it("writes one fixed layout to sign, with the address in lower case", () => {
+        const fields = {
+            action: "register",
+            address: "0xAbC0000000000000000000000000000000000001",
+            token: T1,
+            lang: "ko",
+            platform: "ios",
+            issuedAt: 1_800_000_000,
+        } as const;
+        expect(deviceMessage(fields)).to.equal(
+            [
+                "OPUS push",
+                "action: register",
+                "address: 0xabc0000000000000000000000000000000000001",
+                `token: ${T1}`,
+                "lang: ko",
+                "platform: ios",
+                "issuedAt: 1800000000",
+            ].join("\n")
+        );
+        expect(deviceMessage({ ...fields, action: "unregister" })).to.contain("action: unregister");
+        const mute = muteMessage({ address: fields.address, app: "wayhand", muted: true, issuedAt: 5 });
+        expect(mute).to.contain("action: mute").and.to.contain("app: wayhand");
+        expect(muteMessage({ address: fields.address, app: "wayhand", muted: false, issuedAt: 5 })).to.contain(
+            "action: unmute"
+        );
+    });
+
+    it("posts a push with the service key and returns the counts", async () => {
+        const { calls, fetchFn } = fakeService([{ json: { accepted: 2, noDevice: 1 } }]);
+        const client = new MessageRelayerClient({ url: "https://push.example.org/", key: "k-1", fetch: fetchFn });
+        const out = await client.push({ to: ["0x1"], title: { en: "Hi" }, body: "There", path: "/errand/1" });
+        expect(out).to.deep.equal({ accepted: 2, noDevice: 1, muted: 0, limited: 0, failed: 0 });
+        expect(calls[0].url).to.equal("https://push.example.org/v1/push");
+        expect(calls[0].headers.authorization).to.equal("Bearer k-1");
+        expect(calls[0].body.path).to.equal("/errand/1");
+    });
+
+    it("throws the relayer's reason and status", async () => {
+        const { fetchFn } = fakeService([{ status: 429, json: { error: "The service rate limit is spent" } }]);
+        const client = new MessageRelayerClient({ url: "https://p", key: "k", fetch: fetchFn });
+        try {
+            await client.push({ to: [], title: "a", body: "b" });
+            expect.fail("should throw");
+        } catch (error) {
+            expect(error).to.be.instanceOf(MessageRelayerError);
+            expect((error as MessageRelayerError).status).to.equal(429);
+            expect((error as Error).message).to.contain("rate limit");
+        }
+    });
+});

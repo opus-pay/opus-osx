@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "es2020",
+        "module": "commonjs",
+        "strict": true,
+        "esModuleInterop": true,
+        "outDir": "dist",
+        "declaration": true,
+        "moduleResolution": "node",
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "baseUrl": ".",
+        "paths": {
+            "@opus/sdk": ["../sdk/src/index.ts"]
+        },
+        "typeRoots": ["../../node_modules/@types", "./node_modules/@types"],
+        "types": ["mocha", "chai", "node"]
+    },
+    "include": ["./src"]
+}

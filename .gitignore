@@ -32,3 +32,9 @@ slither-report.json
 
 # Demo recordings are hosted on YouTube, not in git
 docs/grant/*.mp4
+
+# message relayer device table
+packages/message-relayer/data/
+*.db
+*.db-wal
+*.db-shm

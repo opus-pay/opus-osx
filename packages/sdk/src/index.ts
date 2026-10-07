@@ -26,6 +26,14 @@ export { assertDescription, descriptionOf } from "./description";
 export { decodeOpusError } from "./errors";
 export { decodeOpusLog, jobIdFromReceipt } from "./events";
 export { encodeForwarderExecute, signForwardRequest } from "./forwarder";
+export {
+    MessageRelayerClient,
+    MessageRelayerError,
+    PUSH_LANGS,
+    PUSH_PLATFORMS,
+    deviceMessage,
+    muteMessage,
+} from "./message-relayer";
 export { Opus } from "./opus";
 export {
     EXPO_PUSH_URL,
@@ -47,6 +55,16 @@ export { presetAiToAi, presetAiToPerson, presetPersonToAny, presetSmallNoArbiter
 export { statusFor, warnings } from "./status";
 
 export type { ForwardRequest } from "./forwarder";
+export type {
+    DeviceMessageFields,
+    LocalText,
+    MessageRelayerClientOptions,
+    MuteMessageFields,
+    PushLang,
+    PushPlatform,
+    PushSummary,
+    ServicePush,
+} from "./message-relayer";
 export type { PresetAmounts } from "./presets";
 export type { PushClientOptions, PushInput, PushMessage, PushReceipts, PushResult, PushRoute } from "./push";
 export type {
