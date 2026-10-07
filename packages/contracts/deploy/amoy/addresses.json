@@ -1,9 +1,9 @@
 {
-  "network": "amoy",
-  "chainId": 80002,
-  "forwarder": "0xD1172323dc6B5C39f8F015C0C3ada071079c830C",
-  "factory": "0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218",
-  "usdc": "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
-  "instance": "0x4D54D2BD919024742070c63878903483d456d3fC",
-  "evaluator": "0x8A4a02D544145ed668b059A7A1753E1f4470da3B"
+    "network": "amoy",
+    "chainId": 80002,
+    "forwarder": "0xD1172323dc6B5C39f8F015C0C3ada071079c830C",
+    "factory": "0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218",
+    "usdc": "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
+    "instance": "0x4D54D2BD919024742070c63878903483d456d3fC",
+    "evaluator": "0x8A4a02D544145ed668b059A7A1753E1f4470da3B"
 }

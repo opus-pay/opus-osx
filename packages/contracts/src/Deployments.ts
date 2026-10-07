@@ -126,6 +126,7 @@ export class Deployments {
             if (item !== undefined) contents[key] = item.address;
         }
         fs.mkdirSync(path.dirname(this.filename), { recursive: true });
-        fs.writeFileSync(this.filename, JSON.stringify(contents, null, 2), "utf-8");
+        // Four-space indent and a final newline match Prettier, so CI accepts the file as written.
+        fs.writeFileSync(this.filename, `${JSON.stringify(contents, null, 4)}\n`, "utf-8");
     }
 }
