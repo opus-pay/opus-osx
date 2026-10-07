@@ -342,6 +342,8 @@ describe("relayer http", () => {
         try {
             await s.post(JSON.stringify({ integratorId: "errands", request: wire() }));
             await s.post("not json");
+            for (const made of ["made-up-1", "made-up-2"])
+                await s.post(JSON.stringify({ integratorId: made, request: wire() }));
             const res = await fetch(`${s.url}/metrics`);
             expect(res.status).to.equal(200);
             expect(res.headers.get("content-type")).to.contain("text/plain");
@@ -350,7 +352,9 @@ describe("relayer http", () => {
             expect(text).to.contain(`opus_relayer_wallet_balance_coins{wallet="${WALLET}"} 2`);
             expect(text).to.contain("opus_relayer_wallet_min_balance_coins 0.1");
             expect(text).to.contain('opus_relayer_requests_total{integrator="errands",status="200"} 1');
-            expect(text).to.contain('opus_relayer_requests_total{integrator="",status="400"} 1');
+            // Unknown or missing integrators share one label, so callers cannot grow the metrics by inventing names.
+            expect(text).to.not.contain("made-up");
+            expect(text).to.match(/opus_relayer_requests_total\{integrator="unknown",status="\d+"\} /);
             expect(text).to.contain('opus_relayer_budget_total_coins{integrator="errands"}');
             expect(text).to.not.contain(TOKEN);
         } finally {

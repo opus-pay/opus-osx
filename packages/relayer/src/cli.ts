@@ -9,6 +9,7 @@ import { Relayer } from "./relayer";
 import { createRelayerServer } from "./server";
 import { readBudgets, writeBudgets } from "./state";
 import { parseSanctionsList } from "./sanctions";
+import { redactUrls, rpcHost } from "./redact";
 import { relayerAccountFromEnv } from "./wallet";
 
 async function main(): Promise<void> {
@@ -72,7 +73,8 @@ async function main(): Promise<void> {
     console.log("relayer started");
     console.log(`wallet ${account.address}`);
     console.log(`network ${addresses.network} chain ${chain.id} ${chain.name}`);
-    console.log(`rpc ${rpc}`);
+    // Provider URLs often carry the API key in the path or the query: log the host only.
+    console.log(`rpc ${rpcHost(rpc)}`);
     console.log(`instance ${addresses.instance}`);
     console.log(`evaluator ${addresses.evaluator}`);
     console.log(`forwarder ${addresses.forwarder}`);
@@ -83,7 +85,7 @@ async function main(): Promise<void> {
 
 if (require.main === module) {
     main().catch((error: unknown) => {
-        console.error(error instanceof Error ? error.message : error);
+        console.error(redactUrls(error instanceof Error ? error.message : String(error)));
         process.exit(1);
     });
 }

@@ -322,6 +322,34 @@ describe("http", () => {
             body: typeof body === "string" ? body : JSON.stringify(body),
         });
 
+    it("counts made-up paths together so the metrics cannot be grown by calling them", async () => {
+        const s = await serve();
+        for (let i = 0; i < 5; i++) await fetch(`${s.base}/made-up-${i}`);
+        const metrics = await (await fetch(`${s.base}/metrics`)).text();
+        expect(metrics).to.not.contain("made-up");
+        expect(metrics).to.contain('route="other",status="404"} 5');
+        await s.close();
+    });
+
+    it("tells callers apart by the address the proxy added, not by what the caller wrote first", async () => {
+        const env = await setup();
+        const server = createMessageRelayerServer(env.relayer, env.store, {
+            publicPerMinute: 3,
+            trustProxy: true,
+            now: () => env.now.t,
+        });
+        await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+        const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+        const statuses: number[] = [];
+        for (let i = 0; i < 5; i++)
+            statuses.push(
+                (await post(`${base}/v1/devices`, {}, { "x-forwarded-for": `10.0.0.${i}, 203.0.113.9` })).status
+            );
+        // Writing a new first address each time does not give a new allowance.
+        expect(statuses.filter((code) => code === 429).length).to.be.greaterThan(0);
+        await new Promise((r) => server.close(r));
+    });
+
     it("answers 401 without a key, 400 for bad JSON, 413 for a huge body, 404 elsewhere", async () => {
         const s = await serve();
         expect((await post(`${s.base}/v1/push`, {})).status).to.equal(401);
