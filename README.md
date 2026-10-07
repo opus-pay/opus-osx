@@ -15,7 +15,7 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 
 ## Amoy (issue #22)
 
-Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. These are the second deployment (2026-10-08, same source, after an Amoy gas price fix); the test jobs in the evidence ran on the first, whose addresses the evidence lists. The reference instance lists Circle Amoy USDC `0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`, with treasury `0` and fee `0`. No admin roles are granted after deploy.
+Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. These are the second deployment (2026-10-08). It carries the 2026-10-03 security fixes and the 100 USD per-job cap; the first deployment predates them. The test jobs in the evidence ran on the first, whose addresses the evidence lists. The reference instance lists Circle Amoy USDC `0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`, with treasury `0` and fee `0`. No admin roles are granted after deploy.
 
 | Contract | Address |
 | :--- | :--- |

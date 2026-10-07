@@ -18,7 +18,7 @@ The deployed contracts are immutable for this record. Each address below opens t
 | Optimistic evaluator | [`0x65819d9199144a66ec17ad39da6bebabc3eef585`](https://amoy.polygonscan.com/address/0x65819d9199144a66ec17ad39da6bebabc3eef585#code) |
 | Circle Amoy USDC | [`0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`](https://amoy.polygonscan.com/address/0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582) |
 
-Every step on this page ran on the contracts above. On 2026-10-08 the same source was deployed again, because the deploy script priced Amoy transactions below the base fee plus the 25 gwei tip and the deploy stopped waiting. Nothing in the contracts changed. New work uses the second deployment; this record keeps the first.
+Every step on this page ran on the contracts above, which predate the 2026-10-03 security fixes. On 2026-10-08 the current source was deployed: it closes the fake-instance drain, fixes dispute timing, caps the evaluation fee at 20% of the budget (it was 100%), sets the safety margin to one day, and caps each job at 100 USD until the external audit. New work uses the second deployment; this record keeps the first.
 
 | Contract (second deployment, 2026-10-08) | Address |
 | :--- | :--- |

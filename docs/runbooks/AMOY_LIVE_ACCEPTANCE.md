@@ -16,7 +16,7 @@ The tables before the features name the contracts, the wallets, the deadlines, t
 | Optimistic evaluator | [`0x8A4a02D544145ed668b059A7A1753E1f4470da3B`](https://amoy.polygonscan.com/address/0x8A4a02D544145ed668b059A7A1753E1f4470da3B) |
 | Circle Amoy USDC | [`0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`](https://amoy.polygonscan.com/address/0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582) |
 
-These are the contracts deployed on 2026-10-08 from the same source, after the Amoy gas price fix (base fee plus a 25 gwei tip). New runs use them. The transactions recorded below ran on the first deployment, which stays on chain and verified:
+These are the contracts deployed on 2026-10-08 from the current source, which includes the 2026-10-03 security fixes: the evaluation fee is now at most 20% of the budget, so the acceptance run uses a 0.20 USDC fee and 0.10 USDC tips instead of 1.00 and 0.50. New runs use them. The transactions recorded below ran on the first deployment, which stays on chain and verified:
 
 | Contract (first deployment) | Address |
 | :--- | :--- |
