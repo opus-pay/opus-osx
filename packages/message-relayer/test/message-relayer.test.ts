@@ -460,3 +460,94 @@ describe("end to end with the SDK", () => {
         }
     });
 });
+
+const DAY = 24 * 60 * 60;
+
+describe("retention", () => {
+    it("deletes a phone with no activity for a year, and keeps one that was pushed to or re-registered", async () => {
+        const { relayer, store, now } = await setup();
+        const t0 = now.t;
+        await register(relayer, alice, T("a"), {}, t0);
+        await register(relayer, bob, T("b"), {}, t0);
+        // alice's phone is pushed to on day 200; bob's is never used again
+        now.t = t0 + 200 * DAY;
+        await relayer.push(wayhand, { to: [alice.address], title: "t", body: "b" });
+        now.t = t0 + 365 * DAY - 1;
+        expect(relayer.purge()).to.equal(0);
+        now.t = t0 + 366 * DAY;
+        expect(relayer.purge()).to.equal(1);
+        expect(store.devicesOf(alice.address.toLowerCase())).to.have.length(1);
+        expect(store.devicesOf(bob.address.toLowerCase())).to.have.length(0);
+        // alice's last activity was day 200, so she goes after day 565
+        now.t = t0 + 565 * DAY;
+        expect(relayer.purge()).to.equal(0);
+        now.t = t0 + 566 * DAY;
+        expect(relayer.purge()).to.equal(1);
+        expect(store.deviceCount()).to.equal(0);
+        expect(relayer.stats.devicesPurged).to.equal(2);
+    });
+
+    it("counts a new registration as activity", async () => {
+        const { relayer, store, now } = await setup();
+        const t0 = now.t;
+        await register(relayer, alice, T("a"), {}, t0);
+        now.t = t0 + 300 * DAY;
+        await register(relayer, alice, T("a"), {}, now.t);
+        now.t = t0 + 500 * DAY;
+        expect(relayer.purge()).to.equal(0);
+        expect(store.deviceCount()).to.equal(1);
+    });
+
+    it("removes the mutes of a wallet that has no phone left, and keeps the others", async () => {
+        const { relayer, store, now } = await setup();
+        const t0 = now.t;
+        await register(relayer, alice, T("a"), {}, t0);
+        await register(relayer, bob, T("b"), {}, t0);
+        for (const who of [alice, bob]) {
+            const m = { address: who.address, app: "wayhand", muted: true, issuedAt: t0 };
+            await relayer.mute({ ...m, signature: await sign(who, muteMessage(m)) });
+        }
+        // bob registers again on day 300 (activity), alice does not
+        now.t = t0 + 300 * DAY;
+        await register(relayer, bob, T("b"), {}, now.t);
+        now.t = t0 + 400 * DAY;
+        expect(relayer.purge()).to.equal(1);
+        expect(store.isMuted(alice.address.toLowerCase(), "wayhand")).to.equal(false);
+        expect(store.isMuted(bob.address.toLowerCase(), "wayhand")).to.equal(true);
+    });
+
+    it("keeps only a time for each phone: no message text and no recipient log", async () => {
+        const { relayer, store } = await setup();
+        await register(relayer, alice, T("a"));
+        await relayer.push(wayhand, { to: [alice.address], title: "secret title", body: "secret body" });
+        const db = (store as unknown as { db: { prepare(sql: string): { all(): Record<string, unknown>[] } } }).db;
+        const tables = db
+            .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
+            .all()
+            .map((r) => r.name);
+        expect(tables).to.have.members(["devices", "mutes", "tickets"]);
+        const dump = JSON.stringify([
+            db.prepare("SELECT * FROM devices").all(),
+            db.prepare("SELECT * FROM tickets").all(),
+        ]);
+        expect(dump).to.not.contain("secret");
+    });
+
+    it("adds the new column to a database file made before it existed", async () => {
+        const { mkdtempSync } = await import("fs");
+        const { tmpdir } = await import("os");
+        const { join } = await import("path");
+        const file = join(mkdtempSync(join(tmpdir(), "mr-")), "old.db");
+        const { DatabaseSync } = await import("node:sqlite");
+        const old = new DatabaseSync(file);
+        old.exec(`CREATE TABLE devices (address TEXT NOT NULL, token TEXT NOT NULL, lang TEXT NOT NULL, platform TEXT NOT NULL, registered_at INTEGER NOT NULL, PRIMARY KEY (address, token));
+            INSERT INTO devices VALUES ('0xabc', 'ExponentPushToken[old]', 'ko', 'ios', 10);`);
+        old.close();
+        const store = await Store.open(file);
+        expect(store.deviceCount()).to.equal(1);
+        store.markPushed(["ExponentPushToken[old]"], 50);
+        expect(store.purgeInactive(40)).to.equal(0);
+        expect(store.purgeInactive(60)).to.equal(1);
+        store.close();
+    });
+});

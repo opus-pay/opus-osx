@@ -29,6 +29,7 @@ async function start(): Promise<void> {
     const relayer = new MessageRelayer({
         store,
         services,
+        retentionSeconds: number("MESSAGE_RELAYER_RETENTION_DAYS", 365) * 24 * 60 * 60,
         expo: { accessToken: process.env.EXPO_ACCESS_TOKEN?.trim() || undefined },
         log,
     });
@@ -49,7 +50,13 @@ async function start(): Promise<void> {
     }, 20 * 60 * 1000);
     sweep.unref();
 
+    // The retention rule runs at start and then every day.
+    relayer.purge();
+    const retention = setInterval(() => relayer.purge(), 24 * 60 * 60 * 1000);
+    retention.unref();
+
     const stop = () => {
+        clearInterval(retention);
         clearInterval(sweep);
         server.close(() => {
             store.close();
