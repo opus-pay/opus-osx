@@ -29,6 +29,19 @@ These are the contracts deployed on 2026-10-08 from the current source, which in
 
 The runs recorded on this page used the first deployment. Their files were renamed on 2026-10-08 so that runs on the second deployment start with empty records: `packages/contracts/deploy/amoy/acceptance.old-2026-10.json`, `packages/contracts/deploy/amoy/dispute.old-2026-10.json` and `docs/runbooks/amoy-live-results.old-2026-10.json`. The acceptance and dispute scripts refuse a record made on another instance.
 
+## Second deployment: acceptance run of 2026-10-08
+
+Setup ran on 2026-10-08 (KST 07:00). Every hash is in `packages/contracts/deploy/amoy/acceptance.json` and `docs/runbooks/amoy-live-results.json`.
+
+| Flow | On-chain job | State after setup | Next step |
+| :--- | :--- | :--- | :--- |
+| Client approves | 1 | `Completed` | Done |
+| Expiry refund and sweep | 3 | `Funded`, expires 2026-10-09 00:30 UTC (09:30 KST) | `ACCEPTANCE_PHASE=finish yarn acceptance:amoy` after expiry |
+| Silent submission (finalize) | 4 | `Submitted`, review ends 2026-10-07 23:02 UTC (08:02 KST) | `yarn keeper start` with the keeper wallet |
+| No submission (timeout) | 5 | `Funded`, submit window ends 2026-10-07 23:03 UTC (08:03 KST) | `yarn keeper start` with the keeper wallet |
+
+Job 2 was the first try at the sweep flow. It was configured with the old 1.00 USDC fee, which the 20% cap refuses at `fund`, so the client rejected it and swept the fee back; its hashes are under `abandoned` in the record.
+
 ## Wallets
 
 | Wallet | Address | POL | USDC | Role |
