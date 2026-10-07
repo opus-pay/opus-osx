@@ -437,6 +437,8 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - 연동사는 id와 토큰으로 구분하고, 가스 예산과 시간창 안의 호출 횟수로 제한한다. 이 한도는 프로토콜 상수가 아니다. 서명자 주소는 운영자가 넣는 제재 목록에 있으면 중계하지 않는다. 목록 파일이 없으면 프로세스는 시작하지 않는다.
   - 키는 `RELAYER_PRIVATE_KEY`에서만 읽는다. 샘플은 `packages/relayer/env/.env.sample`이고 실제 키는 커밋하지 않는다. 배포자 주소와 같으면 시작을 거부한다. Amoy에서는 가스 가격 바닥을 25 gwei로 두고, 지갑 nonce는 대기 중인 개수에서 이어서 올린다.
   - 로컬 Hardhat에서 POL 잔고가 0인 의뢰인과 수행자가 생성, 설정, 예산, `fundWithPermit`, 제출, 승인까지 마친다. 대금은 수행자에게 간다. Amoy에서 POL이 없는 지갑으로 끝내는 인수 기준과 #12의 라이브 해시는 아직 없다.
+  - **추가 (2026-10-07):** 토큰 없는 연동사(`"public": true`)와 사람(서명 주소)별 요청·가스 한도를 넣었다. 모바일 앱처럼 비밀을 지킬 수 없는 호출자용이다. 사람별 한도는 서명 확인 뒤에 세고, 연동사 총 예산(`budgetWei`)이 최악의 손실을 막는다. 토큰이 있는 연동사는 그대로다. 사람별 기록은 메모리에만 있어 재시작하면 초기화된다. (opus-osx `602180b`)
+  - Prometheus 지표(`/metrics`)와 Grafana·Alertmanager→텔레그램 감시는 opus-network `monitoring/`에 있다.
 
 #### [Issue #26] Indexing
 * **Type:** `Task` / **Priority:** `P1` / **Depends on:** #22
@@ -450,11 +452,11 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - 결제 링크가 쓸 지갑별 목록은 `GET /jobs?account=`이고, 키퍼가 아직 볼 예치·제출 작업은 `GET /active?instance=&evaluator=`다. 키퍼 프로세스는 계속 온체인 `Opus.status`로 기한을 판단한다. 인덱스는 그 대상을 로그 스캔 없이 고르는 조회다.
   - 개인키는 없다. 주소 파일과 RPC만으로 15초마다 이어서 읽고, 이미 반영한 블록은 다시 적용하지 않는다. `JobCreated`에 설명 URI가 없어 의뢰 문구는 인덱스에 없다.
   - 로컬 Hardhat에서 예치 후 제출한 작업을 동기화하면 상태 페이지가 `Submitted`이고, 완료 뒤에는 `Completed`이며 활성 목록에서 빠진다. 공개 호스트에 올린 인덱서는 아직 없고, 결제 링크 앱(#27)이 이 조회를 붙인다.
+  - **추가 (2026-10-07):** 인덱서와 키퍼도 `/metrics`를 낸다. 감시와 경보는 opus-network `monitoring/`에서 한다.
 
 ---
 
 ## Milestone 5: First product — escrow payment links
-
 #### [Issue #27] Payment link: create, share, fund
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #23
 * **Tasks:**
@@ -532,6 +534,9 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - OPUS는 운영자 없는 공개 인프라로 남고, 심부름 서비스가 그 첫 사용처다.
   - 앱 이름은 아직 없다. 화면에는 `[앱 이름]`으로 비워 두었다(#82).
 
+* **해결 내용 (일부):**
+  - **진행 (2026-10-07):** 금지 요청 목록은 운영 규칙 파일 `config/errand-rules.json`(4개 언어 금지어, 연락처 패턴)과 AI 검사로 일부 적용했다. 약관·개인정보 페이지는 초안만 있고 변호사 검토 전이다. 열린 나라는 일본·한국이다. 운영 주체, 법률 검토는 아직이다.
+
 #### [Issue #68] Machine-readable request schema
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #23
 * **Description:** Groundwork for AI assistants (whitepaper §11.4). The same data drives the human interface.
@@ -550,10 +555,13 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #67
 * **Tasks:**
   - [ ] Sign-up in the destination country; identity check via a verification partner
-  - [ ] Profile: areas served, categories, languages
+  - [x] Profile: areas served, categories, languages
   - [ ] Reputation from completed and disputed jobs (on-chain events)
-  - [ ] Suspension from the service's own listings for policy breaches (the protocol is unaffected)
+  - [x] Suspension from the service's own listings for policy breaches (the protocol is unaffected)
 * **Acceptance:** Only verified providers can quote in the pilot.
+
+* **해결 내용 (일부):**
+  - **진행 (2026-10-07):** 프로필(나라·종류·언어, 목록 선택만)과 관리자의 지원 제한(진행 중 작업·에스크로에는 영향 없음)을 만들었다. 평판은 서버 기록에서 셈하며 체인 이벤트로 바꾸는 일은 #77과 함께다. 본인 확인 파트너 연동과 가입 절차는 남았다.
 
 #### [Issue #70] Request posting, quotes, and selection
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #27, #68, #69
@@ -599,10 +607,13 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 #### [Issue #73] Wallet onboarding and gasless use
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #25, D27
 * **Tasks:**
-  - [ ] Wallet created at sign-up (e.g. email login); export available to the user
+  - [x] Wallet created at sign-up (e.g. email login); export available to the user
   - [ ] All actions relayed; no POL needed
   - [ ] Interface uses plain words: request, quote, payment, refund
 * **Acceptance:** A user with no crypto experience completes a job without seeing a token name other than the currency.
+
+* **해결 내용 (일부):**
+  - **진행 (2026-10-07):** `opus-pay/opus-app`(Expo)이 앱 안 지갑을 만든다(복구 문구, 기기 보안 저장소, 개인키 가져오기·내보내기). 이메일 로그인 지갑은 아니다(D27의 비수탁, 표준 지갑). OPUS 계약 호출은 relayer의 토큰 없는 연동사로 보내 POL 없이 되지만, 거래소 등 다른 주소로 USDC를 보내는 일반 전송은 POL이 필요하다. 실제 기기·relayer 운영 시험은 아직 못 했다.
 
 #### [Issue #74] Support, dispute operations, default arbiter
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #53, #54, D10
@@ -626,10 +637,10 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [x] Wallet sign-in (EIP-4361) returning a 24-hour bearer token
   - [x] Public API (read-only; hides applicant notes and proof), private API for every screen action, OpenAPI with an `operationId` per action, `/llms.txt`, `actions` list on each errand, stable error codes, `Idempotency-Key`
   - [x] Trial helpers so one person can walk the whole flow
-  - [ ] Replace the JSON file store with a database
+  - [x] Replace the JSON file store with a database
   - [ ] Real escrow: create the job at selection, fund and confirm with transactions, read money state from chain (indexer); request and proof hashes per #68 and #71
-  - [ ] WalletConnect for phones without a wallet browser
-  - [ ] Rate limits on the public and auth endpoints
+  - [x] WalletConnect for phones without a wallet browser
+  - [x] Rate limits on the public and auth endpoints
 * **Acceptance:** An outside tester completes an errand on Amoy through the app, and an agent does the same through the API alone.
 
 * **해결 내용 (진행 중, 2026-10-03):**
@@ -640,6 +651,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - **정정:** ROADMAP의 앱 경로 `apps/errands`는 `apps/errand`로 만들었다. ROADMAP을 맞췄다.
   - **정정 (2026-10-03):** 심부름 앱을 별도 비공개 저장소 `opus-pay/opus-errand`로 옮겼다(커밋 기록 포함). 이 저장소의 `apps/errand`는 지웠다. 새 저장소는 SDK를 `file:../opus-osx/packages/sdk`로, 컨트랙트 주소는 사본(`config/deployments`)으로 참조만 한다. 사본이 이 저장소의 배포 기록과 같은지는 `yarn check:deployments`가 확인하고, CI는 `opus-osx.ref`에 고정한 커밋으로 이 저장소를 받는다. 심부름 서비스는 프로토콜과 따로 운영한다는 M6 원칙과 맞춘 것이다.
   - **정정 (2026-10-05):** 저장소 이름을 `opus-pay/wayhand`로 바꿨다. OPUS는 중립 프로토콜이고 WayHand는 그 위의 서비스이므로 `opus-` 접두어를 뺐다. 위 기록의 `opus-errand`는 같은 저장소다.
+  - **진행 (2026-10-07):** 저장소는 SQLite(`.data/errands.db`, 스키마 버전 3)로 바꿨고 옛 JSON은 처음 열 때 옮겨 온다. 휴대폰용 WalletConnect는 `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`가 있을 때 켜지며 실기기는 확인하지 못했다. 호출 제한은 공개·로그인·쓰기 구분으로 있다(프로세스 메모리 기준). 실제 에스크로 연결은 코드가 끝났고(#77) 체인에서는 아직 한 번도 실행하지 못했다.
 
 #### [Issue #77] Errand app: connect the real escrow
 * **Type:** `Feature` / **Priority:** `P0` / **Depends on:** #76, #68, #71, #25, #26
@@ -659,32 +671,41 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #76
 * **Description:** The trial keeps everything in one JSON file on one server. Move to storage that survives restarts, more than one server, and growth.
 * **Tasks:**
-  - [ ] Database behind the existing `Repository` interface (errands, applicants, idempotency keys); migrations
+  - [x] Database behind the existing `Repository` interface (errands, applicants, idempotency keys); migrations
   - [ ] Proof photos and video in object storage with signed, expiring links instead of data URLs in the database
   - [ ] Sign-in nonces in shared storage so several servers can run
   - [ ] Backups and a tested restore
   - [ ] Retention and deletion rules for personal data and proof files (with #71 and #67)
 * **Acceptance:** Restarting or adding a server loses nothing; a deleted account's proof files are gone after the retention period.
 
+* **해결 내용 (일부):**
+  - **진행 (2026-10-07):** SQLite 저장소가 `Repository` 인터페이스 뒤에 들어갔다(스키마 번호로 자동 올림). 증빙 사진은 아직 DB 안 data URL이다. 객체 저장소, 공유 nonce 저장소, 백업·복구 시험, 보관 규칙은 남았다. 서버 프로세스 하나가 파일을 독점하는 전제다.
+
 #### [Issue #79] Errand app: hosting, security and operations
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #76, #78
 * **Tasks:**
   - [ ] Hosting with HTTPS and a domain; `ERRAND_AUTH_SECRET` required outside development (refuse to start without it)
-  - [ ] Rate limits on public, auth and write endpoints; request size limits kept
+  - [x] Rate limits on public, auth and write endpoints; request size limits kept
   - [ ] CORS policy for the private API (today: any origin) decided and documented
   - [ ] Error logging and uptime alerts; no personal data or tokens in logs
   - [ ] Security review of the server code before real money, alongside the contract audit (#39, #40)
 * **Acceptance:** A load and abuse test does not take the service down; secrets live only in the host's settings.
 
+* **해결 내용 (일부):**
+  - **진행 (2026-10-07):** 호출 제한(로그인 20, 쓰기 40, 읽기 240회/분, 프로세스 메모리 기준), 본문 크기 제한, `/metrics`(토큰으로 켬)가 있다. 호스팅·도메인·CORS 결정·알림·보안 검토는 남았다.
+
 #### [Issue #80] Errand content rules, reports and moderation
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #67
 * **Description:** Today anyone with a wallet can post anything. The service needs the prohibited-requests list from #67 enforced in the product.
 * **Tasks:**
-  - [ ] Checks at posting time against the prohibited list (illegal goods, surveillance of people, harassment, etc.)
+  - [x] Checks at posting time against the prohibited list (illegal goods, surveillance of people, harassment, etc.)
   - [ ] Report button on errands and applicants; review queue for the service operator
   - [ ] Hiding an errand or blocking a wallet in the service's own listings only (the escrow is unaffected, as in #69)
   - [ ] Personal details (addresses, phone numbers) discouraged in public text, with a warning in the form
 * **Acceptance:** A test post from the prohibited list is refused or hidden, and a report reaches the operator within the published response time.
+
+* **해결 내용 (일부):**
+  - **진행 (2026-10-07):** 올릴 때 규칙 검사와 AI 검사(`ok/review/block`)를 하고, `review`는 관리자 승인 전까지 공개되지 않는다. 신고 버튼, 심부름 숨기기, 주소·연락처 경고 문구는 남았다.
 
 #### [Issue #81] Errand notifications
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #76, #29
@@ -693,6 +714,9 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Channels: email first; web push or a messenger later (#29 uses webhooks)
   - [ ] Users choose which events they get; every message links to the errand
 * **Acceptance:** In the pilot, both sides learn about each step without opening the app.
+
+* **해결 내용 (일부):**
+  - **진행 (2026-10-07):** 앱 안 알림(종 아이콘, 종류별 끄기, 4개 언어)은 구현됐다. 이메일 통로, 환불 알림, 마감 임박 알림(시계 필요)은 남았다.
 
 #### [Issue #82] Errand service name, domain and brand
 * **Type:** `Task` / **Priority:** `P1` / **Depends on:** #67
@@ -873,6 +897,9 @@ A directory of services that use OPUS escrow (D24). It shows on-chain data only;
   - [ ] Each listing is an entry in a public file in the Portal repository (name, description in four languages, category, link, logo, instance address) added by pull request, so every change is visible
   - [ ] A service can ask to change or remove its entry; the operator can remove one under the display policy (#66)
 * **Acceptance:** Every service on the Portal has an agreed listing and a public entry; nobody can list a service without the operator's action.
+
+* **해결 내용 (일부):**
+  - **진행 (2026-10-07):** 포털(`opus-pay/opus-portal`)이 `services.ts`에서 서비스를 4개 언어로 나열한다(WayHand active, 나머지 planned). 목록은 온체인 자동 읽기가 아니라 문의와 합의 뒤 PR로만 추가한다(D23). "서비스 등록 문의" 버튼과 안내 문구는 화면에서 뺐고, 서면 등록 조건과 인스턴스 주소 필드는 남았다.
 
 #### [Issue #63] Service directory and on-chain statistics
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #26, #62
