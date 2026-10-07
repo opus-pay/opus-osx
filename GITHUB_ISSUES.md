@@ -500,6 +500,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - 파일럿 채널은 HTTPS 웹훅이다(D31). 이메일과 텔레그램은 뒤로 둔다.
   - 상태 페이지는 웹훅 주소가 있으면 예치, 제출, 검토 기한, 자동 완료, 상향, 아직 보증금을 내지 않은 쪽의 보증금 기한, 판정을 POST한다. 여유는 3600초다.
   - 보증금 기한 알림은 분쟁 보증금이 있고 한쪽이 아직 내지 않았을 때 나간다. 그 기한을 놓치면 그 작업은 그 쪽의 패배다.
+  - **추가 (2026-10-07):** SDK에 모바일 푸시 라이브러리(`packages/sdk/src/push.ts`, Expo 푸시)를 넣었다. 메시지 검사, 100개씩 전송과 재시도, 죽은 토큰 목록, 영수증 확인이 있고 메시지에 `{ app, path, payload }` 길을 담아 지갑 앱이 미니앱으로 나눠 준다. 사용법은 `docs/push.md`.
 
 #### [Issue #30] Completion-criteria helper
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #27
