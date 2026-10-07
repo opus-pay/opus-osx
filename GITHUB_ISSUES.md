@@ -501,6 +501,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - 상태 페이지는 웹훅 주소가 있으면 예치, 제출, 검토 기한, 자동 완료, 상향, 아직 보증금을 내지 않은 쪽의 보증금 기한, 판정을 POST한다. 여유는 3600초다.
   - 보증금 기한 알림은 분쟁 보증금이 있고 한쪽이 아직 내지 않았을 때 나간다. 그 기한을 놓치면 그 작업은 그 쪽의 패배다.
   - **추가 (2026-10-07):** SDK에 모바일 푸시 라이브러리(`packages/sdk/src/push.ts`, Expo 푸시)를 넣었다. 메시지 검사, 100개씩 전송과 재시도, 죽은 토큰 목록, 영수증 확인이 있고 메시지에 `{ app, path, payload }` 길을 담아 지갑 앱이 미니앱으로 나눠 준다. 사용법은 `docs/push.md`.
+  - **추가 (2026-10-07):** 서비스가 Expo 키와 기기 토큰을 갖지 않도록 메시지 중계 서버(`packages/message-relayer`)를 만들었다. 서비스 키(미니앱 id에 묶임), 지갑 서명으로 기기 등록, 서비스별 끄기, 서비스·지갑별 한도, 영수증 정리, `/metrics`가 있고, SDK에 서비스용 클라이언트(`MessageRelayerClient`)와 서명 문구(`deviceMessage`)를 넣었다. Docker와 monitoring 연결, opus-app의 기기 등록, WayHand 연결은 남았다.
 
 #### [Issue #30] Completion-criteria helper
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #27
