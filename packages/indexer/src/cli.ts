@@ -1,6 +1,8 @@
 import type { Server } from "http";
 import { readFileSync } from "fs";
 
+import { redactUrls } from "./redact";
+
 import { amoy, loadAddresses, localHardhat } from "@opus/sdk";
 import { createPublicClient, http } from "viem";
 
@@ -122,7 +124,7 @@ async function main(): Promise<void> {
             // A failed request is retried later: ranges are applied whole, so nothing is counted twice.
             status.failures += 1;
             status.syncFailures = (status.syncFailures ?? 0) + 1;
-            status.lastError = error instanceof Error ? error.message.split("\n")[0] : String(error);
+            status.lastError = redactUrls(error instanceof Error ? error.message.split("\n")[0] : String(error));
             const progress = indexer.progress();
             status.head = progress.head;
             status.indexedTo = progress.indexedTo;
@@ -141,7 +143,7 @@ async function main(): Promise<void> {
 
 if (require.main === module) {
     main().catch((error: unknown) => {
-        console.error(error instanceof Error ? error.message : error);
+        console.error(redactUrls(error instanceof Error ? error.message : String(error)));
         process.exit(1);
     });
 }

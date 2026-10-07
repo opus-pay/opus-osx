@@ -10,6 +10,15 @@ export const MAX_BODY_BYTES = 16_000;
 
 class TooLarge extends Error {}
 
+const KNOWN_ROUTES = new Set([
+    "GET /health",
+    "GET /metrics",
+    "POST /v1/push",
+    "POST /v1/languages",
+    "POST /v1/devices",
+    "POST /v1/mutes",
+]);
+
 function readBody(req: IncomingMessage, limit: number): Promise<string> {
     return new Promise((resolve, reject) => {
         const chunks: Buffer[] = [];
@@ -53,8 +62,10 @@ export function createMessageRelayerServer(relayer: MessageRelayer, store: Store
     const callerOf = (req: IncomingMessage): string => {
         if (options.trustProxy === true) {
             const forwarded = req.headers["x-forwarded-for"];
-            const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(",")[0]?.trim();
-            if (first) return first;
+            // The proxy adds the address it saw at the END; what comes before is written by the caller.
+            const parts = (Array.isArray(forwarded) ? forwarded.join(",") : forwarded)?.split(",") ?? [];
+            const last = parts[parts.length - 1]?.trim();
+            if (last) return last;
         }
         return req.socket.remoteAddress ?? "unknown";
     };
@@ -66,7 +77,9 @@ export function createMessageRelayerServer(relayer: MessageRelayer, store: Store
         body: unknown,
         headers: Record<string, string> = {}
     ) => {
-        const key = `${route}\u0000${status}`;
+        // Only the routes that exist get a label: any other path (a scanner, a typo) is counted together, so the
+        // metrics cannot be grown without limit by calling made-up addresses.
+        const key = `${KNOWN_ROUTES.has(route) ? route : "other"}\u0000${status}`;
         byRoute.set(key, (byRoute.get(key) ?? 0) + 1);
         const text = typeof body === "string" ? body : JSON.stringify(body);
         res.writeHead(status, {
