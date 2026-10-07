@@ -54,6 +54,16 @@ export function muteMessage(f: MuteMessageFields): string {
     ].join("\n");
 }
 
+export type LocalizedPush = {
+    /** Wallet addresses (any number). */
+    to: readonly string[];
+    /** The text in one language. Called once per language that some wallet registered. */
+    message: (lang: PushLang) => { title: string; body: string };
+    path?: string;
+    payload?: unknown;
+    priority?: "default" | "normal" | "high";
+};
+
 export type ServicePush = {
     /** Wallet addresses, at most 100. */
     to: readonly string[];
@@ -89,6 +99,81 @@ export type MessageRelayerClientOptions = {
     timeoutMs?: number;
 };
 
+/** Anything that can sign a message as a wallet: a viem account fits. */
+export type MessageSigner = {
+    address: string;
+    signMessage(args: { message: string }): Promise<string>;
+};
+
+type WalletCall = { url: string; signer: MessageSigner; fetch?: typeof fetch; now?: () => number };
+
+const clean = (url: string) => url.replace(/\/+$/, "");
+
+async function postSigned(options: WalletCall, path: string, body: Record<string, unknown>): Promise<void> {
+    const run = options.fetch ?? fetch;
+    const response = await run(`${clean(options.url)}${path}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) {
+        const answer = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new MessageRelayerError(
+            answer.error ?? `The message relayer answered ${response.status}`,
+            response.status
+        );
+    }
+}
+
+const secondsNow = (options: WalletCall) => (options.now ?? (() => Math.floor(Date.now() / 1000)))();
+
+export type DeviceCall = WalletCall & { token: string; lang: PushLang; platform: PushPlatform };
+
+/**
+ * For the wallet app: tells the relayer "this phone belongs to this wallet, in this language". The wallet signs
+ * a fixed message, so nobody can register a phone for an address they do not control. Call it again when the
+ * language or the push token changes.
+ */
+export async function registerDevice(options: DeviceCall): Promise<void> {
+    const fields = {
+        action: "register",
+        address: options.signer.address,
+        token: options.token,
+        lang: options.lang,
+        platform: options.platform,
+        issuedAt: secondsNow(options),
+    } as const;
+    const signature = await options.signer.signMessage({ message: deviceMessage(fields) });
+    await postSigned(options, "/v1/devices", { ...fields, signature });
+}
+
+/** For the wallet app: removes this phone (for example when the wallet is erased or the user turns push off). */
+export async function unregisterDevice(options: DeviceCall): Promise<void> {
+    const fields = {
+        action: "unregister",
+        address: options.signer.address,
+        token: options.token,
+        lang: options.lang,
+        platform: options.platform,
+        issuedAt: secondsNow(options),
+    } as const;
+    const signature = await options.signer.signMessage({ message: deviceMessage(fields) });
+    await postSigned(options, "/v1/devices", { ...fields, signature });
+}
+
+/** For the wallet app: stops (or restarts) push from one service for this wallet. */
+export async function setServiceMuted(options: WalletCall & { app: string; muted: boolean }): Promise<void> {
+    const fields = {
+        address: options.signer.address,
+        app: options.app,
+        muted: options.muted,
+        issuedAt: secondsNow(options),
+    };
+    const signature = await options.signer.signMessage({ message: muteMessage(fields) });
+    await postSigned(options, "/v1/mutes", { ...fields, signature });
+}
+
 /** For a service's server: sends a push to wallet addresses through the message relayer. */
 export class MessageRelayerClient {
     private readonly run: typeof fetch;
@@ -97,19 +182,87 @@ export class MessageRelayerClient {
         this.run = options.fetch ?? fetch;
     }
 
-    async push(input: ServicePush): Promise<PushSummary> {
-        const response = await this.run(`${this.options.url.replace(/\/+$/, "")}/v1/push`, {
+    private async call(path: string, body: unknown): Promise<Record<string, unknown>> {
+        const response = await this.run(`${clean(this.options.url)}${path}`, {
             method: "POST",
             headers: { "content-type": "application/json", authorization: `Bearer ${this.options.key}` },
-            body: JSON.stringify(input),
+            body: JSON.stringify(body),
             signal: AbortSignal.timeout(this.options.timeoutMs ?? 10_000),
         });
-        const answer = (await response.json().catch(() => ({}))) as Partial<PushSummary> & { error?: string };
-        if (!response.ok)
+        const answer = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+        if (!response.ok) {
             throw new MessageRelayerError(
-                answer.error ?? `The message relayer answered ${response.status}`,
+                String(answer.error ?? `The message relayer answered ${response.status}`),
                 response.status
             );
+        }
+        return answer;
+    }
+
+    /**
+     * The language each wallet registered, by lower-case address; `null` when the wallet has no phone registered
+     * or has muted this service. At most 100 addresses per call (more are split into several calls).
+     */
+    async languages(addresses: readonly string[]): Promise<Record<string, PushLang | null>> {
+        const out: Record<string, PushLang | null> = {};
+        const unique = [...new Set(addresses.map((a) => a.toLowerCase()))];
+        for (let i = 0; i < unique.length; i += 100) {
+            const answer = await this.call("/v1/languages", { to: unique.slice(i, i + 100) });
+            Object.assign(out, (answer.languages ?? {}) as Record<string, PushLang | null>);
+        }
+        return out;
+    }
+
+    /**
+     * Writes the message in each wallet's own language, then sends. It asks for the languages first, groups the
+     * wallets by language, and sends one push per language with a plain text. A wallet with no phone or a mute is
+     * left out (counted in `noLanguage`). `fallback` is used if the relayer answers with a language you do not write.
+     */
+    async pushLocalized(input: LocalizedPush): Promise<PushSummary & { noLanguage: number }> {
+        const languages = await this.languages(input.to);
+        const groups = new Map<PushLang, string[]>();
+        let noLanguage = 0;
+        for (const address of new Set(input.to.map((a) => a.toLowerCase()))) {
+            const lang = languages[address];
+            if (lang === null || lang === undefined) {
+                noLanguage += 1;
+                continue;
+            }
+            const list = groups.get(lang) ?? [];
+            list.push(address);
+            groups.set(lang, list);
+        }
+        const total: PushSummary & { noLanguage: number } = {
+            accepted: 0,
+            noDevice: 0,
+            muted: 0,
+            limited: 0,
+            failed: 0,
+            noLanguage,
+        };
+        for (const [lang, to] of groups) {
+            const text = input.message(lang);
+            for (let i = 0; i < to.length; i += 100) {
+                const part = await this.push({
+                    to: to.slice(i, i + 100),
+                    title: text.title,
+                    body: text.body,
+                    path: input.path,
+                    payload: input.payload,
+                    priority: input.priority,
+                });
+                total.accepted += part.accepted;
+                total.noDevice += part.noDevice;
+                total.muted += part.muted;
+                total.limited += part.limited;
+                total.failed += part.failed;
+            }
+        }
+        return total;
+    }
+
+    async push(input: ServicePush): Promise<PushSummary> {
+        const answer = (await this.call("/v1/push", input)) as Partial<PushSummary>;
         return {
             accepted: answer.accepted ?? 0,
             noDevice: answer.noDevice ?? 0,

@@ -47,6 +47,19 @@ yarn message-relayer start
 
 서명하는 글은 SDK의 `deviceMessage`, `muteMessage`가 만드는 고정 형식이고, 서명은 5분 안에서만 유효합니다. 한 지갑에 기기는 5대까지입니다. 같은 토큰을 다른 지갑이 등록하면 마지막 지갑으로 옮겨 갑니다.
 
+### 저장하는 값과 언어 조회
+
+기기를 등록하면 **기기 토큰, 지갑 주소, 사용자 언어(en·ko·ja·zh), 플랫폼**이 SQLite에 저장됩니다. 서비스는 주소로 언어를 물어 그 언어로 문구를 만들어 보냅니다.
+
+```json
+POST /v1/languages   { "to": ["0x지갑주소"] }
+→ { "languages": { "0x지갑주소": "ko" } }
+```
+
+-   지갑에 기기가 여러 대면 **가장 최근에 등록한 기기의 언어**를 줍니다.
+-   등록된 기기가 없거나 그 지갑이 이 서비스를 끈 경우 `null`입니다. 서비스는 `null`인 지갑에는 푸시를 보내지 않으면 됩니다.
+-   이 조회도 서비스의 분당 요청 한도에 들어갑니다. 언어와 "기기가 있음"이 서비스에 드러나므로, 키는 서비스 서버에만 둡니다.
+
 ### 푸시 요청
 
 ```json
@@ -66,6 +79,25 @@ yarn message-relayer start
 ```
 
 서비스는 어느 주소가 기기를 가졌는지 알 수 없습니다 (`noDevice`는 개수일 뿐). 한 요청 안에서 잘못된 것이 있으면 아무것도 보내지 않고 400을 돌려줍니다.
+
+## SDK로 쓰기
+
+```ts
+// opus-app (지갑 쪽): 기기와 언어를 등록한다. 언어나 토큰이 바뀔 때마다 다시 부른다.
+import { registerDevice } from "@opus/sdk";
+await registerDevice({ url, signer: account, token: expoPushToken, lang: "ko", platform: "ios" });
+
+// 서비스 서버 (WayHand 등): 지갑마다 언어를 확인해서 그 언어의 문구로 보낸다.
+import { MessageRelayerClient } from "@opus/sdk";
+const relayer = new MessageRelayerClient({ url, key: process.env.MESSAGE_RELAYER_KEY! });
+await relayer.pushLocalized({
+    to: [walletAddress],
+    message: (lang) => texts[lang], // { title, body }
+    path: "/errand/7",
+});
+```
+
+`unregisterDevice`(기기 삭제)와 `setServiceMuted`(서비스별 끄기)도 같은 방식입니다. 서명하는 쪽(`signer`)은 `address`와 `signMessage({ message })`가 있는 것이면 되고 viem 계정이 맞습니다.
 
 ## 한도
 

@@ -272,6 +272,27 @@ export class MessageRelayer {
         return summary;
     }
 
+    /**
+     * A service asks which language each wallet registered, so it can write the message in that language.
+     * A wallet with no phone, or one that muted this service, answers null. The latest phone's language wins.
+     * It counts against the service's request limit.
+     */
+    languages(service: Service, input: unknown): Record<string, PushLang | null> {
+        const body = object(input, "request");
+        if (!this.byService.get(service.id)!.hit("all"))
+            throw new RelayRejected("The service rate limit is spent", 429);
+        const to = body.to;
+        if (!Array.isArray(to) || to.length === 0 || to.length > MAX_RECIPIENTS) {
+            throw new RelayRejected(`to must list 1 to ${MAX_RECIPIENTS} wallet addresses`);
+        }
+        const out: Record<string, PushLang | null> = {};
+        for (const who of new Set(to.map(address))) {
+            const lang = this.store.isMuted(who, service.app) ? null : this.store.languageOf(who);
+            out[who] = (PUSH_LANGS as readonly string[]).includes(lang ?? "") ? (lang as PushLang) : null;
+        }
+        return out;
+    }
+
     /** Asks Expo what became of the pushes sent 15 minutes to a day ago and forgets phones that are gone. */
     async sweepReceipts(): Promise<{ checked: number; delivered: number; failed: number; forgotten: number }> {
         const now = this.now();

@@ -33,6 +33,9 @@ export {
     PUSH_PLATFORMS,
     deviceMessage,
     muteMessage,
+    registerDevice,
+    setServiceMuted,
+    unregisterDevice,
 } from "./message-relayer";
 export { Opus } from "./opus";
 export {
@@ -56,7 +59,10 @@ export { statusFor, warnings } from "./status";
 
 export type { ForwardRequest } from "./forwarder";
 export type {
+    DeviceCall,
     DeviceMessageFields,
+    LocalizedPush,
+    MessageSigner,
     LocalText,
     MessageRelayerClientOptions,
     MuteMessageFields,
