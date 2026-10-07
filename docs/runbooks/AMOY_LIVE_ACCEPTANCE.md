@@ -25,6 +25,10 @@ These are the contracts deployed on 2026-10-08 from the same source, after the A
 | USDC instance | `0x7632d054BfE635A1f0394fbcd74678B6567213Fd` |
 | Optimistic evaluator | `0x65819d9199144a66ec17ad39da6bebabc3eef585` |
 
+## Records of the first deployment
+
+The runs recorded on this page used the first deployment. Their files were renamed on 2026-10-08 so that runs on the second deployment start with empty records: `packages/contracts/deploy/amoy/acceptance.old-2026-10.json`, `packages/contracts/deploy/amoy/dispute.old-2026-10.json` and `docs/runbooks/amoy-live-results.old-2026-10.json`. The acceptance and dispute scripts refuse a record made on another instance.
+
 ## Wallets
 
 | Wallet | Address | POL | USDC | Role |
@@ -365,7 +369,7 @@ DISPUTE_ARBITER=0x... DISPUTE_PHASE=status yarn contracts dispute:amoy  # print 
 5. The provider approves and posts its 0.1 USDC deposit. The case goes to the arbiter.
 6. The arbiter calls `rule`.
 
-**Result.** On-chain job 8 ended `Rejected` and `Resolved`. The arbiter [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644), Ledger account #2, ruled for the client. The client got the 1.00 USDC budget and its 0.10 deposit back. The provider's 0.10 deposit went to the arbiter. Every hash is also in `deploy/amoy/dispute.json`.
+**Result.** On-chain job 8 ended `Rejected` and `Resolved`. The arbiter [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644), Ledger account #2, ruled for the client. The client got the 1.00 USDC budget and its 0.10 deposit back. The provider's 0.10 deposit went to the arbiter. Every hash is also in `deploy/amoy/dispute.old-2026-10.json`.
 
 | Step | Signer | Payment | Evaluation | Transaction |
 | :--- | :--- | :--- | :--- | :--- |
@@ -395,4 +399,4 @@ set -a && source packages/indexer/env/.env && set +a
 yarn indexer start
 ```
 
-The indexer listens on `127.0.0.1:8788` and the relayer on `127.0.0.1:8787`. The indexer keeps its ledger in memory. After a restart it reads again from `INDEXER_FROM_BLOCK`. On Amoy that block is `48650402`, the factory deployment. The same hashes are also written to `docs/runbooks/amoy-live-results.json`.
+The indexer listens on `127.0.0.1:8788` and the relayer on `127.0.0.1:8787`. The indexer keeps its ledger in memory. After a restart it reads again from `INDEXER_FROM_BLOCK`. On Amoy that block is the factory deployment: `48650402` for the first deployment, and the factory creation block on polygonscan for the second. The same hashes are also written to `docs/runbooks/amoy-live-results.json`.
