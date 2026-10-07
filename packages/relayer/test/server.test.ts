@@ -2,7 +2,15 @@ import { expect } from "chai";
 import type { AddressInfo } from "net";
 import { getAddress, type Address, type Hash } from "viem";
 
-import { MAX_BODY_BYTES, parseForwardRequest, Relayer, RelayPending, RelayRejected, RelayUnavailable } from "../src";
+import {
+    MAX_BODY_BYTES,
+    parseForwardRequest,
+    parseIntegrators,
+    Relayer,
+    RelayPending,
+    RelayRejected,
+    RelayUnavailable,
+} from "../src";
 import { createRelayerServer } from "../src/server";
 import type { ProtocolAddresses } from "../../sdk/src";
 
@@ -129,6 +137,107 @@ describe("relayer safety", () => {
         expect(setup({}, { restoredBudgets: { errands: 10n ** 30n } }).relayer.budgetsLeft().errands).to.equal(
             1_000_000n
         );
+    });
+});
+
+describe("relayer public integrator (an app that cannot keep a secret)", () => {
+    const signerLimit = { maxRequests: 2, windowSeconds: 3600, gasWei: 250_000n };
+    const publicIntegrator = {
+        id: "app",
+        token: "",
+        public: true,
+        budgetWei: 1_000_000n,
+        maxRequests: 100,
+        windowSeconds: 60,
+        signer: signerLimit,
+    };
+    const pub = () => setup({}, { integrators: [publicIntegrator] });
+
+    it("reads the config: a public integrator needs per-signer limits and takes no token", () => {
+        const base = { id: "app", budgetWei: "1000", maxRequests: 10, windowSeconds: 60 };
+        expect(() => parseIntegrators(JSON.stringify([{ ...base, public: true }]))).to.throw("per-signer limits");
+        expect(() =>
+            parseIntegrators(
+                JSON.stringify([
+                    { ...base, public: true, token: "x", signer: { maxRequests: 1, windowSeconds: 1, gasWei: "1" } },
+                ])
+            )
+        ).to.throw("takes no token");
+        const [row] = parseIntegrators(
+            JSON.stringify([{ ...base, public: true, signer: { maxRequests: 5, windowSeconds: 60, gasWei: "100" } }])
+        );
+        expect(row.public).to.equal(true);
+        expect(row.signer?.gasWei).to.equal(100n);
+        // A normal integrator still needs a token.
+        expect(() => parseIntegrators(JSON.stringify([{ ...base }]))).to.throw("id and a token");
+    });
+
+    it("accepts a request with no token", async () => {
+        const { relayer } = pub();
+        expect(await relayer.submit(request(), "app", "")).to.equal(HASH);
+    });
+
+    it("still refuses an empty token on a normal integrator", async () => {
+        const { relayer } = setup();
+        try {
+            await relayer.submit(request(), "errands", "");
+            expect.fail("should refuse");
+        } catch (error) {
+            expect(error).to.be.instanceOf(RelayRejected);
+        }
+    });
+
+    it("stops one signer at the per-signer request limit but serves another", async () => {
+        const { relayer } = pub();
+        await relayer.submit(request(), "app", "");
+        await relayer.submit(request(), "app", "");
+        try {
+            await relayer.submit(request(), "app", "");
+            expect.fail("should refuse");
+        } catch (error) {
+            expect((error as Error).message).to.equal("The signer rate limit is spent");
+        }
+        const other = getAddress("0x00000000000000000000000000000000000000cc");
+        expect(await relayer.submit(request({ from: other }), "app", "")).to.equal(HASH);
+    });
+
+    it("stops one signer at the per-signer gas limit (each request holds 100,000 wei here)", async () => {
+        const { relayer } = setup(
+            {},
+            { integrators: [{ ...publicIntegrator, signer: { ...signerLimit, maxRequests: 10, gasWei: 150_000n } }] }
+        );
+        await relayer.submit(request(), "app", "");
+        try {
+            await relayer.submit(request(), "app", "");
+            expect.fail("should refuse");
+        } catch (error) {
+            expect((error as Error).message).to.equal("The signer gas limit is spent");
+        }
+    });
+
+    it("does not count a request whose signature is bad against the named signer", async () => {
+        let valid = false;
+        const { relayer } = setup({}, { integrators: [publicIntegrator] });
+        (relayer as unknown as { publicClient: { readContract: () => Promise<boolean> } }).publicClient.readContract =
+            async () => valid;
+        for (let i = 0; i < 5; i += 1) {
+            try {
+                await relayer.submit(request(), "app", "");
+            } catch {
+                /* a forged request is refused */
+            }
+        }
+        valid = true;
+        expect(await relayer.submit(request(), "app", "")).to.equal(HASH);
+    });
+
+    it("lets the signer back in after the window passes", async () => {
+        let t = 1_000;
+        const { relayer } = setup({}, { integrators: [publicIntegrator], now: () => t });
+        await relayer.submit(request(), "app", "");
+        await relayer.submit(request(), "app", "");
+        t += 3_601;
+        expect(await relayer.submit(request({ deadline: 4_000_000_000 }), "app", "")).to.equal(HASH);
     });
 });
 
