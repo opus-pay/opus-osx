@@ -44,12 +44,18 @@ export type RelayerOptions = {
     expo?: PushClientOptions;
     /** Seconds. */
     now?: () => number;
+    /** Phones not active for this many seconds are deleted by `purge()`. Default 365 days. */
+    retentionSeconds?: number;
     log?: (entry: Record<string, unknown>) => void;
 };
+
+/** How long a phone is kept without any activity (a registration or an accepted push). */
+export const DEFAULT_RETENTION_SECONDS = 365 * 24 * 60 * 60;
 
 export type Stats = {
     registrations: number;
     devicesForgotten: number;
+    devicesPurged: number;
     pushes: Map<string, Record<"accepted" | "noDevice" | "muted" | "limited" | "failed", number>>;
 };
 
@@ -81,7 +87,8 @@ export function textFor(text: LocalText, lang: PushLang): string {
  * a text; the relayer finds the phones, applies the limits and the wallet's mutes, and sends.
  */
 export class MessageRelayer {
-    readonly stats: Stats = { registrations: 0, devicesForgotten: 0, pushes: new Map() };
+    readonly stats: Stats = { registrations: 0, devicesForgotten: 0, devicesPurged: 0, pushes: new Map() };
+    private readonly retentionSeconds: number;
     private readonly now: () => number;
     private readonly byService = new Map<string, SlidingCounter>();
     private readonly byWallet = new Map<string, SlidingCounter>();
@@ -96,6 +103,7 @@ export class MessageRelayer {
         this.expo = options.expo ?? {};
         this.now = options.now ?? (() => Math.floor(Date.now() / 1000));
         this.log = options.log ?? (() => undefined);
+        this.retentionSeconds = options.retentionSeconds ?? DEFAULT_RETENTION_SECONDS;
         for (const s of options.services) {
             this.byService.set(s.id, new SlidingCounter(s.maxRequestsPerMinute, 60, this.now));
             this.byWallet.set(s.id, new SlidingCounter(s.perWalletPerDay, 24 * 60 * 60, this.now));
@@ -262,6 +270,10 @@ export class MessageRelayer {
                 }
             }
             this.store.addTickets(tickets);
+            this.store.markPushed(
+                tickets.map((t) => t.token),
+                now
+            );
             summary.accepted = delivered.size;
             summary.failed = [...failedWallets].filter((w) => !delivered.has(w)).length;
         }
@@ -291,6 +303,17 @@ export class MessageRelayer {
             out[who] = (PUSH_LANGS as readonly string[]).includes(lang ?? "") ? (lang as PushLang) : null;
         }
         return out;
+    }
+
+    /**
+     * The retention rule: deletes phones with no activity (no registration and no accepted push) for the
+     * retention period, and the mutes of wallets left without a phone. Run it once a day.
+     */
+    purge(): number {
+        const count = this.store.purgeInactive(this.now() - this.retentionSeconds);
+        this.stats.devicesPurged += count;
+        if (count > 0) this.log({ event: "purged", devices: count });
+        return count;
     }
 
     /** Asks Expo what became of the pushes sent 15 minutes to a day ago and forgets phones that are gone. */

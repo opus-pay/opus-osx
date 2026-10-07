@@ -5,6 +5,10 @@ import path from "path";
 /** A phone registered by a wallet. `address` is lower case. */
 export type Device = { address: string; token: string; lang: string; platform: string; registeredAt: number };
 
+/** What the retention rule counts: the later of the last registration and the last push the service accepted. */
+export const lastActive = (registeredAt: number, lastPushedAt: number | null | undefined) =>
+    Math.max(registeredAt, lastPushedAt ?? 0);
+
 export type Ticket = { id: string; token: string; at: number };
 
 /** At most this many phones per wallet; registering another removes the oldest. */
@@ -28,6 +32,10 @@ export class Store {
             CREATE INDEX IF NOT EXISTS devices_token ON devices (token);
             CREATE TABLE IF NOT EXISTS mutes (address TEXT NOT NULL, app TEXT NOT NULL, PRIMARY KEY (address, app));
             CREATE TABLE IF NOT EXISTS tickets (id TEXT PRIMARY KEY, token TEXT NOT NULL, at INTEGER NOT NULL);`);
+        // Older files have no `last_pushed_at`: add it. Only a time is kept, never what was sent or to whom.
+        const columns = db.prepare("PRAGMA table_info(devices)").all() as { name: string }[];
+        if (!columns.some((c) => c.name === "last_pushed_at"))
+            db.exec("ALTER TABLE devices ADD COLUMN last_pushed_at INTEGER");
         return new Store(db);
     }
 
@@ -72,6 +80,25 @@ export class Store {
             .prepare("SELECT lang FROM devices WHERE address = ? ORDER BY registered_at DESC, rowid DESC LIMIT 1")
             .all(address) as { lang: string }[];
         return rows[0]?.lang ?? null;
+    }
+
+    /** Records when a push to each phone was last accepted by the push service (a time only). */
+    markPushed(tokens: readonly string[], at: number): void {
+        for (const token of tokens)
+            this.db.prepare("UPDATE devices SET last_pushed_at = ? WHERE token = ?").run(at, token);
+    }
+
+    /**
+     * Retention: removes phones not active since `before` (neither registered nor pushed to), then the mutes of
+     * wallets that no longer have a phone. Returns how many phones went.
+     */
+    purgeInactive(before: number): number {
+        const gone = this.db
+            .prepare("SELECT COUNT(*) AS n FROM devices WHERE MAX(registered_at, COALESCE(last_pushed_at, 0)) < ?")
+            .all(before)[0] as { n: number | bigint };
+        this.db.prepare("DELETE FROM devices WHERE MAX(registered_at, COALESCE(last_pushed_at, 0)) < ?").run(before);
+        this.db.prepare("DELETE FROM mutes WHERE address NOT IN (SELECT address FROM devices)").run();
+        return Number(gone.n);
     }
 
     deviceCount(): number {
