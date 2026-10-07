@@ -7,6 +7,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { createHealthServer, type KeeperStatus } from "./health";
 import { describe, Keeper } from "./keeper";
 import { createNotifier } from "./notify";
+import { redactUrls, rpcHost } from "./redact";
 import { keeperAccountFromEnv } from "./wallet";
 
 /**
@@ -95,7 +96,8 @@ async function main(): Promise<void> {
     console.log("keeper started");
     console.log(`wallet ${account.address}`);
     console.log(`network ${addresses.network} chain ${chain.id} ${chain.name}`);
-    console.log(`rpc ${rpc}`);
+    // Provider URLs often carry the API key in the path or the query: log the host only.
+    console.log(`rpc ${rpcHost(rpc)}`);
     console.log(`instance ${addresses.instance}`);
     console.log(`evaluator ${addresses.evaluator}`);
     console.log(`forwarder ${addresses.forwarder}`);
@@ -151,7 +153,7 @@ async function main(): Promise<void> {
 
 if (require.main === module) {
     main().catch((error: unknown) => {
-        console.error(error instanceof Error ? error.message : error);
+        console.error(redactUrls(error instanceof Error ? error.message : String(error)));
         process.exit(1);
     });
 }
