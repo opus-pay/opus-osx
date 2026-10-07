@@ -270,7 +270,7 @@ describe("message relayer client and signed messages", () => {
     });
 });
 
-import { registerDevice, setServiceMuted, unregisterDevice } from "../src";
+import { checkDevice, ensureDeviceRegistered, registerDevice, setServiceMuted, unregisterDevice } from "../src";
 import { privateKeyToAccount } from "viem/accounts";
 import { recoverMessageAddress } from "viem";
 
@@ -335,6 +335,33 @@ describe("wallet app registration helpers", () => {
         expect(await recoverMessageAddress({ message, signature: b.calls[0].body.signature })).to.equal(
             account.address
         );
+    });
+
+    it("checks whether the phone is registered, and registers only when it is not", async () => {
+        const opts = {
+            url: "https://p",
+            signer: account,
+            token: T1,
+            lang: "ko",
+            platform: "ios",
+            now: () => 7,
+        } as const;
+        const a = fakeService([{ json: { result: "status", registered: true, lang: "ko" } }]);
+        expect(await checkDevice({ ...opts, fetch: a.fetchFn })).to.deep.equal({ registered: true, lang: "ko" });
+        expect(a.calls[0].body.action).to.equal("status");
+        // already registered in the same language: one call, no registration
+        expect(await ensureDeviceRegistered({ ...opts, fetch: a.fetchFn })).to.equal("already");
+        expect(a.calls.map((c) => c.body.action)).to.deep.equal(["status", "status"]);
+        // not registered: status, then register
+        const b = fakeService([{ json: { result: "status", registered: false } }, { json: { result: "registered" } }]);
+        expect(await ensureDeviceRegistered({ ...opts, fetch: b.fetchFn })).to.equal("registered");
+        expect(b.calls.map((c) => c.body.action)).to.deep.equal(["status", "register"]);
+        // registered with another language: updated
+        const c = fakeService([
+            { json: { result: "status", registered: true, lang: "en" } },
+            { json: { result: "registered" } },
+        ]);
+        expect(await ensureDeviceRegistered({ ...opts, fetch: c.fetchFn })).to.equal("updated");
     });
 
     it("throws the relayer's reason when it refuses", async () => {

@@ -56,7 +56,12 @@ async function register(
     relayer: MessageRelayer,
     account: typeof alice,
     token: string,
-    over: Partial<{ lang: PushLang; platform: PushPlatform; issuedAt: number; action: "register" | "unregister" }> = {},
+    over: Partial<{
+        lang: PushLang;
+        platform: PushPlatform;
+        issuedAt: number;
+        action: "register" | "unregister" | "status";
+    }> = {},
     now = 1_800_000_000
 ) {
     const f = {
@@ -94,7 +99,7 @@ describe("service keys", () => {
 describe("registering a phone", () => {
     it("takes a phone signed by the wallet and keeps at most five per wallet", async () => {
         const { relayer, store } = await setup();
-        expect(await register(relayer, alice, T("a"))).to.equal("registered");
+        expect((await register(relayer, alice, T("a"))).result).to.equal("registered");
         expect(store.devicesOf(alice.address.toLowerCase())).to.have.length(1);
         const tokens = "bcdefg".split("");
         let t = 1_800_000_000;
@@ -149,7 +154,7 @@ describe("registering a phone", () => {
         await register(relayer, bob, T("a"));
         expect(store.devicesOf(alice.address.toLowerCase())).to.have.length(0);
         expect(store.devicesOf(bob.address.toLowerCase())).to.have.length(1);
-        expect(await register(relayer, bob, T("a"), { action: "unregister" })).to.equal("unregistered");
+        expect((await register(relayer, bob, T("a"), { action: "unregister" })).result).to.equal("unregistered");
         expect(store.devicesOf(bob.address.toLowerCase())).to.have.length(0);
     });
 });
@@ -410,7 +415,7 @@ describe("language lookup for a service", () => {
     });
 });
 
-import { MessageRelayerClient, registerDevice } from "@opus/sdk";
+import { MessageRelayerClient, ensureDeviceRegistered, registerDevice } from "@opus/sdk";
 
 describe("end to end with the SDK", () => {
     it("a wallet registers its language, the service looks it up and sends in that language", async () => {
@@ -549,5 +554,83 @@ describe("retention", () => {
         expect(store.purgeInactive(40)).to.equal(0);
         expect(store.purgeInactive(60)).to.equal(1);
         store.close();
+    });
+});
+
+describe("checking a phone after the app starts", () => {
+    it("says whether the phone is registered for the wallet, and only to the wallet itself", async () => {
+        const { relayer, now } = await setup();
+        const ask = async (account: typeof alice, token: string, action: "status" | "register" = "status") =>
+            register(relayer, account, token, { action }, now.t);
+        expect(await ask(alice, T("a"))).to.deep.equal({ result: "status", registered: false });
+        await ask(alice, T("a"), "register");
+        expect(await ask(alice, T("a"))).to.deep.equal({ result: "status", registered: true, lang: "ko" });
+        // another phone, or another wallet's phone, is not registered for alice
+        expect((await ask(alice, T("b"))).registered).to.equal(false);
+        expect((await ask(bob, T("a"))).registered).to.equal(false);
+        // a status request signed by someone else is refused
+        const f = {
+            action: "status",
+            address: alice.address,
+            token: T("a"),
+            lang: "ko",
+            platform: "ios",
+            issuedAt: now.t,
+        } as const;
+        await relayer.device({ ...f, signature: await sign(bob, deviceMessage(f)) }).then(
+            () => expect.fail("should refuse"),
+            (e) => expect((e as RelayRejected).status).to.equal(401)
+        );
+    });
+
+    it("counts a check as activity, so a phone in daily use is kept", async () => {
+        const { relayer, store, now } = await setup();
+        const t0 = now.t;
+        await register(relayer, alice, T("a"), {}, t0);
+        now.t = t0 + 300 * DAY;
+        await register(relayer, alice, T("a"), { action: "status" }, now.t);
+        now.t = t0 + 500 * DAY;
+        expect(relayer.purge()).to.equal(0);
+        expect(store.deviceCount()).to.equal(1);
+        now.t = t0 + 666 * DAY;
+        expect(relayer.purge()).to.equal(1);
+    });
+
+    it("starts the retention period over on a new registration: the last push time becomes now", async () => {
+        const { relayer, store, now } = await setup();
+        const t0 = now.t;
+        await register(relayer, alice, T("a"), {}, t0);
+        const db = (store as unknown as { db: { prepare(sql: string): { all(): Record<string, unknown>[] } } }).db;
+        expect(db.prepare("SELECT last_pushed_at AS t FROM devices").all()[0].t).to.equal(t0);
+        // purged after a year of silence, then the app runs again and registers anew
+        now.t = t0 + 400 * DAY;
+        expect(relayer.purge()).to.equal(1);
+        await register(relayer, alice, T("a"), {}, now.t);
+        expect(db.prepare("SELECT last_pushed_at AS t FROM devices").all()[0].t).to.equal(now.t);
+        now.t += 300 * DAY;
+        expect(relayer.purge()).to.equal(0);
+    });
+
+    it("works through the SDK: registers once, then only checks", async () => {
+        const env = await setup();
+        const server = createMessageRelayerServer(env.relayer, env.store, { now: () => env.now.t });
+        await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+        const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+        try {
+            const opts = {
+                url,
+                signer: alice,
+                token: T("a"),
+                lang: "ko",
+                platform: "ios",
+                now: () => env.now.t,
+            } as const;
+            expect(await ensureDeviceRegistered(opts)).to.equal("registered");
+            expect(await ensureDeviceRegistered(opts)).to.equal("already");
+            expect(await ensureDeviceRegistered({ ...opts, lang: "ja" })).to.equal("updated");
+            expect(env.relayer.languages(wayhand, { to: [alice.address] })[alice.address.toLowerCase()]).to.equal("ja");
+        } finally {
+            await new Promise((r) => server.close(r));
+        }
     });
 });

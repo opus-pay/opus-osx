@@ -13,7 +13,7 @@ export type PushPlatform = (typeof PUSH_PLATFORMS)[number];
 export type LocalText = string | Partial<Record<PushLang, string>>;
 
 export type DeviceMessageFields = {
-    action: "register" | "unregister";
+    action: "register" | "unregister" | "status";
     address: string;
     token: string;
     lang: PushLang;
@@ -109,7 +109,11 @@ type WalletCall = { url: string; signer: MessageSigner; fetch?: typeof fetch; no
 
 const clean = (url: string) => url.replace(/\/+$/, "");
 
-async function postSigned(options: WalletCall, path: string, body: Record<string, unknown>): Promise<void> {
+async function postSigned(
+    options: WalletCall,
+    path: string,
+    body: Record<string, unknown>
+): Promise<Record<string, unknown>> {
     const run = options.fetch ?? fetch;
     const response = await run(`${clean(options.url)}${path}`, {
         method: "POST",
@@ -124,6 +128,7 @@ async function postSigned(options: WalletCall, path: string, body: Record<string
             response.status
         );
     }
+    return (await response.json().catch(() => ({}))) as Record<string, unknown>;
 }
 
 const secondsNow = (options: WalletCall) => (options.now ?? (() => Math.floor(Date.now() / 1000)))();
@@ -146,6 +151,38 @@ export async function registerDevice(options: DeviceCall): Promise<void> {
     } as const;
     const signature = await options.signer.signMessage({ message: deviceMessage(fields) });
     await postSigned(options, "/v1/devices", { ...fields, signature });
+}
+
+/** What the relayer knows about this phone: whether it is registered for this wallet, and in which language. */
+export type DeviceStatus = { registered: boolean; lang?: PushLang };
+
+/** For the wallet app: asks whether this phone is registered for this wallet. A yes counts as activity there. */
+export async function checkDevice(options: DeviceCall): Promise<DeviceStatus> {
+    const fields = {
+        action: "status",
+        address: options.signer.address,
+        token: options.token,
+        lang: options.lang,
+        platform: options.platform,
+        issuedAt: secondsNow(options),
+    } as const;
+    const signature = await options.signer.signMessage({ message: deviceMessage(fields) });
+    const answer = await postSigned(options, "/v1/devices", { ...fields, signature });
+    return answer.registered === true
+        ? { registered: true, lang: answer.lang as PushLang | undefined }
+        : { registered: false };
+}
+
+/**
+ * For the wallet app, after it starts: checks that this phone is registered, and registers it when it is not
+ * (or when the language changed). A new registration also starts the relayer's retention period over, so a
+ * phone that was deleted after a year of silence comes back the next time the app runs.
+ */
+export async function ensureDeviceRegistered(options: DeviceCall): Promise<"already" | "registered" | "updated"> {
+    const status = await checkDevice(options);
+    if (status.registered && status.lang === options.lang) return "already";
+    await registerDevice(options);
+    return status.registered ? "updated" : "registered";
 }
 
 /** For the wallet app: removes this phone (for example when the wallet is erased or the user turns push off). */
