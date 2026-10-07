@@ -27,11 +27,28 @@ export { decodeOpusError } from "./errors";
 export { decodeOpusLog, jobIdFromReceipt } from "./events";
 export { encodeForwarderExecute, signForwardRequest } from "./forwarder";
 export { Opus } from "./opus";
+export {
+    EXPO_PUSH_URL,
+    EXPO_RECEIPTS_URL,
+    MAX_PUSH_BATCH,
+    MAX_PUSH_BODY,
+    MAX_PUSH_DATA_BYTES,
+    MAX_PUSH_TITLE,
+    PushError,
+    buildPushMessage,
+    chunkMessages,
+    getPushReceipts,
+    isExpoPushToken,
+    isInsidePath,
+    pushToDevices,
+    sendPush,
+} from "./push";
 export { presetAiToAi, presetAiToPerson, presetPersonToAny, presetSmallNoArbiter } from "./presets";
 export { statusFor, warnings } from "./status";
 
 export type { ForwardRequest } from "./forwarder";
 export type { PresetAmounts } from "./presets";
+export type { PushClientOptions, PushInput, PushMessage, PushReceipts, PushResult, PushRoute } from "./push";
 export type {
     EvaluatorConfig,
     Job,
