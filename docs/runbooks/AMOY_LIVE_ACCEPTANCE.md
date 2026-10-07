@@ -33,12 +33,14 @@ The runs recorded on this page used the first deployment. Their files were renam
 
 Setup ran on 2026-10-08 (KST 07:00). Every hash is in `packages/contracts/deploy/amoy/acceptance.json` and `docs/runbooks/amoy-live-results.json`.
 
-| Flow | On-chain job | State after setup | Next step |
+| Flow | On-chain job | Result | Transactions |
 | :--- | :--- | :--- | :--- |
-| Client approves | 1 | `Completed` | Done |
-| Expiry refund and sweep | 3 | `Funded`, expires 2026-10-09 00:30 UTC (09:30 KST) | `ACCEPTANCE_PHASE=finish yarn acceptance:amoy` after expiry |
-| Silent submission (finalize) | 4 | `Submitted`, review ends 2026-10-07 23:02 UTC (08:02 KST) | `yarn keeper start` with the keeper wallet |
-| No submission (timeout) | 5 | `Funded`, submit window ends 2026-10-07 23:03 UTC (08:03 KST) | `yarn keeper start` with the keeper wallet |
+| Client approves | 1 | `Completed` | in the record |
+| Silent submission (finalize) | 4 | `Completed`: the keeper called `finalize` on 2026-10-08 08:18 KST | [`0xeef77db3…`](https://amoy.polygonscan.com/tx/0xeef77db320237b0cb64b164e80ce1757563ce9ee1d143a2ebe82af74796292b1) |
+| No submission (timeout) | 5 | `Rejected`: the keeper called `timeoutNoSubmission` with a tip | [`0x5ca01057…`](https://amoy.polygonscan.com/tx/0x5ca01057a799b8f545ed2b65af0f6fd2702919066d1d84777013c77a869c4b98) |
+| Expiry refund and sweep | new job (second try) | Set up again on 2026-10-08 | `ACCEPTANCE_PHASE=finish` after it expires, about 26 hours later |
+
+Job 3 was the first try at the expiry refund. Its submit window had closed when the keeper ran for jobs 4 and 5, so the keeper timed it out too ([`0x3e37ef5f…`](https://amoy.polygonscan.com/tx/0x3e37ef5fee0281ab0aa74be1c3c2fd0b2d0edc9060d182ff7be479c5aeb61063)): the client got the budget back and the 0.20 USDC fee went to the operator, so `claimRefund` and `sweep` could not run. The submit window always ends before expiry, so the expiry refund only happens when no keeper acts on the job. The second try runs with every keeper stopped until the job expires.
 
 Job 2 was the first try at the sweep flow. It was configured with the old 1.00 USDC fee, which the 20% cap refuses at `fund`, so the client rejected it and swept the fee back; its hashes are under `abandoned` in the record.
 

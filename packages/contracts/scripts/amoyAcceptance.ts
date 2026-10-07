@@ -67,7 +67,7 @@ type JobRecord = {
     dueAt?: string;
     hashes: Hashes;
     /** Jobs given up because their deadline no longer fit before `fund`; rejected and swept. */
-    abandoned?: { id: string; hashes: Hashes }[];
+    abandoned?: { id: string; note?: string; hashes: Hashes }[];
 };
 type RecordFile = {
     network: "amoy";
@@ -399,6 +399,17 @@ async function printStatus(publicClient: PublicClient, opus: Opus, file: RecordF
     }
     console.log(`chain time ${stamp(now)}`);
     console.log("When finalize and timeout are due, run yarn keeper start with a hot wallet that is not the deployer.");
+    const sweepId = file.jobs.sweep.id;
+    const sweepEnd = file.jobs.sweep.expiredAt;
+    if (sweepId !== undefined && sweepEnd !== undefined && now < BigInt(sweepEnd)) {
+        // The submit window ends long before expiry, so any keeper run before then times the job out
+        // and claimRefund never happens (2026-10-08, job 3).
+        console.log(
+            `Do not run any keeper until sweep job ${sweepId} expires at ${stamp(
+                BigInt(sweepEnd)
+            )}: it would time the job out first.`
+        );
+    }
     console.log("When the sweep job is past expiry, run ACCEPTANCE_PHASE=finish yarn contracts acceptance:amoy");
 }
 
