@@ -1,6 +1,6 @@
 # 모바일 푸시 (SDK)
 
-> **서비스는 Expo에 직접 보내지 않고 메시지 중계 서버(`packages/message-relayer`)를 거칩니다.** 서비스는 지갑 주소와 문구만 보내고(`MessageRelayerClient`), Expo 키와 "주소 ↔ 기기" 표는 중계 서버만 가집니다. 아래의 `sendPush` 등은 중계 서버 안에서 쓰는 부품이고, 서비스가 Expo 키를 갖는 구조가 아닙니다. 자세한 것은 [message-relayer README](../packages/message-relayer/README.md).
+> **서비스는 Expo에 직접 보내지 않고 메시지 중계 서버(`packages/message-relayer`)를 거칩니다.** 서비스는 지갑 주소와 문구만 보내고(`MessageRelayerClient`), Expo 키와 "주소 ↔ 기기" 표는 중계 서버만 가집니다. 아래의 `sendPush` 등은 중계 서버 안에서 쓰는 부품이고, 서비스가 Expo 키를 갖는 구조가 아닙니다. 서비스는 지갑 주소로 사용자의 언어를 물어(`languages`) 그 언어의 문구로 보내고(`pushLocalized`), 앱은 `registerDevice`로 기기와 언어를 등록합니다. 자세한 것은 [message-relayer README](../packages/message-relayer/README.md).
 
 `@opus/sdk`의 푸시 라이브러리(`packages/sdk/src/push.ts`)는 Expo 푸시 서비스로 알림을 보냅니다. iOS와 Android에 모두 닿고, OPUS 지갑 앱(`opus-pay/opus-app`)이 이 방식으로 등록합니다. 의존성을 추가하지 않고 전역 `fetch`를 씁니다. 서버(키퍼, 서비스 백엔드)에서 쓰는 라이브러리이며 앱 안에 넣지 않습니다.
 

@@ -364,3 +364,99 @@ describe("http", () => {
         await s.close();
     });
 });
+
+describe("language lookup for a service", () => {
+    it("answers each wallet's registered language, null when none or muted", async () => {
+        const { relayer, now } = await setup();
+        await register(relayer, alice, T("a"), { lang: "ko" }, now.t);
+        await register(relayer, alice, T("b"), { lang: "ja" }, now.t + 5);
+        const out = relayer.languages(wayhand, { to: [alice.address, bob.address] });
+        // the phone registered last decides
+        expect(out).to.deep.equal({ [alice.address.toLowerCase()]: "ja", [bob.address.toLowerCase()]: null });
+        const m = { address: alice.address, app: "wayhand", muted: true, issuedAt: now.t };
+        await relayer.mute({ ...m, signature: await sign(alice, muteMessage(m)) });
+        expect(relayer.languages(wayhand, { to: [alice.address] })[alice.address.toLowerCase()]).to.equal(null);
+        // the mute is for wayhand only
+        expect(relayer.languages(other, { to: [alice.address] })[alice.address.toLowerCase()]).to.equal("ja");
+    });
+
+    it("refuses bad addresses, empty and oversized lists, and spends the service's request limit", async () => {
+        const { relayer } = await setup();
+        for (const bad of [{ to: [] }, { to: ["0x1"] }, { to: Array.from({ length: 101 }, () => alice.address) }, {}]) {
+            expect(() => relayer.languages(wayhand, bad)).to.throw(RelayRejected);
+        }
+        const limited = { ...wayhand, maxRequestsPerMinute: 1 };
+        const r = new MessageRelayer({ store: await Store.open(":memory:"), services: [limited], now: () => 1 });
+        r.languages(limited, { to: [alice.address] });
+        expect(() => r.languages(limited, { to: [alice.address] })).to.throw("rate limit");
+    });
+
+    it("needs a service key over http", async () => {
+        const env = await setup();
+        const server = createMessageRelayerServer(env.relayer, env.store, { now: () => env.now.t });
+        await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+        const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+        const call = (headers: Record<string, string>) =>
+            fetch(`${base}/v1/languages`, {
+                method: "POST",
+                headers: { "content-type": "application/json", ...headers },
+                body: JSON.stringify({ to: [alice.address] }),
+            });
+        expect((await call({})).status).to.equal(401);
+        await register(env.relayer, alice, T("a"), { lang: "zh" }, env.now.t);
+        const ok = await call({ authorization: `Bearer ${WAYHAND_KEY}` });
+        expect(await ok.json()).to.deep.equal({ languages: { [alice.address.toLowerCase()]: "zh" } });
+        await new Promise((r) => server.close(r));
+    });
+});
+
+import { MessageRelayerClient, registerDevice } from "@opus/sdk";
+
+describe("end to end with the SDK", () => {
+    it("a wallet registers its language, the service looks it up and sends in that language", async () => {
+        const env = await setup();
+        const server = createMessageRelayerServer(env.relayer, env.store, { now: () => env.now.t });
+        await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+        const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+        try {
+            await registerDevice({
+                url,
+                signer: alice,
+                token: T("a"),
+                lang: "ja",
+                platform: "ios",
+                now: () => env.now.t,
+            });
+            await registerDevice({
+                url,
+                signer: bob,
+                token: T("b"),
+                lang: "ko",
+                platform: "android",
+                now: () => env.now.t,
+            });
+            const client = new MessageRelayerClient({ url, key: WAYHAND_KEY });
+            const langs = await client.languages([alice.address, bob.address, "0x" + "9".repeat(40)]);
+            expect(langs[alice.address.toLowerCase()]).to.equal("ja");
+            expect(langs[bob.address.toLowerCase()]).to.equal("ko");
+            const out = await client.pushLocalized({
+                to: [alice.address, bob.address, "0x" + "9".repeat(40)],
+                message: (lang) => ({ title: lang === "ja" ? "新しい応募" : "새 지원자", body: "…" }),
+                path: "/errand/3",
+            });
+            expect(out).to.deep.equal({ accepted: 2, noDevice: 0, muted: 0, limited: 0, failed: 0, noLanguage: 1 });
+            const titles = env.expo.sent
+                .flat()
+                .map((m: { title: string }) => m.title)
+                .sort();
+            expect(titles).to.deep.equal(["새 지원자", "新しい応募"].sort());
+            // a wrong key is refused by the relayer
+            await new MessageRelayerClient({ url, key: "wrong" }).languages([alice.address]).then(
+                () => expect.fail("should refuse"),
+                (e) => expect(e.status).to.equal(401)
+            );
+        } finally {
+            await new Promise((r) => server.close(r));
+        }
+    });
+});

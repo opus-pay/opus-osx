@@ -269,3 +269,131 @@ describe("message relayer client and signed messages", () => {
         }
     });
 });
+
+import { registerDevice, setServiceMuted, unregisterDevice } from "../src";
+import { privateKeyToAccount } from "viem/accounts";
+import { recoverMessageAddress } from "viem";
+
+describe("wallet app registration helpers", () => {
+    const account = privateKeyToAccount(`0x${"33".repeat(32)}`);
+
+    it("signs the fixed message and posts a registration the relayer can verify", async () => {
+        const { calls, fetchFn } = fakeService([{ json: { result: "registered" } }]);
+        await registerDevice({
+            url: "https://p/",
+            signer: account,
+            token: T1,
+            lang: "ja",
+            platform: "android",
+            fetch: fetchFn,
+            now: () => 1_800_000_000,
+        });
+        const body = calls[0].body;
+        expect(calls[0].url).to.equal("https://p/v1/devices");
+        expect(body).to.include({
+            action: "register",
+            token: T1,
+            lang: "ja",
+            platform: "android",
+            issuedAt: 1_800_000_000,
+        });
+        expect(body.address).to.equal(account.address);
+        const message = deviceMessage({
+            action: "register",
+            address: account.address,
+            token: T1,
+            lang: "ja",
+            platform: "android",
+            issuedAt: 1_800_000_000,
+        });
+        expect(await recoverMessageAddress({ message, signature: body.signature })).to.equal(account.address);
+    });
+
+    it("removes a phone and mutes a service with their own signed messages", async () => {
+        const a = fakeService([{ json: {} }]);
+        await unregisterDevice({
+            url: "https://p",
+            signer: account,
+            token: T1,
+            lang: "en",
+            platform: "ios",
+            fetch: a.fetchFn,
+            now: () => 5,
+        });
+        expect(a.calls[0].body.action).to.equal("unregister");
+        const b = fakeService([{ json: {} }]);
+        await setServiceMuted({
+            url: "https://p",
+            signer: account,
+            app: "wayhand",
+            muted: true,
+            fetch: b.fetchFn,
+            now: () => 5,
+        });
+        expect(b.calls[0].url).to.equal("https://p/v1/mutes");
+        const message = muteMessage({ address: account.address, app: "wayhand", muted: true, issuedAt: 5 });
+        expect(await recoverMessageAddress({ message, signature: b.calls[0].body.signature })).to.equal(
+            account.address
+        );
+    });
+
+    it("throws the relayer's reason when it refuses", async () => {
+        const { fetchFn } = fakeService([{ status: 401, json: { error: "The signature is not from this wallet" } }]);
+        try {
+            await registerDevice({
+                url: "https://p",
+                signer: account,
+                token: T1,
+                lang: "en",
+                platform: "ios",
+                fetch: fetchFn,
+            });
+            expect.fail("should throw");
+        } catch (error) {
+            expect((error as MessageRelayerError).status).to.equal(401);
+        }
+    });
+});
+
+describe("service helpers: languages and localized push", () => {
+    const A = "0xAaaa000000000000000000000000000000000001";
+    const B = "0xbbbb000000000000000000000000000000000002";
+    const C = "0xcccc000000000000000000000000000000000003";
+
+    it("asks for languages by lower-case address, 100 at a time", async () => {
+        const many = Array.from({ length: 150 }, (_, i) => `0x${i.toString(16).padStart(40, "0")}`);
+        const { calls, fetchFn } = fakeService([
+            { json: { languages: { [many[0]]: "ko" } } },
+            { json: { languages: {} } },
+        ]);
+        const client = new MessageRelayerClient({ url: "https://p", key: "k", fetch: fetchFn });
+        const out = await client.languages([A, A, ...many]);
+        expect(calls.map((c) => c.body.to.length)).to.deep.equal([100, 51]);
+        expect(calls[0].body.to[0]).to.equal(A.toLowerCase());
+        expect(out[many[0]]).to.equal("ko");
+    });
+
+    it("writes one message per language and skips wallets with no language", async () => {
+        const { calls, fetchFn } = fakeService([
+            { json: { languages: { [A.toLowerCase()]: "ko", [B]: "en", [C]: null } } },
+            { json: { accepted: 1 } },
+            { json: { accepted: 1, failed: 0 } },
+        ]);
+        const client = new MessageRelayerClient({ url: "https://p", key: "k", fetch: fetchFn });
+        const out = await client.pushLocalized({
+            to: [A, B, C],
+            message: (lang) =>
+                lang === "ko"
+                    ? { title: "새 지원자", body: "확인하세요" }
+                    : { title: "New applicant", body: "Check it" },
+            path: "/errand/1",
+        });
+        expect(out).to.deep.include({ accepted: 2, noLanguage: 1 });
+        const pushes = calls.filter((c) => c.url.endsWith("/v1/push"));
+        expect(pushes).to.have.length(2);
+        const ko = pushes.find((c) => c.body.title === "새 지원자");
+        expect(ko!.body.to).to.deep.equal([A.toLowerCase()]);
+        expect(pushes.find((c) => c.body.title === "New applicant")!.body.to).to.deep.equal([B]);
+        expect(ko!.body.path).to.equal("/errand/1");
+    });
+});

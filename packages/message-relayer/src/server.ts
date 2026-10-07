@@ -131,9 +131,11 @@ export function createMessageRelayerServer(relayer: MessageRelayer, store: Store
                     return send(res, route, 200, renderMetrics(samples));
                 }
                 const isPush = req.method === "POST" && url.pathname === "/v1/push";
+                const isLanguages = req.method === "POST" && url.pathname === "/v1/languages";
                 const isDevices = req.method === "POST" && url.pathname === "/v1/devices";
                 const isMutes = req.method === "POST" && url.pathname === "/v1/mutes";
-                if (!isPush && !isDevices && !isMutes) return send(res, route, 404, { error: "Not found" });
+                if (!isPush && !isLanguages && !isDevices && !isMutes)
+                    return send(res, route, 404, { error: "Not found" });
 
                 let body: unknown;
                 try {
@@ -144,10 +146,11 @@ export function createMessageRelayerServer(relayer: MessageRelayer, store: Store
                     }
                     return send(res, route, 400, { error: "The body is not valid JSON" });
                 }
-                if (isPush) {
+                if (isPush || isLanguages) {
                     const header = req.headers.authorization ?? "";
                     const bearer = header.startsWith("Bearer ") ? header.slice("Bearer ".length) : "";
                     const service = relayer.authenticate(bearer);
+                    if (isLanguages) return send(res, route, 200, { languages: relayer.languages(service, body) });
                     return send(res, route, 200, await relayer.push(service, body));
                 }
                 if (!publicLimit.hit(callerOf(req))) {

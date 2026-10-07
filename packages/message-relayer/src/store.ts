@@ -66,6 +66,14 @@ export class Store {
         return rows;
     }
 
+    /** The language of the phone registered last for this wallet, or null when it has none. */
+    languageOf(address: string): string | null {
+        const rows = this.db
+            .prepare("SELECT lang FROM devices WHERE address = ? ORDER BY registered_at DESC, rowid DESC LIMIT 1")
+            .all(address) as { lang: string }[];
+        return rows[0]?.lang ?? null;
+    }
+
     deviceCount(): number {
         return Number((this.db.prepare("SELECT COUNT(*) AS n FROM devices").all()[0] as { n: number | bigint }).n);
     }
