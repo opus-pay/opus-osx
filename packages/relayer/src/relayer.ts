@@ -7,7 +7,7 @@ import {
 } from "@opus/sdk";
 import { getAddress, type Address, type Hash, type PublicClient, type WalletClient } from "viem";
 
-import { GasBudget, RequestWindow, tokenMatches, type Integrator } from "./limits";
+import { GasBudget, RequestWindow, SignerLimits, tokenMatches, type Integrator } from "./limits";
 import { isSanctioned } from "./sanctions";
 import { allowedTarget } from "./targets";
 
@@ -54,6 +54,7 @@ export const DEFAULT_MAX_GAS = 1_500_000n;
 export class Relayer {
     private readonly windows = new Map<string, RequestWindow>();
     private readonly budgets = new Map<string, GasBudget>();
+    private readonly signers = new Map<string, SignerLimits>();
     private readonly integrators: ReadonlyMap<string, Integrator>;
     private nextNonce: number | undefined;
     private tail: Promise<void> = Promise.resolve();
@@ -80,6 +81,8 @@ export class Relayer {
         this.log = options.log ?? (() => undefined);
         for (const integrator of options.integrators) {
             this.windows.set(integrator.id, new RequestWindow(integrator.maxRequests, integrator.windowSeconds, now));
+            if (integrator.signer !== undefined)
+                this.signers.set(integrator.id, new SignerLimits(integrator.signer, now));
             const restored = options.restoredBudgets?.[integrator.id];
             const left = restored === undefined || restored > integrator.budgetWei ? integrator.budgetWei : restored;
             this.budgets.set(integrator.id, new GasBudget(left < 0n ? 0n : left));
@@ -91,7 +94,7 @@ export class Relayer {
 
     async submit(request: ForwardRequest, integratorId: string, bearer: string): Promise<Hash> {
         const integrator = this.integrators.get(integratorId);
-        if (integrator === undefined || !tokenMatches(integrator.token, bearer)) {
+        if (integrator === undefined || (!integrator.public && !tokenMatches(integrator.token, bearer))) {
             throw new RelayRejected("The integrator is not allowed to relay");
         }
         if (request.value !== 0n) throw new RelayRejected("The relayer does not forward native value");
@@ -111,6 +114,11 @@ export class Relayer {
             args: [request],
         });
         if (!valid) throw new RelayRejected("The forwarder rejected the signature");
+        // The signature is good, so `from` is really the signer: now count them against their own limit.
+        const signerLimits = this.signers.get(integratorId);
+        if (signerLimits !== undefined && !signerLimits.admit(getAddress(request.from))) {
+            throw new RelayRejected("The signer rate limit is spent");
+        }
 
         return this.send(request, integratorId);
     }
@@ -144,7 +152,15 @@ export class Relayer {
             this.log({ event: "low-balance", integrator: integratorId, balanceWei: balance.toString() });
             throw new RelayUnavailable("The relayer is out of gas funds");
         }
-        if (!budget.hold(held)) throw new RelayRejected("The integrator budget is spent");
+        const signerLimits = this.signers.get(integratorId);
+        const signer = getAddress(request.from);
+        if (signerLimits !== undefined && !signerLimits.holdGas(signer, held)) {
+            throw new RelayRejected("The signer gas limit is spent");
+        }
+        if (!budget.hold(held)) {
+            signerLimits?.settleGas(signer, held, 0n);
+            throw new RelayRejected("The integrator budget is spent");
+        }
         this.changed();
         let sent: Hash | undefined;
         try {
@@ -166,6 +182,7 @@ export class Relayer {
                 timeout: this.receiptTimeoutMs,
             });
             budget.settle(held, receipt.gasUsed * receipt.effectiveGasPrice);
+            signerLimits?.settleGas(signer, held, receipt.gasUsed * receipt.effectiveGasPrice);
             this.changed();
             if (receipt.status !== "success") throw new RelayRejected("The forwarded call reverted");
             return hash;
@@ -175,6 +192,7 @@ export class Relayer {
             // A sent transaction that is not yet in a block may still land and spend gas: keep the hold.
             if (sent !== undefined) throw new RelayPending(sent);
             budget.settle(held, 0n);
+            signerLimits?.settleGas(signer, held, 0n);
             this.changed();
             throw error;
         }
