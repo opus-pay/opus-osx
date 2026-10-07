@@ -213,7 +213,8 @@ async function main(): Promise<void> {
         addresses.evaluator,
         encodeFunctionData({
             abi: evaluatorAbi,
-            functionName: "approve",
+            // Renamed from approve in the 2026-10-03 security fixes.
+            functionName: "approveJob",
             args: [addresses.instance, id],
         })
     );
