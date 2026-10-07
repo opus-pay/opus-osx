@@ -57,10 +57,11 @@ describe("Invariant suite (#19)", () => {
     }
 
     it("checks I-1/I-2 after every random action and keeps terminal jobs still (I-7)", async function () {
-        // The time grows with the number of actions. The first 10,000-action nightly run was still going after
-        // 33 minutes (200 ms an action was too small; it was a timeout, not a broken invariant), so allow
-        // 500 ms an action and never less than the default.
-        this.timeout(Math.max(120_000, actions * 500));
+        // The time grows with the SQUARE of the number of actions: every check walks all the jobs made so far, so
+        // action n costs about n. Measured in the nightly run (GitHub runner): 1,000 actions took 9 minutes, 2,000
+        // took 33. The first allowance (200 ms, then 500 ms an action) was a timeout, not a broken invariant.
+        // 1 ms for each action squared is about twice the measured time, and never less than the default.
+        this.timeout(Math.max(120_000, actions * actions));
         const rand = mulberry32(seed);
         const token = await deployUsdc();
         const core = await deployCore(token.address);

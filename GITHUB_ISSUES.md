@@ -334,6 +334,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - Hardhat 핸들러가 고정 시드(1)로 매 호출 후 I-2를 대조하고, 종결된 작업은 다시 바뀌지 않는지 본다 (I-7). D5 Foundry 병행은 아직 열어둠.
   - I-4는 권한 없는 호출만으로 최대 창 작업을 종결한다. I-9는 승인·포기가 상대에게 유리함을 단정한다. 야간 워크플로가 시드를 기록한 채 1만 회를 돌린다.
   - **정정:** 무작위 행동에 `object`·`postDeposit`·`resolveMissingDeposit`·`rule`·`resolveByDefault`·`sweep`·`withdraw`를 넣었다. I-4에 확인 모드와 중재 대기도 추가했다.
+  - **정정 (2026-10-07):** 야간 실행이 두 번 시간 초과로 실패했다. 계약 오류가 아니라 검사가 매번 지금까지 만든 모든 작업을 훑어서(`assertI2`) 시간이 행동 수의 **제곱**으로 늘기 때문이다. 실제 측정(GitHub 실행기): 1,000번에 9분, 2,000번에 33분. 그래서 야간 실행을 2,000번으로 줄이고 테스트 시간 제한을 행동 수의 제곱(ms)으로 잡았다. **인수 기준의 "≥ 10,000번"은 아직 충족하지 못했다.** 충족하려면 검사를 건드린 작업만 다시 읽도록(증분) 바꾸는 별도 작업이 필요하다.
 
 #### [Issue #20] ERC-8183 conformance suite
 * **Type:** `Test` / **Priority:** `P0` / **Depends on:** #3, #18
@@ -785,7 +786,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Trust assumptions: evaluator, arbiter, verifier, relayer, keeper, stablecoin issuers
   - [ ] Attack list and mitigations; invariant list; test and coverage report
   - [ ] Revisit #18: raise branch coverage toward 95% or list each uncovered branch with a reason (unreachable guards removed, short-circuit branches tested)
-  - [ ] Confirm the nightly invariant run really completes 10,000 actions (mocha timeout)
+  - [ ] Confirm the nightly invariant run really completes 10,000 actions (mocha timeout) — **2,000 is what fits today** (the check is quadratic, see #19); 10,000 needs an incremental check
 * **Acceptance:** Pack ready to send to auditors.
 
 #### [Issue #40] External audit
