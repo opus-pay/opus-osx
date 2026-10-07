@@ -9,6 +9,8 @@ jobs:
     invariants:
         name: Random-seed invariant run
         runs-on: ubuntu-latest
+        # 10,000 random actions take well over the two minutes a single test gets by default.
+        timeout-minutes: 90
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4

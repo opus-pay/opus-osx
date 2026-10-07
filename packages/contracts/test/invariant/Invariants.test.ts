@@ -56,7 +56,11 @@ describe("Invariant suite (#19)", () => {
         expect(await token.balanceOf(ev.address), "I-2 evaluator").to.equal(held.add(evClaimable));
     }
 
-    it("checks I-1/I-2 after every random action and keeps terminal jobs still (I-7)", async () => {
+    it("checks I-1/I-2 after every random action and keeps terminal jobs still (I-7)", async function () {
+        // The time grows with the number of actions: the nightly run does 10,000 and hit the default
+        // two-minute limit of the Hardhat config (a timeout, not a broken invariant). 200 ms an action is a
+        // generous allowance, and never less than the default.
+        this.timeout(Math.max(120_000, actions * 200));
         const rand = mulberry32(seed);
         const token = await deployUsdc();
         const core = await deployCore(token.address);
