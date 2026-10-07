@@ -18,6 +18,15 @@ The deployed contracts are immutable for this record. Each address below opens t
 | Optimistic evaluator | [`0x65819d9199144a66ec17ad39da6bebabc3eef585`](https://amoy.polygonscan.com/address/0x65819d9199144a66ec17ad39da6bebabc3eef585#code) |
 | Circle Amoy USDC | [`0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`](https://amoy.polygonscan.com/address/0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582) |
 
+Every step on this page ran on the contracts above. On 2026-10-08 the same source was deployed again, because the deploy script priced Amoy transactions below the base fee plus the 25 gwei tip and the deploy stopped waiting. Nothing in the contracts changed. New work uses the second deployment; this record keeps the first.
+
+| Contract (second deployment, 2026-10-08) | Address |
+| :--- | :--- |
+| Forwarder | [`0xD1172323dc6B5C39f8F015C0C3ada071079c830C`](https://amoy.polygonscan.com/address/0xD1172323dc6B5C39f8F015C0C3ada071079c830C#code) |
+| Factory | [`0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218`](https://amoy.polygonscan.com/address/0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218#code) |
+| USDC instance | [`0x4D54D2BD919024742070c63878903483d456d3fC`](https://amoy.polygonscan.com/address/0x4D54D2BD919024742070c63878903483d456d3fC#code) |
+| Optimistic evaluator | [`0x8A4a02D544145ed668b059A7A1753E1f4470da3B`](https://amoy.polygonscan.com/address/0x8A4a02D544145ed668b059A7A1753E1f4470da3B#code) |
+
 ## What these steps show
 
 A non-zero evaluation fee moves when the client calls `configure`, while the job is still `Open`. `fund` locks the budget in the instance and does not move that fee. USDC uses 6 decimals.

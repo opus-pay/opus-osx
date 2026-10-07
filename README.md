@@ -15,14 +15,14 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 
 ## Amoy (issue #22)
 
-Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The reference instance lists Circle Amoy USDC `0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`, with treasury `0` and fee `0`. No admin roles are granted after deploy.
+Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. These are the second deployment (2026-10-08, same source, after an Amoy gas price fix); the test jobs in the evidence ran on the first, whose addresses the evidence lists. The reference instance lists Circle Amoy USDC `0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`, with treasury `0` and fee `0`. No admin roles are granted after deploy.
 
 | Contract | Address |
 | :--- | :--- |
-| `OpusForwarder` | [`0x2042172c8b638f1720A1c468726dbd167d62E63f`](https://amoy.polygonscan.com/address/0x2042172c8b638f1720A1c468726dbd167d62E63f#code) |
-| `OpusACPFactory` | [`0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca`](https://amoy.polygonscan.com/address/0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca#code) |
-| Reference USDC instance | [`0x7632d054BfE635A1f0394fbcd74678B6567213Fd`](https://amoy.polygonscan.com/address/0x7632d054BfE635A1f0394fbcd74678B6567213Fd#code) |
-| `OptimisticEvaluator` | [`0x65819d9199144a66ec17ad39da6bebabc3eef585`](https://amoy.polygonscan.com/address/0x65819d9199144a66ec17ad39da6bebabc3eef585#code) |
+| `OpusForwarder` | [`0xD1172323dc6B5C39f8F015C0C3ada071079c830C`](https://amoy.polygonscan.com/address/0xD1172323dc6B5C39f8F015C0C3ada071079c830C#code) |
+| `OpusACPFactory` | [`0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218`](https://amoy.polygonscan.com/address/0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218#code) |
+| Reference USDC instance | [`0x4D54D2BD919024742070c63878903483d456d3fC`](https://amoy.polygonscan.com/address/0x4D54D2BD919024742070c63878903483d456d3fC#code) |
+| `OptimisticEvaluator` | [`0x8A4a02D544145ed668b059A7A1753E1f4470da3B`](https://amoy.polygonscan.com/address/0x8A4a02D544145ed668b059A7A1753E1f4470da3B#code) |
 
 ## Documents
 
