@@ -1,0 +1,38 @@
+{
+    "name": "@opus/message-relayer",
+    "version": "0.1.0",
+    "description": "OPUS message relayer. Holds the Expo access key and the link from wallet addresses to devices, and sends push for services.",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "clean": "rm -rf dist",
+        "start": "ts-node src/cli.ts",
+        "keys": "ts-node src/cli.ts keys",
+        "test": "mocha --require ts-node/register 'test/**/*.ts'",
+        "coverage": "yarn test",
+        "lint": "tsc -p tsconfig.json --noEmit",
+        "formatting:check": "prettier '**/*.{json,ts,js}' -c",
+        "formatting:write": "prettier '**/*.{json,ts,js}' --write"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/opus-pay/opus-osx.git"
+    },
+    "author": "opus-pay",
+    "license": "SEE LICENSE IN LICENSE.md",
+    "dependencies": {
+        "@opus/sdk": "0.1.0",
+        "viem": "^2.37.5"
+    },
+    "devDependencies": {
+        "@types/chai": "^4.3.11",
+        "@types/mocha": "^10.0.6",
+        "@types/node": "^20.11.30",
+        "chai": "^4.3.10",
+        "mocha": "^10.3.0",
+        "prettier": "^2.8.8",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.4.5"
+    }
+}
