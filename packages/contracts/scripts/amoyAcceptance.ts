@@ -48,6 +48,8 @@ type RecordFile = {
     client: Address;
     provider: Address;
     operator: Address;
+    /** The escrow instance the jobs ran on. Missing in records from the first Amoy deployment. */
+    instance?: Address;
     jobs: { approve: JobRecord; sweep: JobRecord; finalize: JobRecord; timeout: JobRecord };
 };
 
@@ -61,7 +63,7 @@ async function main(): Promise<void> {
     const provider = getAddress(PROVIDER);
     const clientOpus = opusFor(publicClient, addresses, client);
     const providerOpus = opusFor(publicClient, addresses, provider);
-    const file = loadRecord(client, provider, operator);
+    const file = loadRecord(client, provider, operator, addresses.instance as Address);
 
     console.log(`client    ${client}`);
     console.log(`provider  ${provider}`);
@@ -301,27 +303,40 @@ async function printStatus(publicClient: PublicClient, opus: Opus, file: RecordF
     console.log("When the sweep job is past expiry, run ACCEPTANCE_PHASE=finish yarn contracts acceptance:amoy");
 }
 
-function loadRecord(client: Address, provider: Address, operator: Address): RecordFile {
+function loadRecord(client: Address, provider: Address, operator: Address, instance: Address): RecordFile {
+    let parsed: RecordFile | undefined;
     try {
-        const parsed = JSON.parse(readFileSync(OUT, "utf8")) as RecordFile;
+        parsed = JSON.parse(readFileSync(OUT, "utf8")) as RecordFile;
+    } catch {
+        parsed = undefined;
+    }
+    if (parsed !== undefined) {
+        // A record from another deployment would make this run skip steps and read the wrong jobs.
+        if (parsed.instance?.toLowerCase() !== instance.toLowerCase()) {
+            throw new Error(
+                `${OUT} belongs to ${
+                    parsed.instance ?? "the first Amoy deployment"
+                }, not ${instance}. Rename it to keep it, then run again.`
+            );
+        }
         active = parsed;
         return parsed;
-    } catch {
-        const created: RecordFile = {
-            network: "amoy",
-            client,
-            provider,
-            operator,
-            jobs: {
-                approve: { hashes: {} },
-                sweep: { hashes: {} },
-                finalize: { hashes: {} },
-                timeout: { hashes: {} },
-            },
-        };
-        active = created;
-        return created;
     }
+    const created: RecordFile = {
+        network: "amoy",
+        client,
+        provider,
+        operator,
+        instance,
+        jobs: {
+            approve: { hashes: {} },
+            sweep: { hashes: {} },
+            finalize: { hashes: {} },
+            timeout: { hashes: {} },
+        },
+    };
+    active = created;
+    return created;
 }
 
 let active: RecordFile;
@@ -345,7 +360,7 @@ const FLOW_ISSUES: Record<string, string[]> = {
 
 function save(file: RecordFile): void {
     active = file;
-    writeFileSync(OUT, `${JSON.stringify(file, null, 2)}\n`);
+    writeFileSync(OUT, `${JSON.stringify(file, null, 4)}\n`);
     for (const [name, job] of Object.entries(file.jobs)) {
         writeFlow(name, flowFromHashes(FLOW_ISSUES[name] ?? [], job.hashes, job.id));
     }
