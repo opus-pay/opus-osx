@@ -10,11 +10,20 @@ The tables before the features name the contracts, the wallets, the deadlines, t
 
 | Contract | Address |
 | :--- | :--- |
-| Forwarder | [`0x2042172c8b638f1720A1c468726dbd167d62E63f`](https://amoy.polygonscan.com/address/0x2042172c8b638f1720A1c468726dbd167d62E63f) |
-| Factory | [`0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca`](https://amoy.polygonscan.com/address/0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca) |
-| USDC instance | [`0x7632d054BfE635A1f0394fbcd74678B6567213Fd`](https://amoy.polygonscan.com/address/0x7632d054BfE635A1f0394fbcd74678B6567213Fd) |
-| Optimistic evaluator | [`0x65819d9199144a66ec17ad39da6bebabc3eef585`](https://amoy.polygonscan.com/address/0x65819d9199144a66ec17ad39da6bebabc3eef585) |
+| Forwarder | [`0xD1172323dc6B5C39f8F015C0C3ada071079c830C`](https://amoy.polygonscan.com/address/0xD1172323dc6B5C39f8F015C0C3ada071079c830C) |
+| Factory | [`0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218`](https://amoy.polygonscan.com/address/0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218) |
+| USDC instance | [`0x4D54D2BD919024742070c63878903483d456d3fC`](https://amoy.polygonscan.com/address/0x4D54D2BD919024742070c63878903483d456d3fC) |
+| Optimistic evaluator | [`0x8A4a02D544145ed668b059A7A1753E1f4470da3B`](https://amoy.polygonscan.com/address/0x8A4a02D544145ed668b059A7A1753E1f4470da3B) |
 | Circle Amoy USDC | [`0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`](https://amoy.polygonscan.com/address/0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582) |
+
+These are the contracts deployed on 2026-10-08 from the same source, after the Amoy gas price fix (base fee plus a 25 gwei tip). New runs use them. The transactions recorded below ran on the first deployment, which stays on chain and verified:
+
+| Contract (first deployment) | Address |
+| :--- | :--- |
+| Forwarder | `0x2042172c8b638f1720A1c468726dbd167d62E63f` |
+| Factory | `0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca` |
+| USDC instance | `0x7632d054BfE635A1f0394fbcd74678B6567213Fd` |
+| Optimistic evaluator | `0x65819d9199144a66ec17ad39da6bebabc3eef585` |
 
 ## Wallets
 
