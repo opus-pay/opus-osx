@@ -25,7 +25,15 @@ import {
     type PublicClient,
 } from "viem";
 
-import { amoy, loadAddresses, minimumExpiredAt, Opus, presetAiToAi, type EvaluatorConfig } from "../../sdk/src";
+import {
+    amoy,
+    amoyGasPrice,
+    loadAddresses,
+    minimumExpiredAt,
+    Opus,
+    presetAiToAi,
+    type EvaluatorConfig,
+} from "../../sdk/src";
 import { flowFromHashes, writeFlow } from "./liveResults";
 
 const CLIENT: Address = "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0";
@@ -34,15 +42,30 @@ const OUT = "deploy/amoy/acceptance.json";
 const BUDGET = 1_000000n;
 const FEE = 1_000000n;
 const TIP = 500_000n;
-const SLACK = 600n;
+/**
+ * Seconds added to the job's deadline beyond the evaluator's minimum. Every step before `fund` waits
+ * for a Ledger confirmation, and `fund` is refused once the deadline no longer fits its windows.
+ * Ten minutes was not enough on 2026-10-08.
+ */
+const SLACK = 1800n;
+/** Time allowed for the `fund` confirmation itself when checking that the deadline still fits. */
+const FUND_SLACK = 300n;
 
 const erc20Abi = parseAbi(["function balanceOf(address) view returns (uint256)"]);
+const rejectAbi = parseAbi(["function reject(uint256 jobId, bytes32 reason, bytes optParams)"]);
 const createdAbi = parseAbi([
     "event JobCreated(uint256 indexed jobId, address indexed client, address indexed provider, address evaluator, uint256 expiredAt, address hook)",
 ]);
 
 type Hashes = Record<string, Hash>;
-type JobRecord = { id?: string; expiredAt?: string; dueAt?: string; hashes: Hashes };
+type JobRecord = {
+    id?: string;
+    expiredAt?: string;
+    dueAt?: string;
+    hashes: Hashes;
+    /** Jobs given up because their deadline no longer fit before `fund`; rejected and swept. */
+    abandoned?: { id: string; hashes: Hashes }[];
+};
 type RecordFile = {
     network: "amoy";
     client: Address;
@@ -129,7 +152,7 @@ async function runApprove(
         "ipfs://amoy/approve"
     );
     await ensureConfigured(publicClient, clientOpus, file.jobs.approve, jobId, config, 0n);
-    await ensureFunded(publicClient, clientOpus, file.jobs.approve, jobId);
+    await ensureFunded(publicClient, clientOpus, file.jobs.approve, jobId, config);
     if ((await clientOpus.job(jobId)).status === "Funded") {
         await send(publicClient, file, file.jobs.approve, "submit", providerOpus.submit(jobId, zeroHash, BUDGET));
     }
@@ -154,9 +177,13 @@ async function runHeld(
         evaluationFee: FEE,
         keeperTip: withTip ? TIP : 0n,
     });
-    const jobId = await ensureCreated(publicClient, clientOpus, record, config, provider, description);
+    let jobId = await ensureCreated(publicClient, clientOpus, record, config, provider, description);
     await ensureConfigured(publicClient, clientOpus, record, jobId, config, FEE);
-    await ensureFunded(publicClient, clientOpus, record, jobId);
+    if (await abandonIfStale(publicClient, clientOpus, record, jobId, config)) {
+        jobId = await ensureCreated(publicClient, clientOpus, record, config, provider, description);
+        await ensureConfigured(publicClient, clientOpus, record, jobId, config, FEE);
+    }
+    await ensureFunded(publicClient, clientOpus, record, jobId, config);
     if (providerOpus !== undefined && (await clientOpus.job(jobId)).status === "Funded") {
         await send(publicClient, currentFile(record), record, "submit", providerOpus.submit(jobId, zeroHash, BUDGET));
     }
@@ -210,9 +237,68 @@ async function ensureConfigured(
     await send(publicClient, file, record, "configure", opus.configure(jobId, config));
 }
 
-async function ensureFunded(publicClient: PublicClient, opus: Opus, record: JobRecord, jobId: bigint): Promise<void> {
+/**
+ * A job still `Open` whose deadline no longer leaves room for the evaluator's windows can never be
+ * funded. The client rejects it, the evaluation fee is swept back, and the record starts a new job.
+ */
+async function abandonIfStale(
+    publicClient: PublicClient,
+    opus: Opus,
+    record: JobRecord,
+    jobId: bigint,
+    config: EvaluatorConfig
+): Promise<boolean> {
+    const job = await opus.job(jobId);
+    if (job.status !== "Open") return false;
+    const now = (await publicClient.getBlock()).timestamp;
+    if (minimumExpiredAt(now + FUND_SLACK, config) <= job.expiredAt) return false;
+    console.log(`job ${jobId} can no longer be funded before its deadline; rejecting it and starting a new one`);
+    const hashes: Hashes = {};
+    const wallet = createWalletClient({
+        account: getAddress(CLIENT),
+        chain: amoy,
+        transport: custom(network.provider),
+    });
+    console.log("Ledger: confirm reject");
+    const rejected = await wallet.writeContract({
+        address: opus.addresses.instance,
+        abi: rejectAbi,
+        functionName: "reject",
+        args: [jobId, zeroHash, "0x"],
+        gasPrice: await amoyGasPrice(publicClient),
+    });
+    if ((await publicClient.waitForTransactionReceipt({ hash: rejected })).status !== "success") {
+        throw new Error(`reject reverted ${rejected}`);
+    }
+    hashes.reject = rejected;
+    if ((await opus.status(jobId, getAddress(CLIENT))).actions.includes("sweep")) {
+        console.log("Ledger: confirm sweep");
+        const swept = await opus.sweep(jobId);
+        if ((await publicClient.waitForTransactionReceipt({ hash: swept })).status !== "success") {
+            throw new Error(`sweep reverted ${swept}`);
+        }
+        hashes.sweep = swept;
+    }
+    record.abandoned = [...(record.abandoned ?? []), { id: jobId.toString(), hashes: { ...record.hashes, ...hashes } }];
+    record.id = undefined;
+    record.hashes = {};
+    remember(record);
+    return true;
+}
+
+async function ensureFunded(
+    publicClient: PublicClient,
+    opus: Opus,
+    record: JobRecord,
+    jobId: bigint,
+    config: EvaluatorConfig
+): Promise<void> {
     const job = await opus.job(jobId);
     if (job.status !== "Open") return;
+    const now = (await publicClient.getBlock()).timestamp;
+    if (minimumExpiredAt(now + FUND_SLACK, config) > job.expiredAt) {
+        throw new Error(`job ${jobId}'s deadline no longer fits before fund; run again to replace it`);
+    }
     const file = currentFile(record);
     if (job.budget === 0n) await send(publicClient, file, record, "quote", opus.quote(jobId, BUDGET));
     await send(publicClient, file, record, "approveBudget", opus.approveBudget(BUDGET));
