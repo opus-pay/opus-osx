@@ -5,9 +5,12 @@ import path from "path";
 /** A phone registered by a wallet. `address` is lower case. */
 export type Device = { address: string; token: string; lang: string; platform: string; registeredAt: number };
 
-/** What the retention rule counts: the later of the last registration and the last push the service accepted. */
-export const lastActive = (registeredAt: number, lastPushedAt: number | null | undefined) =>
-    Math.max(registeredAt, lastPushedAt ?? 0);
+/** What the retention rule counts: the latest of the registration, the last accepted push and the last time the app checked in. */
+export const lastActive = (
+    registeredAt: number,
+    lastPushedAt: number | null | undefined,
+    lastSeenAt: number | null | undefined = 0
+) => Math.max(registeredAt, lastPushedAt ?? 0, lastSeenAt ?? 0);
 
 export type Ticket = { id: string; token: string; at: number };
 
@@ -32,10 +35,12 @@ export class Store {
             CREATE INDEX IF NOT EXISTS devices_token ON devices (token);
             CREATE TABLE IF NOT EXISTS mutes (address TEXT NOT NULL, app TEXT NOT NULL, PRIMARY KEY (address, app));
             CREATE TABLE IF NOT EXISTS tickets (id TEXT PRIMARY KEY, token TEXT NOT NULL, at INTEGER NOT NULL);`);
-        // Older files have no `last_pushed_at`: add it. Only a time is kept, never what was sent or to whom.
+        // Older files lack `last_pushed_at` and `last_seen_at`: add them. Only a time is kept, never what was sent or to whom.
         const columns = db.prepare("PRAGMA table_info(devices)").all() as { name: string }[];
         if (!columns.some((c) => c.name === "last_pushed_at"))
             db.exec("ALTER TABLE devices ADD COLUMN last_pushed_at INTEGER");
+        if (!columns.some((c) => c.name === "last_seen_at"))
+            db.exec("ALTER TABLE devices ADD COLUMN last_seen_at INTEGER");
         return new Store(db);
     }
 
@@ -44,10 +49,12 @@ export class Store {
         this.db.prepare("DELETE FROM devices WHERE token = ? AND address <> ?").run(device.token, device.address);
         this.db
             .prepare(
-                `INSERT INTO devices (address, token, lang, platform, registered_at) VALUES (?, ?, ?, ?, ?)
-                 ON CONFLICT (address, token) DO UPDATE SET lang = excluded.lang, platform = excluded.platform, registered_at = excluded.registered_at`
+                `INSERT INTO devices (address, token, lang, platform, registered_at, last_pushed_at) VALUES (?, ?, ?, ?, ?, ?)
+                 ON CONFLICT (address, token) DO UPDATE SET lang = excluded.lang, platform = excluded.platform,
+                 registered_at = excluded.registered_at, last_pushed_at = excluded.last_pushed_at`
             )
-            .run(device.address, device.token, device.lang, device.platform, device.registeredAt);
+            // A new registration counts as "the last message was just now", so the retention period starts over.
+            .run(device.address, device.token, device.lang, device.platform, device.registeredAt, device.registeredAt);
         const rows = this.db
             .prepare("SELECT token FROM devices WHERE address = ? ORDER BY registered_at DESC, rowid DESC")
             .all(device.address) as { token: string }[];
@@ -82,6 +89,20 @@ export class Store {
         return rows[0]?.lang ?? null;
     }
 
+    /** The phone registered for this wallet with this token, or undefined. */
+    findDevice(address: string, token: string): Device | undefined {
+        return this.db
+            .prepare(
+                "SELECT address, token, lang, platform, registered_at AS registeredAt FROM devices WHERE address = ? AND token = ?"
+            )
+            .all(address, token)[0] as Device | undefined;
+    }
+
+    /** The app checked in: counts as activity for the retention rule. */
+    touch(address: string, token: string, at: number): void {
+        this.db.prepare("UPDATE devices SET last_seen_at = ? WHERE address = ? AND token = ?").run(at, address, token);
+    }
+
     /** Records when a push to each phone was last accepted by the push service (a time only). */
     markPushed(tokens: readonly string[], at: number): void {
         for (const token of tokens)
@@ -94,9 +115,15 @@ export class Store {
      */
     purgeInactive(before: number): number {
         const gone = this.db
-            .prepare("SELECT COUNT(*) AS n FROM devices WHERE MAX(registered_at, COALESCE(last_pushed_at, 0)) < ?")
+            .prepare(
+                "SELECT COUNT(*) AS n FROM devices WHERE MAX(registered_at, COALESCE(last_pushed_at, 0), COALESCE(last_seen_at, 0)) < ?"
+            )
             .all(before)[0] as { n: number | bigint };
-        this.db.prepare("DELETE FROM devices WHERE MAX(registered_at, COALESCE(last_pushed_at, 0)) < ?").run(before);
+        this.db
+            .prepare(
+                "DELETE FROM devices WHERE MAX(registered_at, COALESCE(last_pushed_at, 0), COALESCE(last_seen_at, 0)) < ?"
+            )
+            .run(before);
         this.db.prepare("DELETE FROM mutes WHERE address NOT IN (SELECT address FROM devices)").run();
         return Number(gone.n);
     }

@@ -135,12 +135,15 @@ export class MessageRelayer {
     }
 
     /** A wallet registers (or removes) one of its phones. The wallet proves it owns the address by signing. */
-    async device(input: unknown): Promise<"registered" | "unregistered"> {
+    async device(
+        input: unknown
+    ): Promise<{ result: "registered" | "unregistered" | "status"; registered?: boolean; lang?: PushLang }> {
         const body = object(input, "request");
         const who = address(body.address);
         const action = body.action;
-        if (action !== "register" && action !== "unregister")
-            throw new RelayRejected("The action must be register or unregister");
+        if (action !== "register" && action !== "unregister" && action !== "status") {
+            throw new RelayRejected("The action must be register, unregister or status");
+        }
         const token = body.token;
         if (!isExpoPushToken(token)) throw new RelayRejected("The device token is not an Expo push token");
         if (!(PUSH_LANGS as readonly unknown[]).includes(body.lang))
@@ -159,10 +162,18 @@ export class MessageRelayer {
         if (action === "register") {
             this.store.register({ address: who, token, lang, platform, registeredAt: this.now() });
             this.stats.registrations += 1;
-            return "registered";
+            return { result: "registered" };
+        }
+        if (action === "status") {
+            // The app asks after it starts: is this phone registered for this wallet? A yes also counts as activity.
+            const found = this.store.findDevice(who, token);
+            if (found !== undefined) this.store.touch(who, token, this.now());
+            return found === undefined
+                ? { result: "status", registered: false }
+                : { result: "status", registered: true, lang: found.lang as PushLang };
         }
         this.store.unregister(who, token);
-        return "unregistered";
+        return { result: "unregistered" };
     }
 
     /** A wallet mutes or unmutes one service (mini-app). */

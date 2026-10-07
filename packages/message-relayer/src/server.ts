@@ -156,7 +156,7 @@ export function createMessageRelayerServer(relayer: MessageRelayer, store: Store
                 if (!publicLimit.hit(callerOf(req))) {
                     return send(res, route, 429, { error: "Too many requests" }, { "retry-after": "60" });
                 }
-                if (isDevices) return send(res, route, 200, { result: await relayer.device(body) });
+                if (isDevices) return send(res, route, 200, await relayer.device(body));
                 await relayer.mute(body);
                 return send(res, route, 200, { result: "ok" });
             } catch (error) {

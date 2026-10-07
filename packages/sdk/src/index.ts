@@ -31,7 +31,9 @@ export {
     MessageRelayerError,
     PUSH_LANGS,
     PUSH_PLATFORMS,
+    checkDevice,
     deviceMessage,
+    ensureDeviceRegistered,
     muteMessage,
     registerDevice,
     setServiceMuted,
@@ -60,6 +62,7 @@ export { statusFor, warnings } from "./status";
 export type { ForwardRequest } from "./forwarder";
 export type {
     DeviceCall,
+    DeviceStatus,
     DeviceMessageFields,
     LocalizedPush,
     MessageSigner,
