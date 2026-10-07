@@ -38,6 +38,16 @@ docker compose stop relayer
 
 `RELAYER_SANCTIONS_FILE`이 없으면 시작하지 않습니다. 샘플 `env/sanctions.txt`는 주석뿐이라 모든 서명자를 중계합니다. 운영 목록은 적용할 제재 주소이고, 한 줄에 주소 하나, `#`으로 시작하는 줄은 무시합니다. 주소가 아닌 줄이 있으면 시작이 실패합니다.
 
+## 토큰 없는 연동사 (모바일 앱용)
+
+앱에는 비밀 토큰을 넣을 수 없습니다(앱을 풀어 보면 꺼낼 수 있음). 그래서 `"public": true` 연동사는 토큰 없이 요청을 받되, **사람(서명 주소)별 한도가 필수**입니다.
+
+-   `signer.maxRequests` / `windowSeconds`: 한 서명 주소가 창 안에서 보낼 수 있는 횟수.
+-   `signer.gasWei`: 한 서명 주소가 창 안에서 쓸 수 있는 가스(wei).
+-   서명 주소는 전달자가 서명을 확인(`verify`)한 **뒤에** 센다. 남의 주소를 `from`에 써서 그 사람의 몫을 소진시킬 수 없다.
+-   주소는 공짜로 만들 수 있으므로, 최악의 손실은 연동사의 `budgetWei`로 막는다. 처음에는 작게 잡고 소진 경보(모니터링)를 받는다.
+-   `token`이 있는 연동사는 그대로 토큰이 필요하다. 토큰이 비어 있다고 통과하지 않는다.
+
 ## HTTP
 
 `GET /health` → 가스 지갑 잔고와 노드 응답을 보고 `200` `{"ok":true,"rpc":true,"wallet":"0x…","balanceWei":"…","lowBalance":false}`. 노드가 응답하지 않거나 잔고가 `RELAYER_MIN_BALANCE_WEI` 이하이면 `503`입니다. 답은 10초 동안 재사용해서 감시가 노드를 몰아세우지 않습니다. 잔고가 바닥나기 전에 알림을 받는 용도로 감시 서비스에 등록하세요.
@@ -50,16 +60,16 @@ docker compose stop relayer
 
 ```json
 {
-  "integratorId": "errands",
-  "request": {
-    "from": "0x의뢰인",
-    "to": "0x인스턴스",
-    "value": "0",
-    "gas": "200000",
-    "deadline": 1893456000,
-    "data": "0x호출데이터",
-    "signature": "0x서명"
-  }
+    "integratorId": "errands",
+    "request": {
+        "from": "0x의뢰인",
+        "to": "0x인스턴스",
+        "value": "0",
+        "gas": "200000",
+        "deadline": 1893456000,
+        "data": "0x호출데이터",
+        "signature": "0x서명"
+    }
 }
 ```
 
@@ -69,19 +79,19 @@ docker compose stop relayer
 
 거절 문구:
 
-| 조건 | `error` |
-| :--- | :--- |
-| id나 토큰이 다름 | `The integrator is not allowed to relay` |
-| `value`가 0이 아님 | `The relayer does not forward native value` |
-| `to`가 인스턴스·팩토리·평가자가 아님 | `The call target is not a known OPUS contract` |
-| `from`이 제재 목록에 있음 | `The signer is on the sanctions list` |
-| 시간창 안의 횟수를 넘김 | `The integrator rate limit is spent` |
-| 전달자 `verify` 실패 | `The forwarder rejected the signature` |
-| 가스 예산이 모자람 | `The integrator budget is spent` |
-| 전달된 호출이 되돌아옴 | `The forwarded call reverted` |
-| 한 요청이 `RELAYER_MAX_GAS`(기본 1,500,000)보다 많은 가스를 요구함 | `The request asks for more gas than the relayer allows` |
-| 서명의 `deadline`이 지남 | `The forward request has expired` |
-| 본문이 JSON이 아니거나 필드가 잘못됨 | `The request body is not valid JSON`, `The forward request has a bad …` (모두 `400`) |
+| 조건                                                               | `error`                                                                              |
+| :----------------------------------------------------------------- | :----------------------------------------------------------------------------------- |
+| id나 토큰이 다름                                                   | `The integrator is not allowed to relay`                                             |
+| `value`가 0이 아님                                                 | `The relayer does not forward native value`                                          |
+| `to`가 인스턴스·팩토리·평가자가 아님                               | `The call target is not a known OPUS contract`                                       |
+| `from`이 제재 목록에 있음                                          | `The signer is on the sanctions list`                                                |
+| 시간창 안의 횟수를 넘김                                            | `The integrator rate limit is spent`                                                 |
+| 전달자 `verify` 실패                                               | `The forwarder rejected the signature`                                               |
+| 가스 예산이 모자람                                                 | `The integrator budget is spent`                                                     |
+| 전달된 호출이 되돌아옴                                             | `The forwarded call reverted`                                                        |
+| 한 요청이 `RELAYER_MAX_GAS`(기본 1,500,000)보다 많은 가스를 요구함 | `The request asks for more gas than the relayer allows`                              |
+| 서명의 `deadline`이 지남                                           | `The forward request has expired`                                                    |
+| 본문이 JSON이 아니거나 필드가 잘못됨                               | `The request body is not valid JSON`, `The forward request has a bad …` (모두 `400`) |
 
 그 밖의 상태: 본문이 64KB보다 크면 `413`. 가스 지갑이 바닥이면 `503` `The relayer is out of gas funds`. 트랜잭션은 보냈지만 `RELAYER_RECEIPT_TIMEOUT_MS`(기본 120초) 안에 블록에 들어가지 않으면 `504`와 `hash`를 줍니다. 나중에 들어갈 수 있으므로 가스 예산은 그대로 잡아 둡니다. `500`은 내부 사유를 응답에 싣지 않고 로그에만 남깁니다.
 
@@ -96,13 +106,13 @@ docker compose stop relayer
 
 `RELAYER_INTEGRATORS`는 연동사 객체의 JSON 배열입니다. 한 명 이상이어야 합니다. 이 숫자는 프로토콜 상수가 아닙니다.
 
-| 필드 | 의미 |
-| :--- | :--- |
-| `id` | `integratorId`와 같은 문자열 |
-| `token` | Bearer 토큰. 비교는 길이가 같을 때만 상수 시간에 한다 |
-| `budgetWei` | 이 프로세스가 살아 있는 동안 그 연동사가 쓸 수 있는 가스 상한(wei) |
-| `maxRequests` | `windowSeconds` 안의 최대 요청 수. 1 이상의 정수 |
-| `windowSeconds` | 그 창의 길이(초). 1 이상의 정수 |
+| 필드            | 의미                                                               |
+| :-------------- | :----------------------------------------------------------------- |
+| `id`            | `integratorId`와 같은 문자열                                       |
+| `token`         | Bearer 토큰. 비교는 길이가 같을 때만 상수 시간에 한다              |
+| `budgetWei`     | 이 프로세스가 살아 있는 동안 그 연동사가 쓸 수 있는 가스 상한(wei) |
+| `maxRequests`   | `windowSeconds` 안의 최대 요청 수. 1 이상의 정수                   |
+| `windowSeconds` | 그 창의 길이(초). 1 이상의 정수                                    |
 
 예산은 예상 가스(`estimateGas * gasPrice`)를 먼저 잡고, 영수증의 `gasUsed * effectiveGasPrice`로 정산합니다. 호출이 되돌아가면 실제 가스를 정산합니다. 전송 자체가 실패하면 잡아 둔 예산을 돌려줍니다. 횟수와 예산은 프로세스 메모리에만 있습니다. 재시작하면 초기 예산으로 돌아갑니다.
 
@@ -112,16 +122,16 @@ Amoy(`chainId` 80002)에서는 가스 가격을 25 gwei로 둡니다.
 
 ## 환경 변수
 
-| 변수 | 필수 | 의미 |
-| :--- | :--- | :--- |
-| `RELAYER_PRIVATE_KEY` | 예 | `0x`와 64자리 hex |
-| `DEPLOYER_ADDRESS` | 예, 배포자와 구분할 때 | 키에서 나온 주소와 같으면 시작 거부 |
-| `RELAYER_ADDRESSES` | 예 | 샘플은 `../contracts/deploy/amoy/addresses.json` |
-| `RELAYER_SANCTIONS_FILE` | 예 | 샘플은 `env/sanctions.txt` |
-| `RELAYER_INTEGRATORS` | 예 | 연동사 JSON 배열 |
-| `RELAYER_RPC_URL` | 아니오 | 비우면 체인 기본 RPC |
-| `RELAYER_HOST` | 아니오 | 비우면 `127.0.0.1` |
-| `RELAYER_PORT` | 아니오 | 비우면 `8787` |
+| 변수                     | 필수                   | 의미                                             |
+| :----------------------- | :--------------------- | :----------------------------------------------- |
+| `RELAYER_PRIVATE_KEY`    | 예                     | `0x`와 64자리 hex                                |
+| `DEPLOYER_ADDRESS`       | 예, 배포자와 구분할 때 | 키에서 나온 주소와 같으면 시작 거부              |
+| `RELAYER_ADDRESSES`      | 예                     | 샘플은 `../contracts/deploy/amoy/addresses.json` |
+| `RELAYER_SANCTIONS_FILE` | 예                     | 샘플은 `env/sanctions.txt`                       |
+| `RELAYER_INTEGRATORS`    | 예                     | 연동사 JSON 배열                                 |
+| `RELAYER_RPC_URL`        | 아니오                 | 비우면 체인 기본 RPC                             |
+| `RELAYER_HOST`           | 아니오                 | 비우면 `127.0.0.1`                               |
+| `RELAYER_PORT`           | 아니오                 | 비우면 `8787`                                    |
 
 ## 테스트
 
