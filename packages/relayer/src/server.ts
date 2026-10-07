@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "http";
 
+import { redactUrls } from "./redact";
 import type { ForwardRequest } from "@opus/sdk";
 import { getAddress, isAddress, type Address, type Hex } from "viem";
 
@@ -118,7 +119,7 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
                 },
             };
         } catch (error) {
-            log({ event: "health-failed", reason: (error as Error).message });
+            log({ event: "health-failed", reason: redactUrls((error as Error).message) });
             result = { at: now(), status: 503, body: { ok: false, rpc: false } };
         }
         cached = result;
@@ -211,7 +212,10 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
         let integratorId = "";
         let from: string | undefined;
         const finish = (status: number, body: Record<string, unknown>, reason?: string) => {
-            const key = `${integratorId}\u0000${status}`;
+            // Only configured integrators get a label of their own: anyone can write any `integratorId`, and a
+            // label per written value would grow the metrics without limit.
+            const known = Object.prototype.hasOwnProperty.call(relayer.budgetsConfigured(), integratorId);
+            const key = `${known ? integratorId : "unknown"}\u0000${status}`;
             answers.set(key, (answers.get(key) ?? 0) + 1);
             seconds += (now() - started) / 1000;
             handled += 1;
@@ -250,7 +254,11 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
             else if (error instanceof RelayPending) finish(504, { error: error.message, hash: error.hash }, "pending");
             else {
                 // The reason is for the log; the sender gets no internal detail.
-                finish(500, { error: "The relayer failed to send the transaction" }, (error as Error).message);
+                finish(
+                    500,
+                    { error: "The relayer failed to send the transaction" },
+                    redactUrls((error as Error).message)
+                );
             }
         }
     }

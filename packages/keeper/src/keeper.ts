@@ -1,4 +1,5 @@
 import { PLACEHOLDER_SAFETY_MARGIN, type Opus } from "@opus/sdk";
+import { redactUrls } from "./redact";
 import { parseAbi, type Address, type Hash } from "viem";
 
 import { isLowBalance, isNearExpiry, type Alert } from "./alerts";
@@ -27,7 +28,7 @@ export function describe(error: unknown): string {
     const message = error instanceof Error ? error.message : String(error);
     const first = message.split("\n").find((line) => line.trim() !== "") ?? "unknown";
     const details = message.match(/Details: ([^\n]+)/)?.[1];
-    return details === undefined ? first : `${first} ${details}`;
+    return redactUrls(details === undefined ? first : `${first} ${details}`);
 }
 
 export type KeeperOptions = {
