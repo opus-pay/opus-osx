@@ -17,6 +17,7 @@
         "node": "hardhat node",
         "deploy:localhost": "hardhat run deploy/localhost/deploy.ts --network localhost",
         "deploy:amoy": "ENV_NETWORK=amoy hardhat run deploy/amoy/deploy.ts --network amoy",
+        "unstick:amoy": "ENV_NETWORK=amoy hardhat run scripts/unstickAmoy.ts --network amoy",
         "acceptance:amoy": "ACCEPTANCE_LEDGER=1 ENV_NETWORK=amoy hardhat run scripts/amoyAcceptance.ts --network amoy",
         "acceptance:relay": "ts-node scripts/amoyRelayAcceptance.ts",
         "dispute:amoy": "ACCEPTANCE_LEDGER=1 ENV_NETWORK=amoy hardhat run scripts/amoyDispute.ts --network amoy",
