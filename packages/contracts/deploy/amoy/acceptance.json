@@ -18,15 +18,7 @@
             "id": "1"
         },
         "sweep": {
-            "hashes": {
-                "createJob": "0xc518d6d78e36aacf57fb0080b1c1d47924028caa763f2e899bdfd537c4e40c66",
-                "approveEvaluation": "0x4252b68755724bc85059b553230ad2621ef3f4be2775f2c0189772f0635f4328",
-                "configure": "0x0015eabe0b0fb644ab89386df7f3ec8267c932c313fe9e379ce5c607e7d3d76c",
-                "quote": "0x83125b20cbe9509ba92dfd4f6f777dbff68c8d1713d725d323afd68f79cd290f",
-                "approveBudget": "0x10f643e1649d8f794e659d454927e54e7575b704cd1f51de71b6f1aa1e2c4de8",
-                "fund": "0xb15e919f59a95b11737eab5be3df543909186514a4ed0b3b02be8edf3d9d63cc"
-            },
-            "id": "3",
+            "hashes": {},
             "abandoned": [
                 {
                     "id": "2",
@@ -39,9 +31,21 @@
                         "reject": "0x2ad752c4a26dd98d3e9bc76c17e7e619baf3e13dd0a097540379fc91586c2e2f",
                         "sweep": "0xd7b3d530ffda29579730116c8db9da56fd411a899aefe9fac7228bdf37f63582"
                     }
+                },
+                {
+                    "id": "3",
+                    "note": "The keeper called timeoutNoSubmission before the job expired, so claimRefund and sweep could not run. The client got the 1.00 USDC budget back; the 0.20 USDC fee went to the operator.",
+                    "hashes": {
+                        "createJob": "0xc518d6d78e36aacf57fb0080b1c1d47924028caa763f2e899bdfd537c4e40c66",
+                        "approveEvaluation": "0x4252b68755724bc85059b553230ad2621ef3f4be2775f2c0189772f0635f4328",
+                        "configure": "0x0015eabe0b0fb644ab89386df7f3ec8267c932c313fe9e379ce5c607e7d3d76c",
+                        "quote": "0x83125b20cbe9509ba92dfd4f6f777dbff68c8d1713d725d323afd68f79cd290f",
+                        "approveBudget": "0x10f643e1649d8f794e659d454927e54e7575b704cd1f51de71b6f1aa1e2c4de8",
+                        "fund": "0xb15e919f59a95b11737eab5be3df543909186514a4ed0b3b02be8edf3d9d63cc",
+                        "timeoutNoSubmission": "0x3e37ef5fee0281ab0aa74be1c3c2fd0b2d0edc9060d182ff7be479c5aeb61063"
+                    }
                 }
-            ],
-            "expiredAt": "1791505822"
+            ]
         },
         "finalize": {
             "hashes": {
@@ -51,7 +55,8 @@
                 "quote": "0x8b0d6d354e3f021908940ed59106eb6d9e471ebdce329a74dd0b42c09b3858fe",
                 "approveBudget": "0x5b0087dc828ec4fa1dc8a6f2247165e65813fc17f64b528f4afcc98c35b1d105",
                 "fund": "0xff60138949e7b2a2d2dd6aabad0992eaad99ba6e6da4a1f18f434d7d81acc338",
-                "submit": "0xb0d5c2aac9f43133abd133746a65cbfb29e95da342bdbabcc2abbd1514d60743"
+                "submit": "0xb0d5c2aac9f43133abd133746a65cbfb29e95da342bdbabcc2abbd1514d60743",
+                "finalize": "0xeef77db320237b0cb64b164e80ce1757563ce9ee1d143a2ebe82af74796292b1"
             },
             "id": "4",
             "dueAt": "1791414161"
@@ -63,7 +68,8 @@
                 "configure": "0xe10a7a43dda65144b0dbf6b0d2b42b73f443ff00c390e5823df185ba2e6bb0c7",
                 "quote": "0xa9c8e7f7712bbbd45434caa502cd9e37351eaa0fbde70bdd96dda66650cfac32",
                 "approveBudget": "0xc725e4176079ea69e9b94574fab602920fc3466115b9edf2a21768b232d62b00",
-                "fund": "0x144add430b5945691b315412a32e195ebcd67c5db1cb54f707b3f260e117139d"
+                "fund": "0x144add430b5945691b315412a32e195ebcd67c5db1cb54f707b3f260e117139d",
+                "timeoutNoSubmission": "0x5ca01057a799b8f545ed2b65af0f6fd2702919066d1d84777013c77a869c4b98"
             },
             "id": "5",
             "dueAt": "1791414226"
