@@ -57,10 +57,10 @@ describe("Invariant suite (#19)", () => {
     }
 
     it("checks I-1/I-2 after every random action and keeps terminal jobs still (I-7)", async function () {
-        // The time grows with the number of actions: the nightly run does 10,000 and hit the default
-        // two-minute limit of the Hardhat config (a timeout, not a broken invariant). 200 ms an action is a
-        // generous allowance, and never less than the default.
-        this.timeout(Math.max(120_000, actions * 200));
+        // The time grows with the number of actions. The first 10,000-action nightly run was still going after
+        // 33 minutes (200 ms an action was too small; it was a timeout, not a broken invariant), so allow
+        // 500 ms an action and never less than the default.
+        this.timeout(Math.max(120_000, actions * 500));
         const rand = mulberry32(seed);
         const token = await deployUsdc();
         const core = await deployCore(token.address);
@@ -85,6 +85,8 @@ describe("Invariant suite (#19)", () => {
         };
 
         for (let i = 0; i < actions; i++) {
+            // Progress line so a long run shows its real speed in the CI log.
+            if (actions >= 1000 && i % 500 === 0) console.log(`      invariant action ${i}/${actions}`);
             const roll = pick(16);
             if (roll === 0 || roll === 1) {
                 const expiredAt = (await time.latest()) + 2 * 24 * 60 * 60;
