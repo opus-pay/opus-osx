@@ -28,6 +28,7 @@ import {
 import {
     amoy,
     amoyGasPrice,
+    evaluatorAbi,
     loadAddresses,
     minimumExpiredAt,
     Opus,
@@ -40,8 +41,10 @@ const CLIENT: Address = "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0";
 const PROVIDER: Address = "0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be";
 const OUT = "deploy/amoy/acceptance.json";
 const BUDGET = 1_000000n;
-const FEE = 1_000000n;
-const TIP = 500_000n;
+/** The evaluator caps the fee at 20% of the budget (since 2026-10-03), and two tips must fit in it. */
+const FEE = 200_000n;
+const TIP = 100_000n;
+const FEE_CAP_BP = 2_000n;
 /**
  * Seconds added to the job's deadline beyond the evaluator's minimum. Every step before `fund` waits
  * for a Ledger confirmation, and `fund` is refused once the deadline no longer fits its windows.
@@ -179,7 +182,7 @@ async function runHeld(
     });
     let jobId = await ensureCreated(publicClient, clientOpus, record, config, provider, description);
     await ensureConfigured(publicClient, clientOpus, record, jobId, config, FEE);
-    if (await abandonIfStale(publicClient, clientOpus, record, jobId, config)) {
+    if (await abandonIfUnfundable(publicClient, clientOpus, record, jobId, config)) {
         jobId = await ensureCreated(publicClient, clientOpus, record, config, provider, description);
         await ensureConfigured(publicClient, clientOpus, record, jobId, config, FEE);
     }
@@ -238,10 +241,11 @@ async function ensureConfigured(
 }
 
 /**
- * A job still `Open` whose deadline no longer leaves room for the evaluator's windows can never be
- * funded. The client rejects it, the evaluation fee is swept back, and the record starts a new job.
+ * A job still `Open` can never be funded when its deadline no longer leaves room for the
+ * evaluator's windows, or when its evaluation fee is above the cap (a record made with the old
+ * fee). The client rejects it, the evaluation fee is swept back, and the record starts a new job.
  */
-async function abandonIfStale(
+async function abandonIfUnfundable(
     publicClient: PublicClient,
     opus: Opus,
     record: JobRecord,
@@ -251,8 +255,17 @@ async function abandonIfStale(
     const job = await opus.job(jobId);
     if (job.status !== "Open") return false;
     const now = (await publicClient.getBlock()).timestamp;
-    if (minimumExpiredAt(now + FUND_SLACK, config) <= job.expiredAt) return false;
-    console.log(`job ${jobId} can no longer be funded before its deadline; rejecting it and starting a new one`);
+    const configured = await publicClient.readContract({
+        address: opus.addresses.evaluator,
+        abi: evaluatorAbi,
+        functionName: "getConfig",
+        args: [opus.addresses.instance, jobId],
+    });
+    const feeTooHigh = configured.evaluationFee > (BUDGET * FEE_CAP_BP) / 10_000n;
+    const late = minimumExpiredAt(now + FUND_SLACK, config) > job.expiredAt;
+    if (!feeTooHigh && !late) return false;
+    const why = feeTooHigh ? "its evaluation fee is above 20% of the budget" : "its deadline no longer fits";
+    console.log(`job ${jobId} can never be funded (${why}); rejecting it and starting a new one`);
     const hashes: Hashes = {};
     const wallet = createWalletClient({
         account: getAddress(CLIENT),
