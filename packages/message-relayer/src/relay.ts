@@ -49,6 +49,29 @@ export type RelayerOptions = {
     log?: (entry: Record<string, unknown>) => void;
 };
 
+/** What a phone is told when another wallet takes it over, in the language of the wallet it leaves. */
+export const MOVE_NOTICE: Record<PushLang, { title: string; body: string }> = {
+    en: {
+        title: "Another wallet was linked to this phone",
+        body: "If this was not you, open OPUS to link your wallet again and check your wallets.",
+    },
+    ko: {
+        title: "다른 지갑이 이 폰에 연결되었습니다",
+        body: "본인이 아니라면 OPUS 앱을 열어 지갑을 다시 연결하고 지갑을 확인해 주세요.",
+    },
+    ja: {
+        title: "別のウォレットがこの端末に接続されました",
+        body: "心当たりがない場合は、OPUSを開いてウォレットを再接続し、ウォレットを確認してください。",
+    },
+    zh: {
+        title: "另一个钱包已绑定到此手机",
+        body: "如果不是您本人操作，请打开 OPUS 重新绑定您的钱包并检查钱包。",
+    },
+};
+
+/** A phone is told at most this often that another wallet took it over. */
+export const MOVE_NOTICE_EVERY_SECONDS = 60 * 60;
+
 /** How long a phone is kept without any activity (a registration or an accepted push). */
 export const DEFAULT_RETENTION_SECONDS = 365 * 24 * 60 * 60;
 
@@ -56,6 +79,10 @@ export type Stats = {
     registrations: number;
     devicesForgotten: number;
     devicesPurged: number;
+    /** Phones that moved from one wallet to another. */
+    devicesMoved: number;
+    /** Notices sent to a phone because another wallet took it over. */
+    moveNotices: number;
     pushes: Map<string, Record<"accepted" | "noDevice" | "muted" | "limited" | "failed", number>>;
 };
 
@@ -87,11 +114,20 @@ export function textFor(text: LocalText, lang: PushLang): string {
  * a text; the relayer finds the phones, applies the limits and the wallet's mutes, and sends.
  */
 export class MessageRelayer {
-    readonly stats: Stats = { registrations: 0, devicesForgotten: 0, devicesPurged: 0, pushes: new Map() };
+    readonly stats: Stats = {
+        registrations: 0,
+        devicesForgotten: 0,
+        devicesPurged: 0,
+        devicesMoved: 0,
+        moveNotices: 0,
+        pushes: new Map(),
+    };
     private readonly retentionSeconds: number;
     private readonly now: () => number;
     private readonly byService = new Map<string, SlidingCounter>();
     private readonly byWallet = new Map<string, SlidingCounter>();
+    /** When each phone was last told that another wallet took it over (seconds). */
+    private readonly movedAt = new Map<string, number>();
     private readonly log: (entry: Record<string, unknown>) => void;
     private readonly store: Store;
     private readonly services: readonly Service[];
@@ -160,6 +196,7 @@ export class MessageRelayer {
             issuedAt
         );
         if (action === "register") {
+            await this.noticeMove(who, token);
             this.store.register({ address: who, token, lang, platform, registeredAt: this.now() });
             this.stats.registrations += 1;
             return { result: "registered" };
@@ -174,6 +211,44 @@ export class MessageRelayer {
         }
         this.store.unregister(who, token);
         return { result: "unregistered" };
+    }
+
+    /**
+     * A token belongs to the wallet that registered it last, so another wallet can take a phone over by signing
+     * with its own key if it learns the token. The phone cannot prove it is the same one, so the old wallet is
+     * told on the phone itself, before it moves: "another wallet was linked to this phone". The real owner then
+     * sees it, and opening the app registers the phone again. At most one notice per phone per hour, so moving a
+     * token back and forth cannot be used to fill a phone with notices. Sending is best effort and never blocks
+     * the registration.
+     */
+    private async noticeMove(who: string, token: string): Promise<void> {
+        const others = this.store.otherOwners(token, who);
+        if (others.length === 0) return;
+        this.stats.devicesMoved += 1;
+        const time = this.now();
+        const last = this.movedAt.get(token);
+        if (last !== undefined && time - last < MOVE_NOTICE_EVERY_SECONDS) return;
+        for (const [key, at] of this.movedAt) if (time - at >= MOVE_NOTICE_EVERY_SECONDS) this.movedAt.delete(key);
+        this.movedAt.set(token, time);
+        const lang = (PUSH_LANGS as readonly string[]).includes(others[0].lang) ? (others[0].lang as PushLang) : "en";
+        try {
+            await sendPush(
+                [
+                    buildPushMessage({
+                        to: token,
+                        title: MOVE_NOTICE[lang].title,
+                        body: MOVE_NOTICE[lang].body,
+                        route: { app: "opus" },
+                        priority: "high",
+                    }),
+                ],
+                this.expo
+            );
+            this.stats.moveNotices += 1;
+            this.log({ event: "device-moved-notice", from: others.length });
+        } catch (error) {
+            this.log({ event: "device-moved-notice-failed", reason: String(error) });
+        }
     }
 
     /** A wallet mutes or unmutes one service (mini-app). */
