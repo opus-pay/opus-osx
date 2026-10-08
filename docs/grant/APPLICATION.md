@@ -17,7 +17,7 @@
 
 OPUS lets two people who have never met settle a small job, from 1 to 1,000 USD, in USDC on Polygon without trusting each other or a platform. The client locks USDC in an escrow contract. The provider is paid when the client approves, or automatically when the review period ends without an objection. If nothing is delivered in time, the client gets the money back.
 
-The contracts are already live on Polygon's test network. Eight test jobs ran end to end, including a dispute that an arbiter decided and a payment link that one side created and the other funded. In one, a payment link created by the client paid the provider 5 USDC about three minutes after the job was opened.
+The contracts are already live on Polygon's test network. Eight test jobs ran end to end, including a dispute that an arbiter decided and a payment link that one side created and the other funded. In one, a payment link created by the client paid the provider 5 USDC about three minutes after the job was opened. After the security fixes of 3 October, the current code was deployed again on 8 October; on it, client approval, both keeper deadlines and a gasless payment have run, and the expiry refund and a dispute are in progress ([evidence](AMOY_EVIDENCE.md#second-deployment-2026-10-08)).
 
 We ask for USD 35,000 to pay for an external audit, a mainnet launch and a public pilot whose numbers anyone can recompute from the chain.
 

@@ -29,21 +29,37 @@ These are the contracts deployed on 2026-10-08 from the current source, which in
 
 The runs recorded on this page used the first deployment. Their files were renamed on 2026-10-08 so that runs on the second deployment start with empty records: `packages/contracts/deploy/amoy/acceptance.old-2026-10.json`, `packages/contracts/deploy/amoy/dispute.old-2026-10.json` and `docs/runbooks/amoy-live-results.old-2026-10.json`. The acceptance and dispute scripts refuse a record made on another instance.
 
-## Second deployment: acceptance run of 2026-10-08
+## Second deployment: acceptance runs of 2026-10-08
 
-Setup ran on 2026-10-08 (KST 07:00). Every hash is in `packages/contracts/deploy/amoy/acceptance.json` and `docs/runbooks/amoy-live-results.json`.
+Every transaction hash of these runs, with the signer of each step, is in `docs/grant/AMOY_EVIDENCE.md` under "Second deployment (2026-10-08)". The raw records are `packages/contracts/deploy/amoy/acceptance.json` and `docs/runbooks/amoy-live-results.json`.
 
-| Flow | On-chain job | Result | Transactions |
+| Flow | On-chain job | Result | Next step |
 | :--- | :--- | :--- | :--- |
-| Client approves | 1 | `Completed` | in the record |
-| Silent submission (finalize) | 4 | `Completed`: the keeper called `finalize` on 2026-10-08 08:18 KST | [`0xeef77db3…`](https://amoy.polygonscan.com/tx/0xeef77db320237b0cb64b164e80ce1757563ce9ee1d143a2ebe82af74796292b1) |
-| No submission (timeout) | 5 | `Rejected`: the keeper called `timeoutNoSubmission` with a tip | [`0x5ca01057…`](https://amoy.polygonscan.com/tx/0x5ca01057a799b8f545ed2b65af0f6fd2702919066d1d84777013c77a869c4b98) |
-| Gasless payment | 6 | `Completed` on 2026-10-08 10:14 KST: two zero-POL wallets signed every step and the relayer paid the gas | [`approve 0x1e8e19ee…`](https://amoy.polygonscan.com/tx/0x1e8e19ee8fdba150a3e2995662d09a21beb973da6ea5ffae28e75cb77e480efb), every hash in `amoy-live-results.json` |
-| Expiry refund and sweep | 7 (second try) | `Funded` on 2026-10-08 10:26 KST; expires 2026-10-09 03:55 UTC (12:55 KST). No keeper may run until then | `ACCEPTANCE_PHASE=finish yarn acceptance:amoy` after expiry |
+| Client approves | 1 | `Completed` | Done |
+| Silent submission (finalize) | 4 | `Completed`. The keeper called `finalize` at 08:18 KST | Done |
+| No submission (timeout) | 5 | `Rejected`. The keeper called `timeoutNoSubmission` and took a 0.10 tip | Done |
+| Gasless payment | 6 | `Completed` at 10:14 KST. Two zero-POL wallets signed; the relayer paid the gas | Done |
+| Expiry refund and sweep | 7 | `Funded` at 10:26 KST; expires 2026-10-09 03:55 UTC (12:55 KST) | No keeper may run until then. Then `ACCEPTANCE_PHASE=finish yarn acceptance:amoy` |
+| Dispute | — | Not run yet | `DISPUTE_ARBITER=0x31923881A21A28254b2330cd41084Cafe0a64644 yarn dispute:amoy` |
 
-Job 3 was the first try at the expiry refund. Its submit window had closed when the keeper ran for jobs 4 and 5, so the keeper timed it out too ([`0x3e37ef5f…`](https://amoy.polygonscan.com/tx/0x3e37ef5fee0281ab0aa74be1c3c2fd0b2d0edc9060d182ff7be479c5aeb61063)): the client got the budget back and the 0.20 USDC fee went to the operator, so `claimRefund` and `sweep` could not run. The submit window always ends before expiry, so the expiry refund only happens when no keeper acts on the job. The second try runs with every keeper stopped until the job expires.
+Job 2 was configured with the old 1.00 USDC fee, which the 20% cap refuses at `fund`; the client rejected it and swept the fee back. Job 3 was the first expiry-refund try; the keeper timed it out while running for jobs 4 and 5, because the submit window always closes before expiry. Both are kept under `abandoned` in the record.
 
-Job 2 was the first try at the sweep flow. It was configured with the old 1.00 USDC fee, which the 20% cap refuses at `fund`, so the client rejected it and swept the fee back; its hashes are under `abandoned` in the record.
+What the scripts needed for the second deployment, so a later run does not hit them again: gas priced from the base fee (not a fixed 25 gwei), a 0.20 fee and 0.10 tips under the 20% cap, 30 minutes of deadline slack for Ledger confirmations, `approveJob` instead of `approve`, and at most 1,500,000 gas per relayed request.
+
+### Balances
+
+Read on 2026-10-08 at 10:26 KST with `yarn balances:amoy`.
+
+| Wallet | Address | POL | USDC |
+| :--- | :--- | ---: | ---: |
+| Client (Ledger) | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) | 0.1360 | 17.20 |
+| Provider (Ledger) | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) | 0.2824 | 18.90 |
+| Arbiter (Ledger #2) | [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644) | 0.0897 | 0.10 |
+| Keeper | [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc) | 0.0752 | 1.20 |
+| Relayer | [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) | 0.2164 | 0.00 |
+| Zero-POL client | [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonscan.com/address/0xF304B61b7889B3B11D9F074e049Ee022AcC8830e) | 0 | 18.00 |
+| Zero-POL provider | [`0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3`](https://amoy.polygonscan.com/address/0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3) | 0 | 2.00 |
+| Deployer | [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba) | 0.0137 | 0.00 |
 
 ## Wallets
 
