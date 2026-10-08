@@ -1,5 +1,5 @@
 import {
-    AMOY_MIN_GAS_PRICE,
+    amoyGasPrice,
     encodeForwarderExecute,
     forwarderAbi,
     type ForwardRequest,
@@ -237,7 +237,7 @@ export class Relayer {
     }
 
     private async gasPrice(): Promise<bigint> {
-        if (this.addresses.chainId === 80002) return AMOY_MIN_GAS_PRICE;
+        if (this.addresses.chainId === 80002) return amoyGasPrice(this.publicClient);
         return this.publicClient.getGasPrice();
     }
 }

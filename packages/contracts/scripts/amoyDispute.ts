@@ -58,6 +58,8 @@ type RecordFile = {
     client: Address;
     provider: Address;
     arbiter: Address;
+    /** The escrow instance the job ran on. Missing in records from the first Amoy deployment. */
+    instance?: Address;
     ruling: "reject" | "complete";
     id?: string;
     hashes: Hashes;
@@ -77,7 +79,7 @@ async function main(): Promise<void> {
     const clientOpus = opusFor(publicClient, addresses, client);
     const providerOpus = opusFor(publicClient, addresses, provider);
     const arbiterWallet = createWalletClient({ account: arbiter, chain: amoy, transport: custom(network.provider) });
-    const file = loadRecord(client, provider, arbiter, ruling);
+    const file = loadRecord(client, provider, arbiter, ruling, addresses.instance as Address);
     if (file.arbiter !== arbiter) throw new Error(`${OUT} was started with arbiter ${file.arbiter}`);
 
     console.log(`client    ${client}`);
@@ -243,16 +245,32 @@ async function printBalances(publicClient: PublicClient, usdc: Address, file: Re
     }
 }
 
-function loadRecord(client: Address, provider: Address, arbiter: Address, ruling: RecordFile["ruling"]): RecordFile {
+function loadRecord(
+    client: Address,
+    provider: Address,
+    arbiter: Address,
+    ruling: RecordFile["ruling"],
+    instance: Address
+): RecordFile {
+    let parsed: RecordFile;
     try {
-        return JSON.parse(readFileSync(OUT, "utf8")) as RecordFile;
+        parsed = JSON.parse(readFileSync(OUT, "utf8")) as RecordFile;
     } catch {
-        return { network: "amoy", client, provider, arbiter, ruling, hashes: {} };
+        return { network: "amoy", client, provider, arbiter, ruling, instance, hashes: {} };
     }
+    // A record from another deployment would make this run skip steps and read the wrong job.
+    if (parsed.instance?.toLowerCase() !== instance.toLowerCase()) {
+        throw new Error(
+            `${OUT} belongs to ${
+                parsed.instance ?? "the first Amoy deployment"
+            }, not ${instance}. Rename it to keep it, then run again.`
+        );
+    }
+    return parsed;
 }
 
 function save(file: RecordFile): void {
-    writeFileSync(OUT, `${JSON.stringify(file, null, 2)}\n`);
+    writeFileSync(OUT, `${JSON.stringify(file, null, 4)}\n`);
     writeFlow("dispute", flowFromHashes([], file.hashes, file.id));
 }
 

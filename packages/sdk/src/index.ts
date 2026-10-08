@@ -22,6 +22,7 @@ export {
     localHardhat,
 } from "./constants";
 export { minimumExpiredAt } from "./deadlines";
+export { AMOY_MIN_TIP, amoyGasPrice } from "./gas";
 export { assertDescription, descriptionOf } from "./description";
 export { decodeOpusError } from "./errors";
 export { decodeOpusLog, jobIdFromReceipt } from "./events";

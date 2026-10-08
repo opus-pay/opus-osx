@@ -25,29 +25,57 @@ import {
     type PublicClient,
 } from "viem";
 
-import { amoy, loadAddresses, minimumExpiredAt, Opus, presetAiToAi, type EvaluatorConfig } from "../../sdk/src";
+import {
+    amoy,
+    amoyGasPrice,
+    evaluatorAbi,
+    loadAddresses,
+    minimumExpiredAt,
+    Opus,
+    presetAiToAi,
+    type EvaluatorConfig,
+} from "../../sdk/src";
 import { flowFromHashes, writeFlow } from "./liveResults";
 
 const CLIENT: Address = "0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0";
 const PROVIDER: Address = "0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be";
 const OUT = "deploy/amoy/acceptance.json";
 const BUDGET = 1_000000n;
-const FEE = 1_000000n;
-const TIP = 500_000n;
-const SLACK = 600n;
+/** The evaluator caps the fee at 20% of the budget (since 2026-10-03), and two tips must fit in it. */
+const FEE = 200_000n;
+const TIP = 100_000n;
+const FEE_CAP_BP = 2_000n;
+/**
+ * Seconds added to the job's deadline beyond the evaluator's minimum. Every step before `fund` waits
+ * for a Ledger confirmation, and `fund` is refused once the deadline no longer fits its windows.
+ * Ten minutes was not enough on 2026-10-08.
+ */
+const SLACK = 1800n;
+/** Time allowed for the `fund` confirmation itself when checking that the deadline still fits. */
+const FUND_SLACK = 300n;
 
 const erc20Abi = parseAbi(["function balanceOf(address) view returns (uint256)"]);
+const rejectAbi = parseAbi(["function reject(uint256 jobId, bytes32 reason, bytes optParams)"]);
 const createdAbi = parseAbi([
     "event JobCreated(uint256 indexed jobId, address indexed client, address indexed provider, address evaluator, uint256 expiredAt, address hook)",
 ]);
 
 type Hashes = Record<string, Hash>;
-type JobRecord = { id?: string; expiredAt?: string; dueAt?: string; hashes: Hashes };
+type JobRecord = {
+    id?: string;
+    expiredAt?: string;
+    dueAt?: string;
+    hashes: Hashes;
+    /** Jobs given up because their deadline no longer fit before `fund`; rejected and swept. */
+    abandoned?: { id: string; note?: string; hashes: Hashes }[];
+};
 type RecordFile = {
     network: "amoy";
     client: Address;
     provider: Address;
     operator: Address;
+    /** The escrow instance the jobs ran on. Missing in records from the first Amoy deployment. */
+    instance?: Address;
     jobs: { approve: JobRecord; sweep: JobRecord; finalize: JobRecord; timeout: JobRecord };
 };
 
@@ -61,7 +89,7 @@ async function main(): Promise<void> {
     const provider = getAddress(PROVIDER);
     const clientOpus = opusFor(publicClient, addresses, client);
     const providerOpus = opusFor(publicClient, addresses, provider);
-    const file = loadRecord(client, provider, operator);
+    const file = loadRecord(client, provider, operator, addresses.instance as Address);
 
     console.log(`client    ${client}`);
     console.log(`provider  ${provider}`);
@@ -127,7 +155,7 @@ async function runApprove(
         "ipfs://amoy/approve"
     );
     await ensureConfigured(publicClient, clientOpus, file.jobs.approve, jobId, config, 0n);
-    await ensureFunded(publicClient, clientOpus, file.jobs.approve, jobId);
+    await ensureFunded(publicClient, clientOpus, file.jobs.approve, jobId, config);
     if ((await clientOpus.job(jobId)).status === "Funded") {
         await send(publicClient, file, file.jobs.approve, "submit", providerOpus.submit(jobId, zeroHash, BUDGET));
     }
@@ -152,9 +180,13 @@ async function runHeld(
         evaluationFee: FEE,
         keeperTip: withTip ? TIP : 0n,
     });
-    const jobId = await ensureCreated(publicClient, clientOpus, record, config, provider, description);
+    let jobId = await ensureCreated(publicClient, clientOpus, record, config, provider, description);
     await ensureConfigured(publicClient, clientOpus, record, jobId, config, FEE);
-    await ensureFunded(publicClient, clientOpus, record, jobId);
+    if (await abandonIfUnfundable(publicClient, clientOpus, record, jobId, config)) {
+        jobId = await ensureCreated(publicClient, clientOpus, record, config, provider, description);
+        await ensureConfigured(publicClient, clientOpus, record, jobId, config, FEE);
+    }
+    await ensureFunded(publicClient, clientOpus, record, jobId, config);
     if (providerOpus !== undefined && (await clientOpus.job(jobId)).status === "Funded") {
         await send(publicClient, currentFile(record), record, "submit", providerOpus.submit(jobId, zeroHash, BUDGET));
     }
@@ -208,9 +240,78 @@ async function ensureConfigured(
     await send(publicClient, file, record, "configure", opus.configure(jobId, config));
 }
 
-async function ensureFunded(publicClient: PublicClient, opus: Opus, record: JobRecord, jobId: bigint): Promise<void> {
+/**
+ * A job still `Open` can never be funded when its deadline no longer leaves room for the
+ * evaluator's windows, or when its evaluation fee is above the cap (a record made with the old
+ * fee). The client rejects it, the evaluation fee is swept back, and the record starts a new job.
+ */
+async function abandonIfUnfundable(
+    publicClient: PublicClient,
+    opus: Opus,
+    record: JobRecord,
+    jobId: bigint,
+    config: EvaluatorConfig
+): Promise<boolean> {
+    const job = await opus.job(jobId);
+    if (job.status !== "Open") return false;
+    const now = (await publicClient.getBlock()).timestamp;
+    const configured = await publicClient.readContract({
+        address: opus.addresses.evaluator,
+        abi: evaluatorAbi,
+        functionName: "getConfig",
+        args: [opus.addresses.instance, jobId],
+    });
+    const feeTooHigh = configured.evaluationFee > (BUDGET * FEE_CAP_BP) / 10_000n;
+    const late = minimumExpiredAt(now + FUND_SLACK, config) > job.expiredAt;
+    if (!feeTooHigh && !late) return false;
+    const why = feeTooHigh ? "its evaluation fee is above 20% of the budget" : "its deadline no longer fits";
+    console.log(`job ${jobId} can never be funded (${why}); rejecting it and starting a new one`);
+    const hashes: Hashes = {};
+    const wallet = createWalletClient({
+        account: getAddress(CLIENT),
+        chain: amoy,
+        transport: custom(network.provider),
+    });
+    console.log("Ledger: confirm reject");
+    const rejected = await wallet.writeContract({
+        address: opus.addresses.instance,
+        abi: rejectAbi,
+        functionName: "reject",
+        args: [jobId, zeroHash, "0x"],
+        gasPrice: await amoyGasPrice(publicClient),
+    });
+    if ((await publicClient.waitForTransactionReceipt({ hash: rejected })).status !== "success") {
+        throw new Error(`reject reverted ${rejected}`);
+    }
+    hashes.reject = rejected;
+    if ((await opus.status(jobId, getAddress(CLIENT))).actions.includes("sweep")) {
+        console.log("Ledger: confirm sweep");
+        const swept = await opus.sweep(jobId);
+        if ((await publicClient.waitForTransactionReceipt({ hash: swept })).status !== "success") {
+            throw new Error(`sweep reverted ${swept}`);
+        }
+        hashes.sweep = swept;
+    }
+    record.abandoned = [...(record.abandoned ?? []), { id: jobId.toString(), hashes: { ...record.hashes, ...hashes } }];
+    record.id = undefined;
+    record.hashes = {};
+    remember(record);
+    return true;
+}
+
+async function ensureFunded(
+    publicClient: PublicClient,
+    opus: Opus,
+    record: JobRecord,
+    jobId: bigint,
+    config: EvaluatorConfig
+): Promise<void> {
     const job = await opus.job(jobId);
     if (job.status !== "Open") return;
+    const now = (await publicClient.getBlock()).timestamp;
+    if (minimumExpiredAt(now + FUND_SLACK, config) > job.expiredAt) {
+        throw new Error(`job ${jobId}'s deadline no longer fits before fund; run again to replace it`);
+    }
     const file = currentFile(record);
     if (job.budget === 0n) await send(publicClient, file, record, "quote", opus.quote(jobId, BUDGET));
     await send(publicClient, file, record, "approveBudget", opus.approveBudget(BUDGET));
@@ -298,30 +399,54 @@ async function printStatus(publicClient: PublicClient, opus: Opus, file: RecordF
     }
     console.log(`chain time ${stamp(now)}`);
     console.log("When finalize and timeout are due, run yarn keeper start with a hot wallet that is not the deployer.");
+    const sweepId = file.jobs.sweep.id;
+    const sweepEnd = file.jobs.sweep.expiredAt;
+    if (sweepId !== undefined && sweepEnd !== undefined && now < BigInt(sweepEnd)) {
+        // The submit window ends long before expiry, so any keeper run before then times the job out
+        // and claimRefund never happens (2026-10-08, job 3).
+        console.log(
+            `Do not run any keeper until sweep job ${sweepId} expires at ${stamp(
+                BigInt(sweepEnd)
+            )}: it would time the job out first.`
+        );
+    }
     console.log("When the sweep job is past expiry, run ACCEPTANCE_PHASE=finish yarn contracts acceptance:amoy");
 }
 
-function loadRecord(client: Address, provider: Address, operator: Address): RecordFile {
+function loadRecord(client: Address, provider: Address, operator: Address, instance: Address): RecordFile {
+    let parsed: RecordFile | undefined;
     try {
-        const parsed = JSON.parse(readFileSync(OUT, "utf8")) as RecordFile;
+        parsed = JSON.parse(readFileSync(OUT, "utf8")) as RecordFile;
+    } catch {
+        parsed = undefined;
+    }
+    if (parsed !== undefined) {
+        // A record from another deployment would make this run skip steps and read the wrong jobs.
+        if (parsed.instance?.toLowerCase() !== instance.toLowerCase()) {
+            throw new Error(
+                `${OUT} belongs to ${
+                    parsed.instance ?? "the first Amoy deployment"
+                }, not ${instance}. Rename it to keep it, then run again.`
+            );
+        }
         active = parsed;
         return parsed;
-    } catch {
-        const created: RecordFile = {
-            network: "amoy",
-            client,
-            provider,
-            operator,
-            jobs: {
-                approve: { hashes: {} },
-                sweep: { hashes: {} },
-                finalize: { hashes: {} },
-                timeout: { hashes: {} },
-            },
-        };
-        active = created;
-        return created;
     }
+    const created: RecordFile = {
+        network: "amoy",
+        client,
+        provider,
+        operator,
+        instance,
+        jobs: {
+            approve: { hashes: {} },
+            sweep: { hashes: {} },
+            finalize: { hashes: {} },
+            timeout: { hashes: {} },
+        },
+    };
+    active = created;
+    return created;
 }
 
 let active: RecordFile;
@@ -345,7 +470,7 @@ const FLOW_ISSUES: Record<string, string[]> = {
 
 function save(file: RecordFile): void {
     active = file;
-    writeFileSync(OUT, `${JSON.stringify(file, null, 2)}\n`);
+    writeFileSync(OUT, `${JSON.stringify(file, null, 4)}\n`);
     for (const [name, job] of Object.entries(file.jobs)) {
         writeFlow(name, flowFromHashes(FLOW_ISSUES[name] ?? [], job.hashes, job.id));
     }
