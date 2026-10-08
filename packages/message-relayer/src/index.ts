@@ -1,5 +1,6 @@
 export {
     MAX_RECIPIENTS,
+    MOVE_NOTICE,
     MessageRelayer,
     RelayRejected,
     RelayUnavailable,

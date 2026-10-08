@@ -9,6 +9,7 @@ import {
     RelayUnavailable,
     Store,
     MAX_DEVICES_PER_ADDRESS,
+    MOVE_NOTICE,
     createMessageRelayerServer,
     hashKey,
     newServiceKey,
@@ -146,6 +147,41 @@ describe("registering a phone", () => {
                 (e) => expect(e).to.be.instanceOf(RelayRejected)
             );
         }
+    });
+
+    it("tells the phone, in the old wallet's language, when another wallet takes it over", async () => {
+        const { relayer, expo, store, now } = await setup();
+        await register(relayer, alice, T("a"), { lang: "ja" });
+        expect(expo.sent).to.have.length(0); // a first registration says nothing
+        await register(relayer, alice, T("a"), { lang: "ja" });
+        expect(expo.sent).to.have.length(0); // nor does registering again as the same wallet
+        await register(relayer, bob, T("a"), { lang: "en" });
+        expect(expo.sent).to.have.length(1);
+        const notice = expo.sent[0][0];
+        expect(notice.to).to.equal(T("a"));
+        expect(notice.title).to.equal(MOVE_NOTICE.ja.title);
+        expect(JSON.stringify(notice)).to.not.contain(bob.address.toLowerCase());
+        expect(store.devicesOf(bob.address.toLowerCase())).to.have.length(1);
+        expect(store.devicesOf(alice.address.toLowerCase())).to.have.length(0);
+        expect(relayer.stats.devicesMoved).to.equal(1);
+        expect(relayer.stats.moveNotices).to.equal(1);
+        // Taking it back and forth cannot fill the phone with notices: one an hour.
+        await register(relayer, alice, T("a"), { lang: "ja" }, now.t);
+        await register(relayer, bob, T("a"), { lang: "en" }, now.t);
+        expect(expo.sent).to.have.length(1);
+        expect(relayer.stats.devicesMoved).to.equal(3);
+        now.t += 3601;
+        await register(relayer, alice, T("a"), { lang: "ja" }, now.t);
+        expect(expo.sent).to.have.length(2);
+    });
+
+    it("still registers the phone when the notice cannot be sent", async () => {
+        const { relayer, expo, store } = await setup();
+        await register(relayer, alice, T("b"));
+        expo.down = true;
+        await register(relayer, bob, T("b"));
+        expect(store.devicesOf(bob.address.toLowerCase())).to.have.length(1);
+        expect(relayer.stats.moveNotices).to.equal(0);
     });
 
     it("moves a token to the wallet that registers it last, and removes a phone", async () => {

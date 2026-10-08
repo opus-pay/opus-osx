@@ -67,6 +67,13 @@ export class Store {
         this.db.prepare("DELETE FROM devices WHERE address = ? AND token = ?").run(address, token);
     }
 
+    /** The other wallets this token is registered for (not `address`), with the language of each registration. */
+    otherOwners(token: string, address: string): { address: string; lang: string }[] {
+        return this.db
+            .prepare("SELECT address, lang FROM devices WHERE token = ? AND address <> ?")
+            .all(token, address) as { address: string; lang: string }[];
+    }
+
     /** Removes a token for every wallet (the push service said the phone is gone). */
     forget(token: string): void {
         this.db.prepare("DELETE FROM devices WHERE token = ?").run(token);
