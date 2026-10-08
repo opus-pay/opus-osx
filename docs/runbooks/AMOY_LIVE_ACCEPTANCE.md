@@ -10,11 +10,56 @@ The tables before the features name the contracts, the wallets, the deadlines, t
 
 | Contract | Address |
 | :--- | :--- |
-| Forwarder | [`0x2042172c8b638f1720A1c468726dbd167d62E63f`](https://amoy.polygonscan.com/address/0x2042172c8b638f1720A1c468726dbd167d62E63f) |
-| Factory | [`0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca`](https://amoy.polygonscan.com/address/0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca) |
-| USDC instance | [`0x7632d054BfE635A1f0394fbcd74678B6567213Fd`](https://amoy.polygonscan.com/address/0x7632d054BfE635A1f0394fbcd74678B6567213Fd) |
-| Optimistic evaluator | [`0x65819d9199144a66ec17ad39da6bebabc3eef585`](https://amoy.polygonscan.com/address/0x65819d9199144a66ec17ad39da6bebabc3eef585) |
+| Forwarder | [`0xD1172323dc6B5C39f8F015C0C3ada071079c830C`](https://amoy.polygonscan.com/address/0xD1172323dc6B5C39f8F015C0C3ada071079c830C) |
+| Factory | [`0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218`](https://amoy.polygonscan.com/address/0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218) |
+| USDC instance | [`0x4D54D2BD919024742070c63878903483d456d3fC`](https://amoy.polygonscan.com/address/0x4D54D2BD919024742070c63878903483d456d3fC) |
+| Optimistic evaluator | [`0x8A4a02D544145ed668b059A7A1753E1f4470da3B`](https://amoy.polygonscan.com/address/0x8A4a02D544145ed668b059A7A1753E1f4470da3B) |
 | Circle Amoy USDC | [`0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`](https://amoy.polygonscan.com/address/0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582) |
+
+These are the contracts deployed on 2026-10-08 from the current source, which includes the 2026-10-03 security fixes: the evaluation fee is now at most 20% of the budget, so the acceptance run uses a 0.20 USDC fee and 0.10 USDC tips instead of 1.00 and 0.50. New runs use them. The transactions recorded below ran on the first deployment, which stays on chain and verified:
+
+| Contract (first deployment) | Address |
+| :--- | :--- |
+| Forwarder | `0x2042172c8b638f1720A1c468726dbd167d62E63f` |
+| Factory | `0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca` |
+| USDC instance | `0x7632d054BfE635A1f0394fbcd74678B6567213Fd` |
+| Optimistic evaluator | `0x65819d9199144a66ec17ad39da6bebabc3eef585` |
+
+## Records of the first deployment
+
+The runs recorded on this page used the first deployment. Their files were renamed on 2026-10-08 so that runs on the second deployment start with empty records: `packages/contracts/deploy/amoy/acceptance.old-2026-10.json`, `packages/contracts/deploy/amoy/dispute.old-2026-10.json` and `docs/runbooks/amoy-live-results.old-2026-10.json`. The acceptance and dispute scripts refuse a record made on another instance.
+
+## Second deployment: acceptance runs of 2026-10-08
+
+Every transaction hash of these runs, with the signer of each step, is in `docs/grant/AMOY_EVIDENCE.md` under "Second deployment (2026-10-08)". The raw records are `packages/contracts/deploy/amoy/acceptance.json` and `docs/runbooks/amoy-live-results.json`.
+
+| Flow | On-chain job | Result | Next step |
+| :--- | :--- | :--- | :--- |
+| Client approves | 1 | `Completed` | Done |
+| Silent submission (finalize) | 4 | `Completed`. The keeper called `finalize` at 08:18 KST | Done |
+| No submission (timeout) | 5 | `Rejected`. The keeper called `timeoutNoSubmission` and took a 0.10 tip | Done |
+| Gasless payment | 6 | `Completed` at 10:14 KST. Two zero-POL wallets signed; the relayer paid the gas | Done |
+| Expiry refund and sweep | 7 | `Funded` at 10:26 KST; expires 2026-10-09 03:55 UTC (12:55 KST) | No keeper may run until then. Then `ACCEPTANCE_PHASE=finish yarn acceptance:amoy` |
+| Dispute | — | Not run yet | `DISPUTE_ARBITER=0x31923881A21A28254b2330cd41084Cafe0a64644 yarn dispute:amoy` |
+
+Job 2 was configured with the old 1.00 USDC fee, which the 20% cap refuses at `fund`; the client rejected it and swept the fee back. Job 3 was the first expiry-refund try; the keeper timed it out while running for jobs 4 and 5, because the submit window always closes before expiry. Both are kept under `abandoned` in the record.
+
+What the scripts needed for the second deployment, so a later run does not hit them again: gas priced from the base fee (not a fixed 25 gwei), a 0.20 fee and 0.10 tips under the 20% cap, 30 minutes of deadline slack for Ledger confirmations, `approveJob` instead of `approve`, and at most 1,500,000 gas per relayed request.
+
+### Balances
+
+Read on 2026-10-08 at 10:26 KST with `yarn balances:amoy`.
+
+| Wallet | Address | POL | USDC |
+| :--- | :--- | ---: | ---: |
+| Client (Ledger) | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) | 0.1360 | 17.20 |
+| Provider (Ledger) | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) | 0.2824 | 18.90 |
+| Arbiter (Ledger #2) | [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644) | 0.0897 | 0.10 |
+| Keeper | [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc) | 0.0752 | 1.20 |
+| Relayer | [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) | 0.2164 | 0.00 |
+| Zero-POL client | [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonscan.com/address/0xF304B61b7889B3B11D9F074e049Ee022AcC8830e) | 0 | 18.00 |
+| Zero-POL provider | [`0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3`](https://amoy.polygonscan.com/address/0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3) | 0 | 2.00 |
+| Deployer | [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba) | 0.0137 | 0.00 |
 
 ## Wallets
 
@@ -89,7 +134,7 @@ The step name in a feature table is the acceptance script's label. Polygonscan s
 | fund | `fund` | Client | Locks the budget in the instance and starts the evaluation phase. It does not move the evaluation fee. | Funded | Funded |
 | fundWithPermit | `fundWithPermit` | Client | Same as `fund`. The USDC permit is a signature inside this call, not its own transaction. | Funded | Funded |
 | submit | `submit` | Provider | Records the deliverable hash and starts the review window. | Submitted | Submitted |
-| approve | evaluator `approve` | Client | Completes the job. Pays the budget to the provider and any fee to the operator. | Completed | Resolved |
+| approve | evaluator `approveJob` (`approve` on the first deployment) | Client | Completes the job. Pays the budget to the provider and any fee to the operator. | Completed | Resolved |
 | finalize | `finalize` | Anyone. Here, the keeper | After a silent review, completes the job. The tip comes out of the fee first. | Completed | Resolved |
 | timeoutNoSubmission | `timeoutNoSubmission` | Anyone. Here, the keeper | After a missed submit window, rejects the job. The tip comes out of the fee first. | Rejected | Resolved |
 | claimRefund | `claimRefund` | Anyone. Here, the client | After `expiredAt`, returns the budget. Leaves the evaluation fee where it is. | Expired | Funded |
@@ -264,7 +309,7 @@ If the keeper is running before step 7, it calls `timeoutNoSubmission` and the e
 
 **Code.** `packages/contracts/scripts/amoyRelayAcceptance.ts`. From the repository root, `yarn contracts acceptance:relay` runs it inside `packages/contracts`. It reads `OPERATOR_ADDRESS` from the filled copy of `packages/contracts/env/.amoy.env.sample`, then the filled copy of `packages/contracts/env/.amoy.relay.env.sample`. It does not print either key. Each finished step is written to the `gasless` flow in `docs/runbooks/amoy-live-results.json`. Running the command again skips a step that already has a hash.
 
-**Method.** The zero-POL wallet signs an EIP-712 forward request. `from` is that wallet, `value` is 0, and `gas` is 2,000,000. The script posts the signature to `POST http://127.0.0.1:8787/relay` with `Authorization: Bearer` set to the integrator token and `integratorId` `errands`. The relayer wallet calls `forwarder.execute` and pays the POL. The two signing wallets never send a transaction.
+**Method.** The zero-POL wallet signs an EIP-712 forward request. `from` is that wallet, `value` is 0, and `gas` is 2,000,000 (1,200,000 since 2026-10-08, under the relayer's 1,500,000 cap). The script posts the signature to `POST http://127.0.0.1:8787/relay` with `Authorization: Bearer` set to the integrator token and `integratorId` `errands`. The relayer wallet calls `forwarder.execute` and pays the POL. The two signing wallets never send a transaction.
 
 `fundWithPermit` carries an EIP-2612 permit for 1 USDC. The spender is the USDC instance, the domain version is the token's `version()` (`2` on Circle Amoy USDC), and the deadline is one hour. The permit is a signature, not its own transaction. If the token rejects that domain, the permit is ignored and `fundWithPermit` reverts `InsufficientAllowance`, because these wallets never call `approve`.
 
@@ -312,7 +357,7 @@ If the keeper is running before step 7, it calls `timeoutNoSubmission` and the e
 
 **Result.** Client quote: chain job 7 is `Completed` and `Resolved`. The provider received the 5.00 USDC budget in the `approve` transaction, and there was no evaluation fee. The `submit` input carries job id 7 and deliverable `0x52baa0e5f62955a6f6412081035036f5a0bd99d235d0c3ebd20ff30f6a1dd770`, the keccak256 of [`docs/grant/AmoyClientQuote.txt`](../grant/AmoyClientQuote.txt). Every hash below was read back from Polygonscan, and each call's input or `JobCreated` log names job 7. Gas was 0.0243955 POL for the client's five transactions and 0.0022593 POL for the provider's one. Provider quote: not run.
 
-The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it has no transaction of its own. MetaMask labels the evaluator `approve` as a token permission request, because its selector `0x095ea7b3` is the same as the ERC-20 and ERC-721 `approve`.
+The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it has no transaction of its own. On this first deployment, MetaMask labels the evaluator `approve` as a token permission request, because its selector `0x095ea7b3` is the same as the ERC-20 and ERC-721 `approve`. The second deployment renames it `approveJob`, which removes the clash.
 
 The form default, lock "Client, before the review rules are set", makes the client quote.
 
@@ -356,7 +401,7 @@ DISPUTE_ARBITER=0x... DISPUTE_PHASE=status yarn contracts dispute:amoy  # print 
 5. The provider approves and posts its 0.1 USDC deposit. The case goes to the arbiter.
 6. The arbiter calls `rule`.
 
-**Result.** On-chain job 8 ended `Rejected` and `Resolved`. The arbiter [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644), Ledger account #2, ruled for the client. The client got the 1.00 USDC budget and its 0.10 deposit back. The provider's 0.10 deposit went to the arbiter. Every hash is also in `deploy/amoy/dispute.json`.
+**Result.** On-chain job 8 ended `Rejected` and `Resolved`. The arbiter [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644), Ledger account #2, ruled for the client. The client got the 1.00 USDC budget and its 0.10 deposit back. The provider's 0.10 deposit went to the arbiter. Every hash is also in `deploy/amoy/dispute.old-2026-10.json`.
 
 | Step | Signer | Payment | Evaluation | Transaction |
 | :--- | :--- | :--- | :--- | :--- |
@@ -386,4 +431,4 @@ set -a && source packages/indexer/env/.env && set +a
 yarn indexer start
 ```
 
-The indexer listens on `127.0.0.1:8788` and the relayer on `127.0.0.1:8787`. The indexer keeps its ledger in memory. After a restart it reads again from `INDEXER_FROM_BLOCK`. On Amoy that block is `48650402`, the factory deployment. The same hashes are also written to `docs/runbooks/amoy-live-results.json`.
+The indexer listens on `127.0.0.1:8788` and the relayer on `127.0.0.1:8787`. The indexer keeps its ledger in memory. After a restart it reads again from `INDEXER_FROM_BLOCK`. On Amoy that block is the factory deployment: `48650402` for the first deployment, and the factory creation block on polygonscan for the second. The same hashes are also written to `docs/runbooks/amoy-live-results.json`.

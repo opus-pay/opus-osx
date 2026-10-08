@@ -317,7 +317,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D1 | EVM target and OZ version | **Decided: Solidity 0.8.24, `evmVersion` `cancun`, OpenZeppelin 5.6.1** | — |
 | D2 | `MAX_PLATFORM_FEE_BP`, `HOOK_GAS_LIMIT` | **Proposed (2026-10-05): fee cap 1,000 (10%)** as a user-protection ceiling; each service picks its own rate below it (WayHand: 5% on completion only). Confirm with `HOOK_GAS_LIMIT` before #42 | #7, #9, #42 |
 | D3 | Job duration bounds; evaluator window bounds; safety margin | Open | #6, #14 |
-| D4 | Budget range | **Decided: 1–1,000 USD per job, fixed constant** | — |
+| D4 | Budget range | **Decided: 1–1,000 USD per job, fixed constant.** The deployment before the external audit caps it at 100 USD (D33) | — |
 | D5 | Foundry for invariant tests | Open | #19 |
 | D7 | License (MIT vs BSL) | **Decided: MIT.** Solidity SPDX headers switch at the next deployment | #45 |
 | D8 | Stablecoins in the factory list | **Decided: constructor list, no hardcoded addresses** | — |
@@ -329,7 +329,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D15 | USDC permit funding path | **Decided: yes** — `fundWithPermit` | — |
 | D16 | Signature-based agreement execution | **Decided: not at launch** (backlog #51) | — |
 | D17 | Token at launch | **Decided: none** (review in #52) | — |
-| D18 | Evaluation fee, keeper tip, dispute deposit amounts (fee capped relative to budget) | Open | #16, #53 |
+| D18 | Evaluation fee, keeper tip, dispute deposit amounts (fee capped relative to budget) | **Partly decided (2026-10-03): the evaluation fee is at most 20% of the budget, in code.** Amounts per preset are still open | #16, #53 |
 | D19 | OPUS Court parameters (randomness, panel sizes, capacity multiple, slashing) | Open | M11 |
 | D20 | Evaluator stake asset | **Decided: USDC first, OPG only after the Court works and legal review** | #55, #52 |
 | D21 | Voluntary concession | **Decided: client may approve any time after submission; provider may withdraw any time** | — |

@@ -7,22 +7,22 @@ A person in one place asks a person far away, in another country or another regi
 OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not distinguish people from AI agents, so the same contracts will serve people's AI assistants when they start posting errands.
 
 * No admin: no owner, pause, upgrade, or setters
-* 1–1,000 USD per job, fixed in code
+* 1–1,000 USD per job, fixed in code; 100 USD per job until the external audit
 * No protocol fee; evaluators are paid the same whatever the outcome
 * No token at launch
 
-> Status: the contracts are deployed and verified on Polygon Amoy, and eight test jobs have run there end to end, including a dispute decided by an arbiter ([evidence](./docs/grant/AMOY_EVIDENCE.md)). The SDK, keeper, relayer and payment-link app were used in those runs, and the indexer is written. Not yet audited; no mainnet deployment. ERC-8183 is a draft standard.
+> Status: the contracts are deployed and verified on Polygon Amoy. On the first deployment eight test jobs ran end to end, including a dispute decided by an arbiter. The second deployment (2026-10-08, with the 2026-10-03 security fixes) has passed approval, keeper finalize and timeout, and a gasless run; the expiry refund and the dispute are in progress ([evidence](./docs/grant/AMOY_EVIDENCE.md)). The SDK, keeper, relayer and payment-link app were used in those runs, and the indexer is written. Not yet audited; no mainnet deployment. ERC-8183 is a draft standard.
 
 ## Amoy (issue #22)
 
-Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The reference instance lists Circle Amoy USDC `0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`, with treasury `0` and fee `0`. No admin roles are granted after deploy.
+Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. These are the second deployment (2026-10-08). It carries the 2026-10-03 security fixes and the 100 USD per-job cap; the first deployment predates them. The test jobs in the evidence ran on the first, whose addresses the evidence lists. The reference instance lists Circle Amoy USDC `0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582`, with treasury `0` and fee `0`. No admin roles are granted after deploy.
 
 | Contract | Address |
 | :--- | :--- |
-| `OpusForwarder` | [`0x2042172c8b638f1720A1c468726dbd167d62E63f`](https://amoy.polygonscan.com/address/0x2042172c8b638f1720A1c468726dbd167d62E63f#code) |
-| `OpusACPFactory` | [`0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca`](https://amoy.polygonscan.com/address/0xeafFF7cCe71b66dB91c40d09640ae9ae854707ca#code) |
-| Reference USDC instance | [`0x7632d054BfE635A1f0394fbcd74678B6567213Fd`](https://amoy.polygonscan.com/address/0x7632d054BfE635A1f0394fbcd74678B6567213Fd#code) |
-| `OptimisticEvaluator` | [`0x65819d9199144a66ec17ad39da6bebabc3eef585`](https://amoy.polygonscan.com/address/0x65819d9199144a66ec17ad39da6bebabc3eef585#code) |
+| `OpusForwarder` | [`0xD1172323dc6B5C39f8F015C0C3ada071079c830C`](https://amoy.polygonscan.com/address/0xD1172323dc6B5C39f8F015C0C3ada071079c830C#code) |
+| `OpusACPFactory` | [`0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218`](https://amoy.polygonscan.com/address/0x8Cae2EBe1b3D13e3EAf9Fc765a577dc30c6a5218#code) |
+| Reference USDC instance | [`0x4D54D2BD919024742070c63878903483d456d3fC`](https://amoy.polygonscan.com/address/0x4D54D2BD919024742070c63878903483d456d3fC#code) |
+| `OptimisticEvaluator` | [`0x8A4a02D544145ed668b059A7A1753E1f4470da3B`](https://amoy.polygonscan.com/address/0x8A4a02D544145ed668b059A7A1753E1f4470da3B#code) |
 
 ## Documents
 
@@ -30,8 +30,8 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. The refer
 | :--- | :--- |
 | [`WHITEPAPER.md`](./WHITEPAPER.md) / [`WHITEPAPER.ko.md`](./WHITEPAPER.ko.md) | Design, evaluation, security model, products, risks (English / Korean; kept in sync) |
 | [`docs/grant/`](./docs/grant/README.md) | Polygon grant pack: application, forum post, Amoy evidence |
-| [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D29 |
-| [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#75 with tasks and acceptance criteria |
+| [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D33 |
+| [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#82 with tasks and acceptance criteria |
 | [`.cursor/AGENTS.md`](./.cursor/AGENTS.md) | Context for AI coding agents: invariants I-1–I-9, rules, decisions |
 | [`.cursor/CURSOR_BRIEF.md`](./.cursor/CURSOR_BRIEF.md) | Implementation spec for M0–M5 |
 | [`packages/contracts/docs/EVM_TARGET.md`](./packages/contracts/docs/EVM_TARGET.md) | D1: Polygon / Amoy `cancun` target and sources |

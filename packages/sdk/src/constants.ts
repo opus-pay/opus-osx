@@ -23,7 +23,10 @@ export const MIN_BUDGET_USD = 1n;
 /** 100 USD per job until the external audit, matching OpusAgenticCommerce.MAX_BUDGET_USD. */
 export const MAX_BUDGET_USD = 100n;
 
-/** Amoy rejects a tip below 25 gwei. dRPC's quoted price is not usable. */
+/**
+ * @deprecated This is Amoy's minimum tip, not a gas price that gets mined once the base fee is
+ * above zero. Use `amoyGasPrice(publicClient)`.
+ */
 export const AMOY_MIN_GAS_PRICE = 25_000_000_000n;
 
 export const amoy = defineChain({

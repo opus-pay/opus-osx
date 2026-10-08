@@ -79,6 +79,16 @@ function liveNetworkAccounts() {
     return liveNetworkSignerConfig(getLedgerAccounts(), getAccounts());
 }
 
+/** Whole gwei from an env variable, or the fallback when unset. */
+function gweiFromEnv(name: string, fallback: number): number {
+    const text = process.env[name]?.trim();
+    const value = text === undefined || text === "" ? fallback : Number(text);
+    if (!Number.isInteger(value) || value <= 0 || value > 2000) {
+        throw new Error(`${name} must be whole gwei between 1 and 2000, got "${text}"`);
+    }
+    return value * 1_000_000_000;
+}
+
 const config = {
     solidity: {
         compilers: [
@@ -113,9 +123,12 @@ const config = {
         amoy: {
             url: process.env.AMOY_URL || "https://polygon-amoy-bor-rpc.publicnode.com",
             chainId: 80002,
-            // Amoy rejects a tip under 25 gwei. dRPC's eth_gasPrice is ~400 gwei, which
-            // prices one deploy at ~0.5 POL. Pin the chain minimum so the quote is not used.
-            gasPrice: 25_000_000_000,
+            // A legacy gas price is base fee + tip, and Amoy wants a tip of at least 25 gwei.
+            // The base fee moves (about 31 gwei on 2026-10-08), so a pinned 25 gwei stops
+            // being mined once it rises: the deploy then waits forever after the Ledger signs.
+            // RPC quotes are not used either (dRPC once said ~400 gwei). Default 70 gwei;
+            // set AMOY_GAS_PRICE_GWEI to follow the base fee.
+            gasPrice: gweiFromEnv("AMOY_GAS_PRICE_GWEI", 70),
             ...liveNetworkAccounts(),
         },
         polygon: {

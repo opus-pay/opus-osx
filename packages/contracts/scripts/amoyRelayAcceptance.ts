@@ -44,7 +44,11 @@ import { readResults, txUrl, writeFlow, type LiveTx } from "./liveResults";
 
 const balanceAbi = parseAbi(["function balanceOf(address) view returns (uint256)"]);
 const BUDGET = 1_000000n;
-const GAS = 2_000_000n;
+/**
+ * Gas each forward request asks for. It must stay under the relayer's cap (RELAYER_MAX_GAS, default
+ * 1,500,000 since 2026-10-05); the largest step here, createJob, uses well under half of this.
+ */
+const GAS = 1_200_000n;
 const FLOW = "gasless";
 const PERMIT_TYPES = {
     Permit: [
@@ -213,7 +217,8 @@ async function main(): Promise<void> {
         addresses.evaluator,
         encodeFunctionData({
             abi: evaluatorAbi,
-            functionName: "approve",
+            // Renamed from approve in the 2026-10-03 security fixes.
+            functionName: "approveJob",
             args: [addresses.instance, id],
         })
     );
