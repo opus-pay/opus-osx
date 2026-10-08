@@ -134,7 +134,7 @@ The step name in a feature table is the acceptance script's label. Polygonscan s
 | fund | `fund` | Client | Locks the budget in the instance and starts the evaluation phase. It does not move the evaluation fee. | Funded | Funded |
 | fundWithPermit | `fundWithPermit` | Client | Same as `fund`. The USDC permit is a signature inside this call, not its own transaction. | Funded | Funded |
 | submit | `submit` | Provider | Records the deliverable hash and starts the review window. | Submitted | Submitted |
-| approve | evaluator `approve` | Client | Completes the job. Pays the budget to the provider and any fee to the operator. | Completed | Resolved |
+| approve | evaluator `approveJob` (`approve` on the first deployment) | Client | Completes the job. Pays the budget to the provider and any fee to the operator. | Completed | Resolved |
 | finalize | `finalize` | Anyone. Here, the keeper | After a silent review, completes the job. The tip comes out of the fee first. | Completed | Resolved |
 | timeoutNoSubmission | `timeoutNoSubmission` | Anyone. Here, the keeper | After a missed submit window, rejects the job. The tip comes out of the fee first. | Rejected | Resolved |
 | claimRefund | `claimRefund` | Anyone. Here, the client | After `expiredAt`, returns the budget. Leaves the evaluation fee where it is. | Expired | Funded |
@@ -357,7 +357,7 @@ If the keeper is running before step 7, it calls `timeoutNoSubmission` and the e
 
 **Result.** Client quote: chain job 7 is `Completed` and `Resolved`. The provider received the 5.00 USDC budget in the `approve` transaction, and there was no evaluation fee. The `submit` input carries job id 7 and deliverable `0x52baa0e5f62955a6f6412081035036f5a0bd99d235d0c3ebd20ff30f6a1dd770`, the keccak256 of [`docs/grant/AmoyClientQuote.txt`](../grant/AmoyClientQuote.txt). Every hash below was read back from Polygonscan, and each call's input or `JobCreated` log names job 7. Gas was 0.0243955 POL for the client's five transactions and 0.0022593 POL for the provider's one. Provider quote: not run.
 
-The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it has no transaction of its own. MetaMask labels the evaluator `approve` as a token permission request, because its selector `0x095ea7b3` is the same as the ERC-20 and ERC-721 `approve`.
+The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it has no transaction of its own. On this first deployment, MetaMask labels the evaluator `approve` as a token permission request, because its selector `0x095ea7b3` is the same as the ERC-20 and ERC-721 `approve`. The second deployment renames it `approveJob`, which removes the clash.
 
 The form default, lock "Client, before the review rules are set", makes the client quote.
 
