@@ -246,7 +246,7 @@ Order: forwarder (if D14) → factory → reference USDC instance (`treasury = 0
 
 **SDK (`@opus/sdk`, #23)**
 * viem; types from typechain/ABI only; takes a `WalletClient`; never handles private keys.
-* Standard flow: `createJob`, `setProvider`, `quote` (`setBudget`), `fund(expectedBudget)`, `submit`, plus evaluator calls (`configure`, `approve`, `object`, `extendReview`, `withdrawAsProvider`, `postDeposit`, triggers).
+* Standard flow: `createJob`, `setProvider`, `quote` (`setBudget`), `fund(expectedBudget)`, `submit`, plus evaluator calls (`configure`, `approveJob` (formerly `approve`), `object`, `extendReview`, `withdrawAsProvider`, `postDeposit`, triggers).
 * Presets: AI→AI, AI→person, person→any (confirmation mode, deposit up front), small/no-arbiter **[D10, D18]**.
 * Safety: provider may start only if funded amount == agreed amount; warn if evaluator == client; `description` is always a hash or URI of a request document (schema in #68); split work above 1,000 USD into linked jobs.
 

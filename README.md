@@ -7,7 +7,7 @@ A person in one place asks a person far away, in another country or another regi
 OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not distinguish people from AI agents, so the same contracts will serve people's AI assistants when they start posting errands.
 
 * No admin: no owner, pause, upgrade, or setters
-* 1–1,000 USD per job, fixed in code
+* 1–1,000 USD per job, fixed in code; 100 USD per job until the external audit
 * No protocol fee; evaluators are paid the same whatever the outcome
 * No token at launch
 
@@ -30,8 +30,8 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. These are
 | :--- | :--- |
 | [`WHITEPAPER.md`](./WHITEPAPER.md) / [`WHITEPAPER.ko.md`](./WHITEPAPER.ko.md) | Design, evaluation, security model, products, risks (English / Korean; kept in sync) |
 | [`docs/grant/`](./docs/grant/README.md) | Polygon grant pack: application, forum post, Amoy evidence |
-| [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D29 |
-| [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#75 with tasks and acceptance criteria |
+| [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D33 |
+| [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#82 with tasks and acceptance criteria |
 | [`.cursor/AGENTS.md`](./.cursor/AGENTS.md) | Context for AI coding agents: invariants I-1–I-9, rules, decisions |
 | [`.cursor/CURSOR_BRIEF.md`](./.cursor/CURSOR_BRIEF.md) | Implementation spec for M0–M5 |
 | [`packages/contracts/docs/EVM_TARGET.md`](./packages/contracts/docs/EVM_TARGET.md) | D1: Polygon / Amoy `cancun` target and sources |

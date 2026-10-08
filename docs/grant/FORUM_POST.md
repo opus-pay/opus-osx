@@ -35,7 +35,7 @@ When someone pays a stranger far away to buy, ship, film or fetch something, one
 | Dispute decided by an arbiter | 8 | The client objected, both sides posted a 0.10 USDC deposit, the arbiter ruled for the client: refund, and the provider's deposit paid the arbiter |
 | Provider's link, funded by the client, 5 USDC | 10 | Provider paid; the run in the demo video |
 
-Every hash: [docs/grant/AMOY_EVIDENCE.md](https://github.com/opus-pay/opus-osx/blob/main/docs/grant/AMOY_EVIDENCE.md). The contracts are source-verified on Amoy Polygonscan, with 146 contract test cases including ERC-8183 conformance and invariants.
+Every hash: [docs/grant/AMOY_EVIDENCE.md](https://github.com/opus-pay/opus-osx/blob/main/docs/grant/AMOY_EVIDENCE.md). The contracts are source-verified on Amoy Polygonscan, with 153 contract test cases including ERC-8183 conformance and invariants.
 
 ## Why Polygon
 
@@ -51,7 +51,7 @@ We propose the USD 35,000 as an investment rather than a gift. Before the first 
 
 | Milestone | Deliverable | Check | USD |
 | :--- | :--- | :--- | :--- |
-| M1. Audit (weeks 0–8) | Code freeze first (approve renamed, final fee and time bounds, MIT headers), then an external audit of about 1,100 lines of core Solidity, fixes, and an Amoy rerun of every scenario | Public report and new hashes | 22,000 |
+| M1. Audit (weeks 0–8) | Code freeze first (approve already renamed and the fee cap already lowered to 20% on 3 October; final time bounds, MIT headers), then an external audit of about 1,100 lines of core Solidity, fixes, and an Amoy rerun of every scenario | Public report and new hashes | 22,000 |
 | M2. Mainnet and pilot (weeks 8–14) | Polygon PoS deployment, relayer, keeper and indexer live, pilot in one corridor | ≥ 12 completed jobs, ≥ 10 wallets, ≥ 360 USDC settled, all on chain | 8,000 |
 | M3. Reporting and reuse (weeks 14–20) | Public metrics dashboard, docs and demo, SDK examples, ERC-8183 feedback, final report | URLs and repository | 5,000 |
 
@@ -59,7 +59,7 @@ POL is converted to USDC within 7 days of each tranche to pay dollar-priced work
 
 ## Risks
 
-Funds stay in the contracts, and cash in and out goes through licensed partners. The contracts are audited before mainnet and capped at 1,000 USD per job. ERC-8183 is still a draft, so we track changes and send feedback. Adoption starts with one corridor and is measured in public.
+Funds stay in the contracts, and cash in and out goes through licensed partners. The contracts are audited before mainnet and capped at 1,000 USD per job (100 USD until the audit). ERC-8183 is still a draft, so we track changes and send feedback. Adoption starts with one corridor and is measured in public.
 
 ## Reporting
 
