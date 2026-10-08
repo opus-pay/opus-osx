@@ -39,7 +39,7 @@ Setup ran on 2026-10-08 (KST 07:00). Every hash is in `packages/contracts/deploy
 | Silent submission (finalize) | 4 | `Completed`: the keeper called `finalize` on 2026-10-08 08:18 KST | [`0xeef77db3…`](https://amoy.polygonscan.com/tx/0xeef77db320237b0cb64b164e80ce1757563ce9ee1d143a2ebe82af74796292b1) |
 | No submission (timeout) | 5 | `Rejected`: the keeper called `timeoutNoSubmission` with a tip | [`0x5ca01057…`](https://amoy.polygonscan.com/tx/0x5ca01057a799b8f545ed2b65af0f6fd2702919066d1d84777013c77a869c4b98) |
 | Gasless payment | 6 | `Completed` on 2026-10-08 10:14 KST: two zero-POL wallets signed every step and the relayer paid the gas | [`approve 0x1e8e19ee…`](https://amoy.polygonscan.com/tx/0x1e8e19ee8fdba150a3e2995662d09a21beb973da6ea5ffae28e75cb77e480efb), every hash in `amoy-live-results.json` |
-| Expiry refund and sweep | new job (second try) | Set up again on 2026-10-08 | `ACCEPTANCE_PHASE=finish` after it expires, about 26 hours later |
+| Expiry refund and sweep | 7 (second try) | `Funded` on 2026-10-08 10:26 KST; expires 2026-10-09 03:55 UTC (12:55 KST). No keeper may run until then | `ACCEPTANCE_PHASE=finish yarn acceptance:amoy` after expiry |
 
 Job 3 was the first try at the expiry refund. Its submit window had closed when the keeper ran for jobs 4 and 5, so the keeper timed it out too ([`0x3e37ef5f…`](https://amoy.polygonscan.com/tx/0x3e37ef5fee0281ab0aa74be1c3c2fd0b2d0edc9060d182ff7be479c5aeb61063)): the client got the budget back and the 0.20 USDC fee went to the operator, so `claimRefund` and `sweep` could not run. The submit window always ends before expiry, so the expiry refund only happens when no keeper acts on the job. The second try runs with every keeper stopped until the job expires.
 
