@@ -162,7 +162,7 @@ The client filled in the payment link form in the OPUS pay app and sent the link
 
 The USDC allowance for `fundWithPermit` is an off-chain permit signature, so it has no transaction of its own. The `submit` input carries job id 7 and the deliverable hash above, which is the keccak256 of `AmoyClientQuote.txt`. The whole run took three minutes. The client paid 0.0243955 POL in gas over five transactions and the provider 0.0022593 POL, each under one US cent at any POL price below USD 0.37.
 
-Known wallet display issue: the evaluator's `approve(address,uint256)` has the same function selector (`0x095ea7b3`) as the ERC-20 and ERC-721 `approve`. MetaMask therefore showed the client's approval as a token permission request. The call itself is correct, and the funds moved as shown above. Renaming the function is planned before mainnet, and the rename needs a new deployment.
+Known wallet display issue: the evaluator's `approve(address,uint256)` has the same function selector (`0x095ea7b3`) as the ERC-20 and ERC-721 `approve`. MetaMask therefore showed the client's approval as a token permission request. The call itself is correct, and the funds moved as shown above. Resolved: the function was renamed `approveJob` on 2026-10-03, and the second deployment (2026-10-08) carries the rename.
 
 ## Step 7. An arbiter decides a dispute
 
