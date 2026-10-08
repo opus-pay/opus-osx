@@ -18,7 +18,14 @@
             "id": "1"
         },
         "sweep": {
-            "hashes": {},
+            "hashes": {
+                "createJob": "0x39146e54e21930509fcb975c6f55624ebcf7729fe4875e405a43883fe2430de7",
+                "approveEvaluation": "0x9685ea03f7156eb6a252e504e3b9691da0ef32ae1dc3d9834e9cab611e168ffe",
+                "configure": "0xe83c3610659a4a879cf544bfcd95cc5ead2a6a3dadf19aa4953752e2c9a38e8a",
+                "quote": "0xf513ee7ce72fd6682d9bf2b90b0c9142dbcc865d91a884ee0446ceb6a4ee0808",
+                "approveBudget": "0x8e58bbfdbc1fc6b11c5d61b40984beb3ab2545d373309c66fa580a9fde58afdf",
+                "fund": "0x899208667c2bfd54b20eaa44290f6a36d5b6c21549abee0b13596ba9938a461b"
+            },
             "abandoned": [
                 {
                     "id": "2",
@@ -45,7 +52,9 @@
                         "timeoutNoSubmission": "0x3e37ef5fee0281ab0aa74be1c3c2fd0b2d0edc9060d182ff7be479c5aeb61063"
                     }
                 }
-            ]
+            ],
+            "id": "7",
+            "expiredAt": "1791518110"
         },
         "finalize": {
             "hashes": {
@@ -58,8 +67,7 @@
                 "submit": "0xb0d5c2aac9f43133abd133746a65cbfb29e95da342bdbabcc2abbd1514d60743",
                 "finalize": "0xeef77db320237b0cb64b164e80ce1757563ce9ee1d143a2ebe82af74796292b1"
             },
-            "id": "4",
-            "dueAt": "1791414161"
+            "id": "4"
         },
         "timeout": {
             "hashes": {
@@ -71,8 +79,7 @@
                 "fund": "0x144add430b5945691b315412a32e195ebcd67c5db1cb54f707b3f260e117139d",
                 "timeoutNoSubmission": "0x5ca01057a799b8f545ed2b65af0f6fd2702919066d1d84777013c77a869c4b98"
             },
-            "id": "5",
-            "dueAt": "1791414226"
+            "id": "5"
         }
     }
 }
