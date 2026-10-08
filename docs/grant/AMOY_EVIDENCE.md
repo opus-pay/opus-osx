@@ -223,6 +223,124 @@ The link used the default amount rule, "Client, before the review rules are set"
 
 The whole run took under three minutes. Gas was the same as in step 6: 0.0243955 POL for the client's five transactions and 0.0022593 POL for the provider's one, at 25 gwei. On-chain job 9, about 20 minutes earlier (01:42–01:43 UTC), was opened by the same link flow and stopped after `configure` when a public RPC endpoint failed a read. It was never funded, so no USDC moved, and it expires unused.
 
+## Second deployment (2026-10-08)
+
+The contracts listed under "second deployment" above were deployed on 2026-10-08 from the current source, after the 2026-10-03 security fixes. Every run below used them. Budgets are 1.00 USDC. The evaluation fee is 0.20 USDC (the cap is now 20% of the budget) and the keeper tip is 0.10 USDC. Gas was priced from the base fee: about 69 gwei while the base fee was about 31 gwei.
+
+| Flow | On-chain job | Ending | Where the USDC went |
+| :--- | :--- | :--- | :--- |
+| Client approves | 1 | `Completed` | 1.00 to the provider. No fee |
+| Silent submission, keeper finalizes | 4 | `Completed` | 1.00 to the provider. Fee: 0.10 tip to the keeper, 0.10 to the operator |
+| No submission, keeper times out | 5 | `Rejected` | 1.00 back to the client. Fee: 0.10 tip to the keeper, 0.10 to the operator |
+| Gasless payment through the relayer | 6 | `Completed` | 1.00 to the zero-POL provider. Both signing wallets still hold 0 POL |
+| Expiry refund and fee sweep, no keeper | 7 | `Funded`, expires 2026-10-09 03:55 UTC | Pending: `claimRefund` and `sweep` after expiry |
+| Dispute decided by an arbiter | — | Not run yet | — |
+
+Two attempts did not reach their ending. Both are kept:
+
+* **Job 2** was configured with the old 1.00 USDC fee. The 20% cap refuses that at `fund`, so the client rejected the job while it was `Open` and swept the fee back.
+* **Job 3** was the first expiry-refund try. When the keeper ran for jobs 4 and 5, job 3's submit window had also closed, so the keeper timed it out: the client got 1.00 back and the 0.20 fee went to the operator. The submit window always ends before expiry, so the client's own `claimRefund` happens only when no keeper acts. Job 7 repeats the flow with every keeper stopped.
+
+### Job 1. Client approves
+
+| Step | Signer | Transaction |
+| :--- | :--- | :--- |
+| `createJob` | Client (Ledger) | [`0x258bfc33c270a147405e264cfde28efa25cf9cd31c945d8b52d591a55706504c`](https://amoy.polygonscan.com/tx/0x258bfc33c270a147405e264cfde28efa25cf9cd31c945d8b52d591a55706504c) |
+| `configure` | Client (Ledger) | [`0xc3266b0f11323a913aebb1695f7b163324eaaf7c60dba8108e1a7a080ce2aaad`](https://amoy.polygonscan.com/tx/0xc3266b0f11323a913aebb1695f7b163324eaaf7c60dba8108e1a7a080ce2aaad) |
+| `quote` | Client (Ledger) | [`0xed2d9b978840ca3513d40fe98dc739bcd4bfad6b078b9901a8db99991cea765a`](https://amoy.polygonscan.com/tx/0xed2d9b978840ca3513d40fe98dc739bcd4bfad6b078b9901a8db99991cea765a) |
+| `approveBudget` | Client (Ledger) | [`0x1f1800c629e3c0d67cc9146d16ba5588e36299f5ddb850b67157f8e9e6750d6c`](https://amoy.polygonscan.com/tx/0x1f1800c629e3c0d67cc9146d16ba5588e36299f5ddb850b67157f8e9e6750d6c) |
+| `fund` | Client (Ledger) | [`0x7074d310f35c616c7242962a34a59c24d50b6a9f23fc79517e69742a69a1ab90`](https://amoy.polygonscan.com/tx/0x7074d310f35c616c7242962a34a59c24d50b6a9f23fc79517e69742a69a1ab90) |
+| `submit` | Provider (Ledger) | [`0x5c85a545060735fd29e30b4e6c8f79254dabcd6187a630f3e1d874e29699277a`](https://amoy.polygonscan.com/tx/0x5c85a545060735fd29e30b4e6c8f79254dabcd6187a630f3e1d874e29699277a) |
+| `approve` | Client (Ledger) | [`0xc152c3ed04b909f3d7c1506622b57966514d3c7721e637e10d27853c9d402b26`](https://amoy.polygonscan.com/tx/0xc152c3ed04b909f3d7c1506622b57966514d3c7721e637e10d27853c9d402b26) |
+
+### Job 4. A keeper completes a silent submission
+
+| Step | Signer | Transaction |
+| :--- | :--- | :--- |
+| `createJob` | Client (Ledger) | [`0xb8cd700841b694936470f7b62fc2d1af55d54b83e1df6001994e2ff77a4adf57`](https://amoy.polygonscan.com/tx/0xb8cd700841b694936470f7b62fc2d1af55d54b83e1df6001994e2ff77a4adf57) |
+| `approveEvaluation` | Client (Ledger) | [`0x90811a72a98b961b0e9c41e1893071d41b899916745bb595e4fce38b358675cc`](https://amoy.polygonscan.com/tx/0x90811a72a98b961b0e9c41e1893071d41b899916745bb595e4fce38b358675cc) |
+| `configure` | Client (Ledger) | [`0xfb1d5a462de1f23d07cf7e1dfa4235b6296073ab03e483e64a71628551331e7c`](https://amoy.polygonscan.com/tx/0xfb1d5a462de1f23d07cf7e1dfa4235b6296073ab03e483e64a71628551331e7c) |
+| `quote` | Client (Ledger) | [`0x8b0d6d354e3f021908940ed59106eb6d9e471ebdce329a74dd0b42c09b3858fe`](https://amoy.polygonscan.com/tx/0x8b0d6d354e3f021908940ed59106eb6d9e471ebdce329a74dd0b42c09b3858fe) |
+| `approveBudget` | Client (Ledger) | [`0x5b0087dc828ec4fa1dc8a6f2247165e65813fc17f64b528f4afcc98c35b1d105`](https://amoy.polygonscan.com/tx/0x5b0087dc828ec4fa1dc8a6f2247165e65813fc17f64b528f4afcc98c35b1d105) |
+| `fund` | Client (Ledger) | [`0xff60138949e7b2a2d2dd6aabad0992eaad99ba6e6da4a1f18f434d7d81acc338`](https://amoy.polygonscan.com/tx/0xff60138949e7b2a2d2dd6aabad0992eaad99ba6e6da4a1f18f434d7d81acc338) |
+| `submit` | Provider (Ledger) | [`0xb0d5c2aac9f43133abd133746a65cbfb29e95da342bdbabcc2abbd1514d60743`](https://amoy.polygonscan.com/tx/0xb0d5c2aac9f43133abd133746a65cbfb29e95da342bdbabcc2abbd1514d60743) |
+| `finalize` | Keeper | [`0xeef77db320237b0cb64b164e80ce1757563ce9ee1d143a2ebe82af74796292b1`](https://amoy.polygonscan.com/tx/0xeef77db320237b0cb64b164e80ce1757563ce9ee1d143a2ebe82af74796292b1) |
+
+### Job 5. A keeper rejects a job with no submission
+
+| Step | Signer | Transaction |
+| :--- | :--- | :--- |
+| `createJob` | Client (Ledger) | [`0x71f4caa6579d9d02f6d42aeca9f74a223631b7cd69065845d5352c7f4eaa8f8b`](https://amoy.polygonscan.com/tx/0x71f4caa6579d9d02f6d42aeca9f74a223631b7cd69065845d5352c7f4eaa8f8b) |
+| `approveEvaluation` | Client (Ledger) | [`0x0b5ec15bbf7b416d1466aff22f109222fe926ae1e3cae01928ea1a1269841e97`](https://amoy.polygonscan.com/tx/0x0b5ec15bbf7b416d1466aff22f109222fe926ae1e3cae01928ea1a1269841e97) |
+| `configure` | Client (Ledger) | [`0xe10a7a43dda65144b0dbf6b0d2b42b73f443ff00c390e5823df185ba2e6bb0c7`](https://amoy.polygonscan.com/tx/0xe10a7a43dda65144b0dbf6b0d2b42b73f443ff00c390e5823df185ba2e6bb0c7) |
+| `quote` | Client (Ledger) | [`0xa9c8e7f7712bbbd45434caa502cd9e37351eaa0fbde70bdd96dda66650cfac32`](https://amoy.polygonscan.com/tx/0xa9c8e7f7712bbbd45434caa502cd9e37351eaa0fbde70bdd96dda66650cfac32) |
+| `approveBudget` | Client (Ledger) | [`0xc725e4176079ea69e9b94574fab602920fc3466115b9edf2a21768b232d62b00`](https://amoy.polygonscan.com/tx/0xc725e4176079ea69e9b94574fab602920fc3466115b9edf2a21768b232d62b00) |
+| `fund` | Client (Ledger) | [`0x144add430b5945691b315412a32e195ebcd67c5db1cb54f707b3f260e117139d`](https://amoy.polygonscan.com/tx/0x144add430b5945691b315412a32e195ebcd67c5db1cb54f707b3f260e117139d) |
+| `timeoutNoSubmission` | Keeper | [`0x5ca01057a799b8f545ed2b65af0f6fd2702919066d1d84777013c77a869c4b98`](https://amoy.polygonscan.com/tx/0x5ca01057a799b8f545ed2b65af0f6fd2702919066d1d84777013c77a869c4b98) |
+
+### Job 6. Wallets with no POL finish a job through the relayer
+
+The relayer wallet [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) sent each transaction to the forwarder and paid the gas.
+
+| Step | Signer | Transaction |
+| :--- | :--- | :--- |
+| `createJob` | Zero-POL client, relayed | [`0x0fe2601a94429e6ec9f25e891b2827e1b1856cd22cbd452267e0dcf73f9ffd7a`](https://amoy.polygonscan.com/tx/0x0fe2601a94429e6ec9f25e891b2827e1b1856cd22cbd452267e0dcf73f9ffd7a) |
+| `configure` | Zero-POL client, relayed | [`0xb9981c5bdb8cff67261dfc58aa51fc51f291d18c076260bc8312a09b16fd2458`](https://amoy.polygonscan.com/tx/0xb9981c5bdb8cff67261dfc58aa51fc51f291d18c076260bc8312a09b16fd2458) |
+| `setBudget` | Zero-POL client, relayed | [`0x441ced4b8a89c0ca018a0c2f366b1fda6d78b9f049301678d639a1b93b504370`](https://amoy.polygonscan.com/tx/0x441ced4b8a89c0ca018a0c2f366b1fda6d78b9f049301678d639a1b93b504370) |
+| `fundWithPermit` | Zero-POL client, relayed | [`0xbc9ec7988c72e1481764f61e00fb8df82b9c278e13ef50d5acbcde58f51b997b`](https://amoy.polygonscan.com/tx/0xbc9ec7988c72e1481764f61e00fb8df82b9c278e13ef50d5acbcde58f51b997b) |
+| `submit` | Zero-POL provider, relayed | [`0x2a0abe982d55fa5d35eece46ef0296253792d6d945f1e67587f47b8e74ceb321`](https://amoy.polygonscan.com/tx/0x2a0abe982d55fa5d35eece46ef0296253792d6d945f1e67587f47b8e74ceb321) |
+| `approve` | Zero-POL client, relayed (`approveJob`) | [`0x1e8e19ee8fdba150a3e2995662d09a21beb973da6ea5ffae28e75cb77e480efb`](https://amoy.polygonscan.com/tx/0x1e8e19ee8fdba150a3e2995662d09a21beb973da6ea5ffae28e75cb77e480efb) |
+
+### Job 7. Expiry refund with no keeper (in progress)
+
+| Step | Signer | Transaction |
+| :--- | :--- | :--- |
+| `createJob` | Client (Ledger) | [`0x39146e54e21930509fcb975c6f55624ebcf7729fe4875e405a43883fe2430de7`](https://amoy.polygonscan.com/tx/0x39146e54e21930509fcb975c6f55624ebcf7729fe4875e405a43883fe2430de7) |
+| `approveEvaluation` | Client (Ledger) | [`0x9685ea03f7156eb6a252e504e3b9691da0ef32ae1dc3d9834e9cab611e168ffe`](https://amoy.polygonscan.com/tx/0x9685ea03f7156eb6a252e504e3b9691da0ef32ae1dc3d9834e9cab611e168ffe) |
+| `configure` | Client (Ledger) | [`0xe83c3610659a4a879cf544bfcd95cc5ead2a6a3dadf19aa4953752e2c9a38e8a`](https://amoy.polygonscan.com/tx/0xe83c3610659a4a879cf544bfcd95cc5ead2a6a3dadf19aa4953752e2c9a38e8a) |
+| `quote` | Client (Ledger) | [`0xf513ee7ce72fd6682d9bf2b90b0c9142dbcc865d91a884ee0446ceb6a4ee0808`](https://amoy.polygonscan.com/tx/0xf513ee7ce72fd6682d9bf2b90b0c9142dbcc865d91a884ee0446ceb6a4ee0808) |
+| `approveBudget` | Client (Ledger) | [`0x8e58bbfdbc1fc6b11c5d61b40984beb3ab2545d373309c66fa580a9fde58afdf`](https://amoy.polygonscan.com/tx/0x8e58bbfdbc1fc6b11c5d61b40984beb3ab2545d373309c66fa580a9fde58afdf) |
+| `fund` | Client (Ledger) | [`0x899208667c2bfd54b20eaa44290f6a36d5b6c21549abee0b13596ba9938a461b`](https://amoy.polygonscan.com/tx/0x899208667c2bfd54b20eaa44290f6a36d5b6c21549abee0b13596ba9938a461b) |
+
+### Job 2. Configured with the old fee, then rejected and swept
+
+| Step | Signer | Transaction |
+| :--- | :--- | :--- |
+| `createJob` | Client (Ledger) | [`0x3085ddc778ae4fcc820587cce912c84d90016aa52978fce30acd126275b0891b`](https://amoy.polygonscan.com/tx/0x3085ddc778ae4fcc820587cce912c84d90016aa52978fce30acd126275b0891b) |
+| `approveEvaluation` | Client (Ledger) | [`0x637ae69099e650d9f9b730895fed67632a38745fd5468744de01127e673e4adb`](https://amoy.polygonscan.com/tx/0x637ae69099e650d9f9b730895fed67632a38745fd5468744de01127e673e4adb) |
+| `configure` | Client (Ledger) | [`0x02702cabc3fafc0253d7868f80afd6fa56ced372dbbd8dd68cf1b56d284b8d65`](https://amoy.polygonscan.com/tx/0x02702cabc3fafc0253d7868f80afd6fa56ced372dbbd8dd68cf1b56d284b8d65) |
+| `quote` | Client (Ledger) | [`0x7e9b425924c782d15512cd42214b7361f738093d22980107ea4d1943d9982e7c`](https://amoy.polygonscan.com/tx/0x7e9b425924c782d15512cd42214b7361f738093d22980107ea4d1943d9982e7c) |
+| `approveBudget` | Client (Ledger) | [`0xb24a1b31e03e7d9ede324f99fa874301214a7637147cc91547078fafc4e736e3`](https://amoy.polygonscan.com/tx/0xb24a1b31e03e7d9ede324f99fa874301214a7637147cc91547078fafc4e736e3) |
+| `reject` | Client (Ledger) | [`0x2ad752c4a26dd98d3e9bc76c17e7e619baf3e13dd0a097540379fc91586c2e2f`](https://amoy.polygonscan.com/tx/0x2ad752c4a26dd98d3e9bc76c17e7e619baf3e13dd0a097540379fc91586c2e2f) |
+| `sweep` | Client (Ledger) | [`0xd7b3d530ffda29579730116c8db9da56fd411a899aefe9fac7228bdf37f63582`](https://amoy.polygonscan.com/tx/0xd7b3d530ffda29579730116c8db9da56fd411a899aefe9fac7228bdf37f63582) |
+
+### Job 3. Timed out by the keeper before it expired
+
+| Step | Signer | Transaction |
+| :--- | :--- | :--- |
+| `createJob` | Client (Ledger) | [`0xc518d6d78e36aacf57fb0080b1c1d47924028caa763f2e899bdfd537c4e40c66`](https://amoy.polygonscan.com/tx/0xc518d6d78e36aacf57fb0080b1c1d47924028caa763f2e899bdfd537c4e40c66) |
+| `approveEvaluation` | Client (Ledger) | [`0x4252b68755724bc85059b553230ad2621ef3f4be2775f2c0189772f0635f4328`](https://amoy.polygonscan.com/tx/0x4252b68755724bc85059b553230ad2621ef3f4be2775f2c0189772f0635f4328) |
+| `configure` | Client (Ledger) | [`0x0015eabe0b0fb644ab89386df7f3ec8267c932c313fe9e379ce5c607e7d3d76c`](https://amoy.polygonscan.com/tx/0x0015eabe0b0fb644ab89386df7f3ec8267c932c313fe9e379ce5c607e7d3d76c) |
+| `quote` | Client (Ledger) | [`0x83125b20cbe9509ba92dfd4f6f777dbff68c8d1713d725d323afd68f79cd290f`](https://amoy.polygonscan.com/tx/0x83125b20cbe9509ba92dfd4f6f777dbff68c8d1713d725d323afd68f79cd290f) |
+| `approveBudget` | Client (Ledger) | [`0x10f643e1649d8f794e659d454927e54e7575b704cd1f51de71b6f1aa1e2c4de8`](https://amoy.polygonscan.com/tx/0x10f643e1649d8f794e659d454927e54e7575b704cd1f51de71b6f1aa1e2c4de8) |
+| `fund` | Client (Ledger) | [`0xb15e919f59a95b11737eab5be3df543909186514a4ed0b3b02be8edf3d9d63cc`](https://amoy.polygonscan.com/tx/0xb15e919f59a95b11737eab5be3df543909186514a4ed0b3b02be8edf3d9d63cc) |
+| `timeoutNoSubmission` | Keeper | [`0x3e37ef5fee0281ab0aa74be1c3c2fd0b2d0edc9060d182ff7be479c5aeb61063`](https://amoy.polygonscan.com/tx/0x3e37ef5fee0281ab0aa74be1c3c2fd0b2d0edc9060d182ff7be479c5aeb61063) |
+
+### Balances after these runs
+
+Read on 2026-10-08 at 10:26 KST with `yarn balances:amoy`.
+
+| Wallet | Address | POL | USDC |
+| :--- | :--- | ---: | ---: |
+| Client (Ledger) | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) | 0.1360 | 17.20 |
+| Provider (Ledger) | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) | 0.2824 | 18.90 |
+| Arbiter (Ledger #2) | [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644) | 0.0897 | 0.10 |
+| Keeper | [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc) | 0.0752 | 1.20 |
+| Relayer | [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) | 0.2164 | 0.00 |
+| Zero-POL client | [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonscan.com/address/0xF304B61b7889B3B11D9F074e049Ee022AcC8830e) | 0 | 18.00 |
+| Zero-POL provider | [`0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3`](https://amoy.polygonscan.com/address/0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3) | 0 | 2.00 |
+| Deployer | [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba) | 0.0137 | 0.00 |
+
 ## Not yet recorded on Amoy
 
 One variant is still open. Its hashes will be added here after it is sent.

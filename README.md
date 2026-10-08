@@ -11,7 +11,7 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 * No protocol fee; evaluators are paid the same whatever the outcome
 * No token at launch
 
-> Status: the contracts are deployed and verified on Polygon Amoy, and eight test jobs have run there end to end, including a dispute decided by an arbiter ([evidence](./docs/grant/AMOY_EVIDENCE.md)). The SDK, keeper, relayer and payment-link app were used in those runs, and the indexer is written. Not yet audited; no mainnet deployment. ERC-8183 is a draft standard.
+> Status: the contracts are deployed and verified on Polygon Amoy. On the first deployment eight test jobs ran end to end, including a dispute decided by an arbiter. The second deployment (2026-10-08, with the 2026-10-03 security fixes) has passed approval, keeper finalize and timeout, and a gasless run; the expiry refund and the dispute are in progress ([evidence](./docs/grant/AMOY_EVIDENCE.md)). The SDK, keeper, relayer and payment-link app were used in those runs, and the indexer is written. Not yet audited; no mainnet deployment. ERC-8183 is a draft standard.
 
 ## Amoy (issue #22)
 
