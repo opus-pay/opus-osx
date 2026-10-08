@@ -11,7 +11,7 @@ import {
 } from "viem";
 
 import { coreAbi, erc20Abi, evaluatorAbi } from "./abi";
-import { AMOY_MIN_GAS_PRICE } from "./constants";
+import { amoyGasPrice } from "./gas";
 import { descriptionOf } from "./description";
 import { decodeOpusError } from "./errors";
 import { jobIdFromReceipt } from "./events";
@@ -444,6 +444,7 @@ export class Opus {
     ): Promise<Hash> {
         const wallet = this.requireWallet();
         try {
+            const gasPrice = this.addresses.chainId === 80002 ? await amoyGasPrice(this.publicClient) : undefined;
             return await wallet.writeContract({
                 address,
                 abi,
@@ -451,7 +452,7 @@ export class Opus {
                 args,
                 account: wallet.account,
                 chain: wallet.chain,
-                ...(this.addresses.chainId === 80002 ? { gasPrice: AMOY_MIN_GAS_PRICE } : {}),
+                ...(gasPrice === undefined ? {} : { gasPrice }),
             } as never);
         } catch (error) {
             throw new Error(decodeOpusError(error));

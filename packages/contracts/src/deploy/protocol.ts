@@ -36,7 +36,7 @@ export function addressesPath(network: string): string {
 export function writeAddressesJson(network: string, addresses: ProtocolAddresses) {
     const file = addressesPath(network);
     fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, `${JSON.stringify(addresses, null, 2)}\n`, "utf-8");
+    fs.writeFileSync(file, `${JSON.stringify(addresses, null, 4)}\n`, "utf-8");
 }
 
 async function attachOrDeploy(

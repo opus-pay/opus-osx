@@ -180,7 +180,7 @@ describe("SDK on a local Hardhat node (#23)", () => {
         }
         const amoy = loadAddresses(require("fs").readFileSync("deploy/amoy/addresses.json", "utf8"));
         expect(amoy.chainId).to.equal(80002);
-        expect(amoy.instance).to.equal(getAddress("0x7632d054BfE635A1f0394fbcd74678B6567213Fd"));
+        expect(amoy.instance).to.equal(getAddress("0x4D54D2BD919024742070c63878903483d456d3fC"));
     });
 
     it("approves a funded job and returns the evaluation fee after expiry", async () => {
