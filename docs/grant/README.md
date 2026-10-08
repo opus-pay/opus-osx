@@ -21,7 +21,7 @@ These files support OPUS's funding request to the Polygon Community Treasury. OP
    # 0x52baa0e5f62955a6f6412081035036f5a0bd99d235d0c3ebd20ff30f6a1dd770
    ```
 
-4. **The tests run.** `yarn contracts test` runs the 146 contract test cases, all passing at commit `36369b5f`.
+4. **The tests run.** `yarn contracts test` runs the 153 contract test cases, all passing in CI at commit `c1504bf8`.
 
 ## Before submitting
 

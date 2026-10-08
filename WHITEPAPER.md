@@ -242,7 +242,7 @@ Submission
 * **The provider may withdraw at any time after funding**, including after submitting and during a dispute. The job is rejected and the client is refunded.
 * If a party concedes during a dispute, the arbiter or Court is paid from the conceding party's deposit, as if it had lost.
 
-ERC-8183 lets only the evaluator call `complete` and `reject`. Every OPUS evaluator therefore exposes `approve` (client) and `withdrawAsProvider` (provider) and forwards them to the core. A submission is still required before completion, because the standard completes only submitted jobs.
+ERC-8183 lets only the evaluator call `complete` and `reject`. Every OPUS evaluator therefore exposes `approveJob` (client; named so wallets do not mistake it for a token `approve`) and `withdrawAsProvider` (provider) and forwards them to the core. A submission is still required before completion, because the standard completes only submitted jobs.
 
 ### 7.4 `OptimisticEvaluator` configuration
 
@@ -406,7 +406,7 @@ OPUS intends to submit items 1 and 2 as feedback to the ERC-8183 discussion.
 
 ### 10.2 Budget range
 
-Every job's budget must be **at least 1 USD and at most 1,000 USD** (in USDC or USDT). The range is a constant in the core and applies from deployment; no one can change it. A different range requires a new deployment that users choose to move to.
+Every job's budget must be **at least 1 USD and at most 1,000 USD** (in USDC or USDT). The range is a constant in the core and applies from deployment; no one can change it. Until the external audit the deployed code caps each job at 100 USD; the deployment after the audit raises it to 1,000 USD. A different range requires a new deployment that users choose to move to.
 
 * **Why a maximum.** With no emergency stop, a bug or a wrong ruling can cost at most 1,000 USD per job. It keeps OPUS focused on the small, frequent work where agents trade most, keeps the stake an evaluator needs small, and keeps the regulatory profile of each payment small.
 * **Why a minimum.** Below 1 USD, gas and evaluation costs outweigh the payment, and dust jobs could be used to spam evaluators.
