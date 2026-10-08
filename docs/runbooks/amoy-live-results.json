@@ -164,6 +164,46 @@
           "url": "https://amoy.polygonscan.com/tx/0x144add430b5945691b315412a32e195ebcd67c5db1cb54f707b3f260e117139d"
         }
       ]
+    },
+    "gasless": {
+      "issues": [
+        "#25",
+        "#12"
+      ],
+      "jobId": "6",
+      "status": "Completed",
+      "transactions": [
+        {
+          "name": "createJob",
+          "hash": "0x0fe2601a94429e6ec9f25e891b2827e1b1856cd22cbd452267e0dcf73f9ffd7a",
+          "url": "https://amoy.polygonscan.com/tx/0x0fe2601a94429e6ec9f25e891b2827e1b1856cd22cbd452267e0dcf73f9ffd7a"
+        },
+        {
+          "name": "configure",
+          "hash": "0xb9981c5bdb8cff67261dfc58aa51fc51f291d18c076260bc8312a09b16fd2458",
+          "url": "https://amoy.polygonscan.com/tx/0xb9981c5bdb8cff67261dfc58aa51fc51f291d18c076260bc8312a09b16fd2458"
+        },
+        {
+          "name": "setBudget",
+          "hash": "0x441ced4b8a89c0ca018a0c2f366b1fda6d78b9f049301678d639a1b93b504370",
+          "url": "https://amoy.polygonscan.com/tx/0x441ced4b8a89c0ca018a0c2f366b1fda6d78b9f049301678d639a1b93b504370"
+        },
+        {
+          "name": "fundWithPermit",
+          "hash": "0xbc9ec7988c72e1481764f61e00fb8df82b9c278e13ef50d5acbcde58f51b997b",
+          "url": "https://amoy.polygonscan.com/tx/0xbc9ec7988c72e1481764f61e00fb8df82b9c278e13ef50d5acbcde58f51b997b"
+        },
+        {
+          "name": "submit",
+          "hash": "0x2a0abe982d55fa5d35eece46ef0296253792d6d945f1e67587f47b8e74ceb321",
+          "url": "https://amoy.polygonscan.com/tx/0x2a0abe982d55fa5d35eece46ef0296253792d6d945f1e67587f47b8e74ceb321"
+        },
+        {
+          "name": "approve",
+          "hash": "0x1e8e19ee8fdba150a3e2995662d09a21beb973da6ea5ffae28e75cb77e480efb",
+          "url": "https://amoy.polygonscan.com/tx/0x1e8e19ee8fdba150a3e2995662d09a21beb973da6ea5ffae28e75cb77e480efb"
+        }
+      ]
     }
   }
 }
