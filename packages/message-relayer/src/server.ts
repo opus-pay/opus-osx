@@ -114,6 +114,18 @@ export function createMessageRelayerServer(relayer: MessageRelayer, store: Store
                             value: relayer.stats.registrations,
                         },
                         {
+                            name: "opus_message_relayer_devices_moved_total",
+                            help: "Phones that moved from one wallet to another (a wallet switch, or a takeover).",
+                            type: "counter",
+                            value: relayer.stats.devicesMoved,
+                        },
+                        {
+                            name: "opus_message_relayer_move_notices_total",
+                            help: "Notices sent to a phone because another wallet took it over.",
+                            type: "counter",
+                            value: relayer.stats.moveNotices,
+                        },
+                        {
                             name: "opus_message_relayer_devices_forgotten_total",
                             help: "Dead phones removed.",
                             type: "counter",
