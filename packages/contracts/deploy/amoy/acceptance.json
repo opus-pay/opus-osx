@@ -24,7 +24,9 @@
                 "configure": "0xe83c3610659a4a879cf544bfcd95cc5ead2a6a3dadf19aa4953752e2c9a38e8a",
                 "quote": "0xf513ee7ce72fd6682d9bf2b90b0c9142dbcc865d91a884ee0446ceb6a4ee0808",
                 "approveBudget": "0x8e58bbfdbc1fc6b11c5d61b40984beb3ab2545d373309c66fa580a9fde58afdf",
-                "fund": "0x899208667c2bfd54b20eaa44290f6a36d5b6c21549abee0b13596ba9938a461b"
+                "fund": "0x899208667c2bfd54b20eaa44290f6a36d5b6c21549abee0b13596ba9938a461b",
+                "claimRefund": "0xec2b4f26b7986e3d6cf1a25e4158cac18a77f26fed6f4d131868ee9d52d8eccf",
+                "sweep": "0x52cf37054b34ee4a6da431551204a2587e5cd12b0b89b69e989f3ea15402bcf4"
             },
             "abandoned": [
                 {
