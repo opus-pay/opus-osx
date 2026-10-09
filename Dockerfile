@@ -1,4 +1,4 @@
-# One image per service: build with --target keeper, relayer or indexer.
+# One image per service: build with --target keeper, relayer, indexer or message-relayer.
 #   docker build --target relayer -t opus-relayer .
 # Each image holds only that service, the SDK it needs and production dependencies, and runs compiled
 # JavaScript (no ts-node). Keys and addresses are not copied in; they come from the environment and mounts.
@@ -9,7 +9,7 @@ FROM node:${NODE_VERSION}-bookworm-slim AS base
 WORKDIR /app
 RUN corepack enable && corepack prepare yarn@1.22.19 --activate
 
-# ---- build: compile the SDK and the three services. The payment app and the contract toolchain stay out so the
+# ---- build: compile the SDK and the four services. The payment app and the contract toolchain stay out so the
 # install does not fetch Next or Hardhat.
 FROM base AS build
 COPY package.json yarn.lock ./
@@ -17,16 +17,19 @@ COPY packages/sdk/package.json packages/sdk/
 COPY packages/keeper/package.json packages/keeper/
 COPY packages/relayer/package.json packages/relayer/
 COPY packages/indexer/package.json packages/indexer/
-RUN node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); p.workspaces={packages:['packages/sdk','packages/keeper','packages/relayer','packages/indexer']}; fs.writeFileSync('package.json', JSON.stringify(p,null,4)+'\n');" \
+COPY packages/message-relayer/package.json packages/message-relayer/
+RUN node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); p.workspaces={packages:['packages/sdk','packages/keeper','packages/relayer','packages/indexer','packages/message-relayer']}; fs.writeFileSync('package.json', JSON.stringify(p,null,4)+'\n');" \
     && yarn install --frozen-lockfile --network-timeout 600000
 COPY packages/sdk packages/sdk
 COPY packages/keeper packages/keeper
 COPY packages/relayer packages/relayer
 COPY packages/indexer packages/indexer
+COPY packages/message-relayer packages/message-relayer
 RUN yarn workspace @opus/sdk build \
     && yarn workspace @opus/keeper build \
     && yarn workspace @opus/relayer build \
-    && yarn workspace @opus/indexer build
+    && yarn workspace @opus/indexer build \
+    && yarn workspace @opus/message-relayer build
 
 # ---- production dependencies, one install per service so each image carries only what it needs.
 FROM base AS deps-keeper
@@ -52,6 +55,14 @@ COPY packages/indexer/package.json packages/indexer/
 RUN node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); p.workspaces={packages:['packages/sdk','packages/indexer']}; fs.writeFileSync('package.json', JSON.stringify(p,null,4)+'\n');" \
     && yarn install --frozen-lockfile --production --network-timeout 600000 \
     && mkdir -p packages/indexer/node_modules
+
+FROM base AS deps-message-relayer
+COPY package.json yarn.lock ./
+COPY packages/sdk/package.json packages/sdk/
+COPY packages/message-relayer/package.json packages/message-relayer/
+RUN node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); p.workspaces={packages:['packages/sdk','packages/message-relayer']}; fs.writeFileSync('package.json', JSON.stringify(p,null,4)+'\n');" \
+    && yarn install --frozen-lockfile --production --network-timeout 600000 \
+    && mkdir -p packages/message-relayer/node_modules
 
 # ---- keeper: calls deadline handling and collects tips. No inbound traffic except the optional health check.
 FROM node:${NODE_VERSION}-bookworm-slim AS keeper
@@ -103,4 +114,23 @@ VOLUME ["/data"]
 USER node
 EXPOSE 8788
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.INDEXER_PORT||'8788')+'/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+CMD ["node", "dist/cli.js"]
+
+# ---- message-relayer: push relay for the wallet app. Holds the Expo key and the wallet-to-device table (SQLite in /data).
+FROM node:${NODE_VERSION}-bookworm-slim AS message-relayer
+ENV NODE_ENV=production \
+    MESSAGE_RELAYER_HOST=0.0.0.0 \
+    MESSAGE_RELAYER_DB=/data/message-relayer.db
+WORKDIR /app/packages/message-relayer
+COPY --from=deps-message-relayer /app/node_modules /app/node_modules
+COPY --from=deps-message-relayer /app/packages/message-relayer/node_modules ./node_modules
+COPY --from=build /app/packages/sdk/package.json /app/packages/sdk/package.json
+COPY --from=build /app/packages/sdk/dist /app/packages/sdk/dist
+COPY --from=build /app/packages/message-relayer/package.json ./package.json
+COPY --from=build /app/packages/message-relayer/dist ./dist
+RUN mkdir -p /data && chown node:node /data
+VOLUME ["/data"]
+USER node
+EXPOSE 8788
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.MESSAGE_RELAYER_PORT||'8788')+'/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 CMD ["node", "dist/cli.js"]
