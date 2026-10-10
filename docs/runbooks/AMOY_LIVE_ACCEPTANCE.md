@@ -48,11 +48,11 @@ What the scripts needed for the second deployment, so a later run does not hit t
 
 ### Balances
 
-Read on 2026-10-08 at 10:26 KST with `yarn balances:amoy`.
+Read on 2026-10-10 with `yarn balances:amoy`, after job 7 ended. The client's USDC rose from 17.20 to 18.40: the 1.00 budget from `claimRefund` and the 0.20 fee from `sweep`. The client and the deployer held more POL than before (topped up); the relayer spent POL on the gasless run.
 
 | Wallet | Address | POL | USDC |
 | :--- | :--- | ---: | ---: |
-| Client (Ledger) | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) | 0.1360 | 17.20 |
+| Client (Ledger) | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) | 0.2291 | 18.40 |
 | Provider (Ledger) | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) | 0.2824 | 18.90 |
 | Arbiter (Ledger #2) | [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644) | 0.0897 | 0.10 |
 | Keeper | [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc) | 0.0752 | 1.20 |
