@@ -234,7 +234,7 @@ The contracts listed under "second deployment" above were deployed on 2026-10-08
 | No submission, keeper times out | 5 | `Rejected` | 1.00 back to the client. Fee: 0.10 tip to the keeper, 0.10 to the operator |
 | Gasless payment through the relayer | 6 | `Completed` | 1.00 to the zero-POL provider. Both signing wallets still hold 0 POL |
 | Expiry refund and fee sweep, no keeper | 7 | `Expired` | 1.00 back to the client by `claimRefund`. The unused 0.20 fee swept back to the client. The keeper did not act |
-| Dispute decided by an arbiter | — | Not run yet | — |
+| Dispute decided by an arbiter | 8 | `Rejected` | 1.00 back to the client. Deposits: the client's 0.10 back to the client, the provider's 0.10 to the arbiter |
 
 Two attempts did not reach their ending. Both are kept:
 
@@ -303,6 +303,24 @@ The relayer wallet [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.p
 | `fund` | Client (Ledger) | [`0x899208667c2bfd54b20eaa44290f6a36d5b6c21549abee0b13596ba9938a461b`](https://amoy.polygonscan.com/tx/0x899208667c2bfd54b20eaa44290f6a36d5b6c21549abee0b13596ba9938a461b) |
 | `claimRefund` | Client (Ledger), after expiry | [`0xec2b4f26b7986e3d6cf1a25e4158cac18a77f26fed6f4d131868ee9d52d8eccf`](https://amoy.polygonscan.com/tx/0xec2b4f26b7986e3d6cf1a25e4158cac18a77f26fed6f4d131868ee9d52d8eccf) |
 | `sweep` | Client (Ledger) | [`0x52cf37054b34ee4a6da431551204a2587e5cd12b0b89b69e989f3ea15402bcf4`](https://amoy.polygonscan.com/tx/0x52cf37054b34ee4a6da431551204a2587e5cd12b0b89b69e989f3ea15402bcf4) |
+
+### Job 8. An arbiter decides a dispute
+
+The job used `presetPersonToAny`: no evaluation fee, a 0.10 USDC dispute deposit from each side, and an arbiter that is neither the client nor the provider. The client's deposit was taken at `configure`. After the provider submitted, the client objected and the provider posted its deposit, which sent the case to the arbiter. The arbiter ruled for the client. The run was sent by `packages/contracts/scripts/amoyDispute.ts` on 2026-10-10 and took about two minutes. Every step was signed by a Ledger wallet and no relayer was used. After it, the script printed 18.4 USDC for the client, 18.8 for the provider and 0.2 for the arbiter: the client lost nothing, the provider lost its 0.10 deposit, and the arbiter gained it.
+
+| Step | Signer | Transaction |
+| :--- | :--- | :--- |
+| `createJob` | Client (Ledger) | [`0x32a17733de5ff62ab11767f339e17990ec25dc0bccf7049a572e06fc537d57ae`](https://amoy.polygonscan.com/tx/0x32a17733de5ff62ab11767f339e17990ec25dc0bccf7049a572e06fc537d57ae) |
+| `setBudget` | Client (Ledger) | [`0x115dcf8546b4af94ba70282b026a1f6d39fb165602d42a8427a44fca58b8c514`](https://amoy.polygonscan.com/tx/0x115dcf8546b4af94ba70282b026a1f6d39fb165602d42a8427a44fca58b8c514) |
+| `approveDeposit` | Client (Ledger) | [`0xe60fbe7315fe067e1c73ac48a96f5264b90d0bbf9188b8ee581919925d96dbf0`](https://amoy.polygonscan.com/tx/0xe60fbe7315fe067e1c73ac48a96f5264b90d0bbf9188b8ee581919925d96dbf0) |
+| `configure` | Client (Ledger) | [`0x97f469ad155b58a902ac9ebb1a405c9e5dbf34eb00965937e9aae724abde0305`](https://amoy.polygonscan.com/tx/0x97f469ad155b58a902ac9ebb1a405c9e5dbf34eb00965937e9aae724abde0305) |
+| `approveBudget` | Client (Ledger) | [`0x09172c069617e93ed8897702ed160d3718a81f923c7874eaacc1eeaa51fc70aa`](https://amoy.polygonscan.com/tx/0x09172c069617e93ed8897702ed160d3718a81f923c7874eaacc1eeaa51fc70aa) |
+| `fund` | Client (Ledger) | [`0x64b331581dad1c324d453126a4d3c7ea5a4da8c6b18f3e1226b6b470965df616`](https://amoy.polygonscan.com/tx/0x64b331581dad1c324d453126a4d3c7ea5a4da8c6b18f3e1226b6b470965df616) |
+| `submit` | Provider (Ledger) | [`0xdde9d3bb991cea61578940eadced178fc6dd80df28bf02b7574c50a1a7d613b4`](https://amoy.polygonscan.com/tx/0xdde9d3bb991cea61578940eadced178fc6dd80df28bf02b7574c50a1a7d613b4) |
+| `object` | Client (Ledger) | [`0x4ac8c98b16da6d73a5070a1855523a54e795d50191de4e75e8d27e9b16e212f5`](https://amoy.polygonscan.com/tx/0x4ac8c98b16da6d73a5070a1855523a54e795d50191de4e75e8d27e9b16e212f5) |
+| `approveDeposit (provider)` | Provider (Ledger) | [`0x25f137da1e81e30f8059969ce33b4701c9fc469fa60b7c47785bbead165ea42d`](https://amoy.polygonscan.com/tx/0x25f137da1e81e30f8059969ce33b4701c9fc469fa60b7c47785bbead165ea42d) |
+| `postDeposit` | Provider (Ledger) | [`0xdd729455e91467d4d68b158801967d437b9e14e95b024bdf31b3894cb75e829a`](https://amoy.polygonscan.com/tx/0xdd729455e91467d4d68b158801967d437b9e14e95b024bdf31b3894cb75e829a) |
+| `rule` | Arbiter (Ledger #2) | [`0x5baa0809785a5a62f02f659eb9daf1432a8f214d074827b89317e40931d8095a`](https://amoy.polygonscan.com/tx/0x5baa0809785a5a62f02f659eb9daf1432a8f214d074827b89317e40931d8095a) |
 
 ### Job 2. Configured with the old fee, then rejected and swept
 
