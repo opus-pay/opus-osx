@@ -338,10 +338,10 @@ Read on 2026-10-10 with `yarn balances:amoy`, after job 7 ended. The client's US
 | Provider (Ledger) | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) | 0.2824 | 18.90 |
 | Arbiter (Ledger #2) | [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644) | 0.0897 | 0.10 |
 | Keeper | [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc) | 0.0752 | 1.20 |
-| Relayer | [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) | 0.2164 | 0.00 |
+| Relayer | [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) | 0.1112 | 0.00 |
 | Zero-POL client | [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonscan.com/address/0xF304B61b7889B3B11D9F074e049Ee022AcC8830e) | 0 | 18.00 |
 | Zero-POL provider | [`0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3`](https://amoy.polygonscan.com/address/0xA84a2dC2Da35f79fF315F377Ae99b8ac3DcE87a3) | 0 | 2.00 |
-| Deployer | [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba) | 0.0137 | 0.00 |
+| Deployer | [`0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba`](https://amoy.polygonscan.com/address/0x88dDAc5963D578cb62Cf1e6515127d9485aa9Fba) | 0.0402 | 0.00 |
 
 ## Not yet recorded on Amoy
 
