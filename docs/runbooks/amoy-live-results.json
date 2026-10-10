@@ -224,6 +224,67 @@
           "url": "https://amoy.polygonscan.com/tx/0x1e8e19ee8fdba150a3e2995662d09a21beb973da6ea5ffae28e75cb77e480efb"
         }
       ]
+    },
+    "dispute": {
+      "issues": [],
+      "jobId": "8",
+      "transactions": [
+        {
+          "name": "createJob",
+          "hash": "0x32a17733de5ff62ab11767f339e17990ec25dc0bccf7049a572e06fc537d57ae",
+          "url": "https://amoy.polygonscan.com/tx/0x32a17733de5ff62ab11767f339e17990ec25dc0bccf7049a572e06fc537d57ae"
+        },
+        {
+          "name": "setBudget",
+          "hash": "0x115dcf8546b4af94ba70282b026a1f6d39fb165602d42a8427a44fca58b8c514",
+          "url": "https://amoy.polygonscan.com/tx/0x115dcf8546b4af94ba70282b026a1f6d39fb165602d42a8427a44fca58b8c514"
+        },
+        {
+          "name": "approveDeposit",
+          "hash": "0xe60fbe7315fe067e1c73ac48a96f5264b90d0bbf9188b8ee581919925d96dbf0",
+          "url": "https://amoy.polygonscan.com/tx/0xe60fbe7315fe067e1c73ac48a96f5264b90d0bbf9188b8ee581919925d96dbf0"
+        },
+        {
+          "name": "configure",
+          "hash": "0x97f469ad155b58a902ac9ebb1a405c9e5dbf34eb00965937e9aae724abde0305",
+          "url": "https://amoy.polygonscan.com/tx/0x97f469ad155b58a902ac9ebb1a405c9e5dbf34eb00965937e9aae724abde0305"
+        },
+        {
+          "name": "approveBudget",
+          "hash": "0x09172c069617e93ed8897702ed160d3718a81f923c7874eaacc1eeaa51fc70aa",
+          "url": "https://amoy.polygonscan.com/tx/0x09172c069617e93ed8897702ed160d3718a81f923c7874eaacc1eeaa51fc70aa"
+        },
+        {
+          "name": "fund",
+          "hash": "0x64b331581dad1c324d453126a4d3c7ea5a4da8c6b18f3e1226b6b470965df616",
+          "url": "https://amoy.polygonscan.com/tx/0x64b331581dad1c324d453126a4d3c7ea5a4da8c6b18f3e1226b6b470965df616"
+        },
+        {
+          "name": "submit",
+          "hash": "0xdde9d3bb991cea61578940eadced178fc6dd80df28bf02b7574c50a1a7d613b4",
+          "url": "https://amoy.polygonscan.com/tx/0xdde9d3bb991cea61578940eadced178fc6dd80df28bf02b7574c50a1a7d613b4"
+        },
+        {
+          "name": "object",
+          "hash": "0x4ac8c98b16da6d73a5070a1855523a54e795d50191de4e75e8d27e9b16e212f5",
+          "url": "https://amoy.polygonscan.com/tx/0x4ac8c98b16da6d73a5070a1855523a54e795d50191de4e75e8d27e9b16e212f5"
+        },
+        {
+          "name": "approveDeposit_provider",
+          "hash": "0x25f137da1e81e30f8059969ce33b4701c9fc469fa60b7c47785bbead165ea42d",
+          "url": "https://amoy.polygonscan.com/tx/0x25f137da1e81e30f8059969ce33b4701c9fc469fa60b7c47785bbead165ea42d"
+        },
+        {
+          "name": "postDeposit",
+          "hash": "0xdd729455e91467d4d68b158801967d437b9e14e95b024bdf31b3894cb75e829a",
+          "url": "https://amoy.polygonscan.com/tx/0xdd729455e91467d4d68b158801967d437b9e14e95b024bdf31b3894cb75e829a"
+        },
+        {
+          "name": "rule",
+          "hash": "0x5baa0809785a5a62f02f659eb9daf1432a8f214d074827b89317e40931d8095a",
+          "url": "https://amoy.polygonscan.com/tx/0x5baa0809785a5a62f02f659eb9daf1432a8f214d074827b89317e40931d8095a"
+        }
+      ]
     }
   }
 }

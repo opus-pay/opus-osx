@@ -40,7 +40,7 @@ Every transaction hash of these runs, with the signer of each step, is in `docs/
 | No submission (timeout) | 5 | `Rejected`. The keeper called `timeoutNoSubmission` and took a 0.10 tip | Done |
 | Gasless payment | 6 | `Completed` at 10:14 KST. Two zero-POL wallets signed; the relayer paid the gas | Done |
 | Expiry refund and sweep | 7 | `Expired`. Funded at 10:26 KST on 2026-10-08; the client ran `ACCEPTANCE_PHASE=finish yarn acceptance:amoy` after expiry (2026-10-09 03:55 UTC) with no keeper running | Done |
-| Dispute | — | Not run yet | `DISPUTE_ARBITER=0x31923881A21A28254b2330cd41084Cafe0a64644 yarn dispute:amoy` |
+| Dispute | 8 | `Rejected`. The arbiter ruled for the client on 2026-10-10. The client got the 1.00 budget and its 0.10 deposit back; the provider's 0.10 deposit went to the arbiter | Done |
 
 Job 2 was configured with the old 1.00 USDC fee, which the 20% cap refuses at `fund`; the client rejected it and swept the fee back. Job 3 was the first expiry-refund try; the keeper timed it out while running for jobs 4 and 5, because the submit window always closes before expiry. Both are kept under `abandoned` in the record.
 
