@@ -48,13 +48,13 @@ What the scripts needed for the second deployment, so a later run does not hit t
 
 ### Balances
 
-Read on 2026-10-10 with `yarn balances:amoy`, after job 7 ended. The client's USDC rose from 17.20 to 18.40: the 1.00 budget from `claimRefund` and the 0.20 fee from `sweep`. The client and the deployer held more POL than before (topped up); the relayer spent POL on the gasless run.
+Read on 2026-10-10 with `yarn balances:amoy`, after job 7 and the dispute (job 8) had ended. Since the 2026-10-08 reading the client's USDC rose from 17.20 to 18.40 (the 1.00 budget from `claimRefund` and the 0.20 fee from `sweep`; the dispute cost it nothing). The provider's USDC fell by its 0.10 deposit and the arbiter's rose by the same. The client and the deployer held more POL than before (topped up); the relayer spent POL on the gasless run.
 
 | Wallet | Address | POL | USDC |
 | :--- | :--- | ---: | ---: |
-| Client (Ledger) | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) | 0.2291 | 18.40 |
-| Provider (Ledger) | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) | 0.2824 | 18.90 |
-| Arbiter (Ledger #2) | [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644) | 0.0897 | 0.10 |
+| Client (Ledger) | [`0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0`](https://amoy.polygonscan.com/address/0x7b88b2324289d42C5972957eC09bfb9C7a7ECda0) | 0.1966 | 18.40 |
+| Provider (Ledger) | [`0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be`](https://amoy.polygonscan.com/address/0xC012a2ab8C2949eC870c0A923c2EE7120474F7Be) | 0.2724 | 18.80 |
+| Arbiter (Ledger #2) | [`0x31923881A21A28254b2330cd41084Cafe0a64644`](https://amoy.polygonscan.com/address/0x31923881A21A28254b2330cd41084Cafe0a64644) | 0.0765 | 0.20 |
 | Keeper | [`0x87775F236D38526f48F702EE36FD195c75882cBc`](https://amoy.polygonscan.com/address/0x87775F236D38526f48F702EE36FD195c75882cBc) | 0.0752 | 1.20 |
 | Relayer | [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.polygonscan.com/address/0x942fa17cf26b6b0CbEA6A11141007501fe064577) | 0.1112 | 0.00 |
 | Zero-POL client | [`0xF304B61b7889B3B11D9F074e049Ee022AcC8830e`](https://amoy.polygonscan.com/address/0xF304B61b7889B3B11D9F074e049Ee022AcC8830e) | 0 | 18.00 |
