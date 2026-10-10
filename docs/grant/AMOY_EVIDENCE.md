@@ -233,13 +233,13 @@ The contracts listed under "second deployment" above were deployed on 2026-10-08
 | Silent submission, keeper finalizes | 4 | `Completed` | 1.00 to the provider. Fee: 0.10 tip to the keeper, 0.10 to the operator |
 | No submission, keeper times out | 5 | `Rejected` | 1.00 back to the client. Fee: 0.10 tip to the keeper, 0.10 to the operator |
 | Gasless payment through the relayer | 6 | `Completed` | 1.00 to the zero-POL provider. Both signing wallets still hold 0 POL |
-| Expiry refund and fee sweep, no keeper | 7 | `Funded`, expires 2026-10-09 03:55 UTC | Pending: `claimRefund` and `sweep` after expiry |
+| Expiry refund and fee sweep, no keeper | 7 | `Expired` | 1.00 back to the client by `claimRefund`. The unused 0.20 fee swept back to the client. The keeper did not act |
 | Dispute decided by an arbiter | — | Not run yet | — |
 
 Two attempts did not reach their ending. Both are kept:
 
 * **Job 2** was configured with the old 1.00 USDC fee. The 20% cap refuses that at `fund`, so the client rejected the job while it was `Open` and swept the fee back.
-* **Job 3** was the first expiry-refund try. When the keeper ran for jobs 4 and 5, job 3's submit window had also closed, so the keeper timed it out: the client got 1.00 back and the 0.20 fee went to the operator. The submit window always ends before expiry, so the client's own `claimRefund` happens only when no keeper acts. Job 7 repeats the flow with every keeper stopped.
+* **Job 3** was the first expiry-refund try. When the keeper ran for jobs 4 and 5, job 3's submit window had also closed, so the keeper timed it out: the client got 1.00 back and the 0.20 fee went to the operator. The submit window always ends before expiry, so the client's own `claimRefund` happens only when no keeper acts. Job 7 repeated the flow with every keeper stopped, and the client's own `claimRefund` and `sweep` ended it.
 
 ### Job 1. Client approves
 
@@ -291,7 +291,7 @@ The relayer wallet [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.p
 | `submit` | Zero-POL provider, relayed | [`0x2a0abe982d55fa5d35eece46ef0296253792d6d945f1e67587f47b8e74ceb321`](https://amoy.polygonscan.com/tx/0x2a0abe982d55fa5d35eece46ef0296253792d6d945f1e67587f47b8e74ceb321) |
 | `approve` | Zero-POL client, relayed (`approveJob`) | [`0x1e8e19ee8fdba150a3e2995662d09a21beb973da6ea5ffae28e75cb77e480efb`](https://amoy.polygonscan.com/tx/0x1e8e19ee8fdba150a3e2995662d09a21beb973da6ea5ffae28e75cb77e480efb) |
 
-### Job 7. Expiry refund with no keeper (in progress)
+### Job 7. Expiry refund with no keeper
 
 | Step | Signer | Transaction |
 | :--- | :--- | :--- |
@@ -301,6 +301,8 @@ The relayer wallet [`0x942fa17cf26b6b0CbEA6A11141007501fe064577`](https://amoy.p
 | `quote` | Client (Ledger) | [`0xf513ee7ce72fd6682d9bf2b90b0c9142dbcc865d91a884ee0446ceb6a4ee0808`](https://amoy.polygonscan.com/tx/0xf513ee7ce72fd6682d9bf2b90b0c9142dbcc865d91a884ee0446ceb6a4ee0808) |
 | `approveBudget` | Client (Ledger) | [`0x8e58bbfdbc1fc6b11c5d61b40984beb3ab2545d373309c66fa580a9fde58afdf`](https://amoy.polygonscan.com/tx/0x8e58bbfdbc1fc6b11c5d61b40984beb3ab2545d373309c66fa580a9fde58afdf) |
 | `fund` | Client (Ledger) | [`0x899208667c2bfd54b20eaa44290f6a36d5b6c21549abee0b13596ba9938a461b`](https://amoy.polygonscan.com/tx/0x899208667c2bfd54b20eaa44290f6a36d5b6c21549abee0b13596ba9938a461b) |
+| `claimRefund` | Client (Ledger), after expiry | [`0xec2b4f26b7986e3d6cf1a25e4158cac18a77f26fed6f4d131868ee9d52d8eccf`](https://amoy.polygonscan.com/tx/0xec2b4f26b7986e3d6cf1a25e4158cac18a77f26fed6f4d131868ee9d52d8eccf) |
+| `sweep` | Client (Ledger) | [`0x52cf37054b34ee4a6da431551204a2587e5cd12b0b89b69e989f3ea15402bcf4`](https://amoy.polygonscan.com/tx/0x52cf37054b34ee4a6da431551204a2587e5cd12b0b89b69e989f3ea15402bcf4) |
 
 ### Job 2. Configured with the old fee, then rejected and swept
 
