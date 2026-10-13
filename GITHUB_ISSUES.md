@@ -503,6 +503,7 @@ I-1 destinations · I-2 solvency · I-3 roles · I-4 liveness · I-5 fixed terms
   - 보증금 기한 알림은 분쟁 보증금이 있고 한쪽이 아직 내지 않았을 때 나간다. 그 기한을 놓치면 그 작업은 그 쪽의 패배다.
   - **추가 (2026-10-07):** SDK에 모바일 푸시 라이브러리(`packages/sdk/src/push.ts`, Expo 푸시)를 넣었다. 메시지 검사, 100개씩 전송과 재시도, 죽은 토큰 목록, 영수증 확인이 있고 메시지에 `{ app, path, payload }` 길을 담아 지갑 앱이 미니앱으로 나눠 준다. 사용법은 `docs/push.md`.
   - **추가 (2026-10-07):** 서비스가 Expo 키와 기기 토큰을 갖지 않도록 메시지 중계 서버(`packages/message-relayer`)를 만들었다. 서비스 키(미니앱 id에 묶임), 지갑 서명으로 기기 등록, 서비스별 끄기, 서비스·지갑별 한도, 영수증 정리, `/metrics`가 있고, SDK에 서비스용 클라이언트(`MessageRelayerClient`)와 서명 문구(`deviceMessage`)를 넣었다. 언어 조회(`/v1/languages`), 기기 확인(`status`)과 1년 삭제 규칙(마지막 푸시·확인 시각만 기록)을 넣었다. Docker와 monitoring 연결, opus-app의 서비스별 끄기 화면은 남았다.
+  - **없앰 (2026-10-11, 대표 결정):** 네이티브 앱을 만들지 않고 웹앱으로 쓰기로 해서, 위의 **Expo 푸시와 메시지 중계 서버(`packages/message-relayer`), SDK의 푸시 부품(`push.ts`, `message-relayer.ts`)을 모두 걷어 냈다.** 푸시는 중계할 필요가 없다. 각 미니앱이 자기 서버에서 표준 Web Push(VAPID)로 사용자의 브라우저에 직접 보낸다 (WayHand: `src/server/web-push.ts`). 휴대폰 홈 화면에 올린 웹앱이 서비스 워커로 받는다.
 
 #### [Issue #30] Completion-criteria helper
 * **Type:** `Feature` / **Priority:** `P1` / **Depends on:** #27

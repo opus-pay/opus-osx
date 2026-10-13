@@ -24,7 +24,6 @@
         "sdk": "yarn workspace @opus/sdk",
         "keeper": "yarn workspace @opus/keeper",
         "relayer": "yarn workspace @opus/relayer",
-        "message-relayer": "yarn workspace @opus/message-relayer",
         "indexer": "yarn workspace @opus/indexer",
         "pay": "yarn workspace @opus/pay"
     }
