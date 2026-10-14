@@ -120,6 +120,23 @@ Aderyn 0.6.8, run by the founder on 2026-10-14 on the contracts of this reposito
 
 Nothing here changes what Slither and the review above found. The two tools agree on the same places (the reentrancy paths, the low-level `transfer`), and in both the paths are guarded.
 
+## A second AI review (Gemini) and how we read it
+
+On 2026-10-14 the founder also had Gemini review the contracts. It is another AI review, **not an audit**, and its scenarios were read against the code here but **not reproduced with tests**. It reports 3 High, 3 Medium and 2 Low findings. It found nothing that was not already known, and no finding contradicts the fixes above. Its two main High findings are risks we list below, with a lower severity for the deployment we run:
+
+| ID | Reported | Our reading |
+| :--- | :--- | :--- |
+| SEC-01 A client's hook can block `complete`, then the client takes the refund after expiry | High | True in the contract: `claimRefund` calls no hook, so a hook that always reverts on `complete` blocks payment. It needs a hook chosen by the client that is **not** the OPUS review contract. In the OPUS flow the hook and evaluator are both the review contract (`_configure` requires `evaluator == hook == address(this)`), and it returns at once on `complete` and `reject`. The SDK `submit` refuses other hooks. The proposed fixes (ignore hook failures, make `claimRefund` call the hook) conflict with ERC-8183, where a hook may block an action and `claimRefund` is hook-free. **Handed to the auditors** |
+| SEC-02 `claimRefund` and a late escalation: dispute deadlines can pass `expiredAt` | High | True in the contract (`_scheduleDeadlines` starts at the later of the review end and the escalation). It needs nobody to call `finalize`, `rule`, `resolveByDefault` or `escalateOnSilence` for more than the one-day margin; all are callable by anyone, the party who loses by the delay has every reason to call, and a keeper runs. The default flow, which pays on silence, has the same root: a payout not triggered before expiry becomes a refund. This is known risk 1. Medium to low with a keeper. **Handed to the auditors** |
+| SEC-03 `KlerosArbiterAdapter`: a loser's deposit locks, `bind` has no authorisation | High | True, and out of scope: the adapter is `experimental/`, marked not for deployment, and excluded from the audit (`PRE_AUDIT_FREEZE.md`, D10). To be fixed before it is ever used |
+| SEC-04 Surplus Ether in `OpusForwarder` | Medium | Not applicable. See Aderyn H-1. `execute` requires `msg.value` to equal the request value, batches refund the rest, and there is no `receive`, so plain Ether is refused. An admin `sweepNative()` would break the no-admin rule |
+| SEC-05 `AfterProviderSetBudget` name and behaviour differ | Medium | True. It is known risk 3. The effect is small: the provider reads the budget before taking the job. Rename or document |
+| SEC-06 No support for DAI's own `permit` | Medium | Not applicable. USDC supports standard `permit`, DAI is not listed, and a failed `permit` falls back to an existing allowance |
+| SEC-07 Unused `factory` and `EVALUATOR_FEE_BP` | Low | Not unused. They are public views that the tests and the ERC-8183 conformance test read |
+| SEC-08 Aderyn items | Low | The same results as the Aderyn triage above |
+
+**Decision (2026-10-14).** The contracts are not changed before the audit for SEC-01 and SEC-02. A change (for example allowing a hook only if it is zero or the evaluator itself) would affect ERC-8183 conformance and would have to be made before the freeze; the risks are small for the OPUS flow, so both are handed to the auditors with their mitigations (the SDK check on hooks, and a running keeper). Anything the auditors ask for goes in with the fixes after the audit.
+
 ## Known risks that remain (by design or not fixable here)
 
 1. **`claimRefund` after expiry races the evaluator.** ERC-8183 makes `claimRefund` permissionless and hook-free after `expiredAt`. If nobody calls `finalize`, `rule` or `resolveByDefault` within the one-day margin, the client can take the refund. Run a keeper. A provider in confirmation mode should call `escalateOnSilence` promptly: a very late escalation can push deadlines past expiry.
