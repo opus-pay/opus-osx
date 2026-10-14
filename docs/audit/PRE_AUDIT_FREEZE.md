@@ -33,7 +33,7 @@ Items 1 and 2 were done on 2026-10-03, together with the fixes in [`SECURITY_REV
 
 1. **Rename the review contract's `approve(address,uint256)`.** Its selector `0x095ea7b3` is the same as ERC-20 `approve`, so wallets show the client's approval as a token permission. Pick a name such as `approveJob`, and update the SDK, keeper, pay app and tests.
 2. **MIT headers.** Change `SPDX-License-Identifier: BUSL-1.1` to `MIT` in every in-scope file.
-3. **Threat model and audit pack.** The static analysis results are in [`STATIC_ANALYSIS.md`](STATIC_ANALYSIS.md). Roles, money flows, trust assumptions, known issues and the ERC-8183 conformance map (`packages/contracts/docs/ERC8183_CONFORMANCE.md`).
+3. **Threat model and audit pack.** The static analysis results (Slither and Aderyn) are in [`SECURITY_REVIEW.md`](SECURITY_REVIEW.md). Roles, money flows, trust assumptions, known issues and the ERC-8183 conformance map (`packages/contracts/docs/ERC8183_CONFORMANCE.md`).
 4. **Freeze.** Tag the commit, for example `audit-v1`, and give the auditors that tag. Record the test count and coverage at that tag.
 
 ## Decided off chain, not part of the audit
