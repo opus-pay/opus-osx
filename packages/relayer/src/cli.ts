@@ -51,6 +51,8 @@ async function main(): Promise<void> {
         integrators: parseIntegrators(integratorsJson),
         blocked,
         maxGas: wei("RELAYER_MAX_GAS"),
+        maxPermitValue: wei("RELAYER_MAX_PERMIT_VALUE"),
+        maxPermitSeconds: number("RELAYER_MAX_PERMIT_SECONDS"),
         receiptTimeoutMs: number("RELAYER_RECEIPT_TIMEOUT_MS"),
         minBalanceWei: wei("RELAYER_MIN_BALANCE_WEI"),
         restoredBudgets: stateFile === undefined || stateFile === "" ? undefined : readBudgets(stateFile),

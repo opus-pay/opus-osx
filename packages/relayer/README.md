@@ -95,6 +95,39 @@ docker compose stop relayer
 
 그 밖의 상태: 본문이 64KB보다 크면 `413`. 가스 지갑이 바닥이면 `503` `The relayer is out of gas funds`. 트랜잭션은 보냈지만 `RELAYER_RECEIPT_TIMEOUT_MS`(기본 120초) 안에 블록에 들어가지 않으면 `504`와 `hash`를 줍니다. 나중에 들어갈 수 있으므로 가스 예산은 그대로 잡아 둡니다. `500`은 내부 사유를 응답에 싣지 않고 로그에만 남깁니다.
 
+## 서명 승인(permit) 전달: `POST /permit`
+
+USDC 같은 서명 승인(EIP-2612 `permit`)을 지원하는 토큰은 **승인**을 서명만으로 할 수 있고, `permit`은 누가 보내도 됩니다. 토큰은 전달자를 믿지 않아서 `approve`를 `/relay`로 보낼 수 없지만, 서명한 `permit`은 이 가스 지갑이 토큰에 직접 보낼 수 있습니다. 서명자는 POL 없이 에스크로에 USDC 사용을 승인합니다. 예: 의뢰인이 `object`(추가금을 가져감) 전에 승인.
+
+헤더와 연동사 규칙은 `/relay`와 같습니다.
+
+```json
+{
+    "integratorId": "errands",
+    "permit": {
+        "owner": "0x서명한 지갑",
+        "spender": "0x인스턴스, 팩토리 또는 평가자",
+        "value": "4000000",
+        "deadline": 1893456000,
+        "v": 27,
+        "r": "0x…",
+        "s": "0x…"
+    }
+}
+```
+
+성공은 `200` `{"hash":"0x…"}`입니다. 받는 곳은 주소 파일의 USDC 하나이고, `spender`는 주소 파일의 인스턴스·팩토리·평가자만 됩니다. 금액은 `RELAYER_MAX_PERMIT_VALUE`(기본 1,000 USDC, 토큰 단위)까지, 유효 시간은 지금부터 `RELAYER_MAX_PERMIT_SECONDS`(기본 3600)까지입니다. 토큰이 서명을 받아들이지 않으면(서명 오류, 이미 쓴 nonce) 가스를 잡기 전에 거절합니다. 연동사 예산·횟수·서명자 한도는 `/relay`와 같이 셉니다.
+
+| 조건                                    | `error`                                                 |
+| :-------------------------------------- | :------------------------------------------------------ |
+| `spender`가 알려진 OPUS 컨트랙트가 아님 | `The permit spender is not a known OPUS contract`       |
+| 금액이 0                                | `The permit opens nothing`                              |
+| 금액이 한도를 넘음                      | `The permit opens more than the relayer allows`         |
+| `deadline`이 지남                       | `The permit has expired`                                |
+| `deadline`이 너무 멂                    | `The permit stays valid longer than the relayer allows` |
+| 토큰이 서명을 거절함                    | `The token rejected the permit`                         |
+| 그 밖(연동사, 제재, 횟수, 예산, 본문)   | `/relay`와 같음                                         |
+
 ## 운영
 
 -   요청마다 한 줄 JSON 로그를 찍습니다 (`event`, 연동사 id, 서명자, 상태, 걸린 시간, 해시, 사유). 토큰과 키는 없습니다.
