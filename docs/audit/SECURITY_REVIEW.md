@@ -99,7 +99,20 @@ After the fixes Slither reports 38 results (39 before; the `erc20-interface` pai
 | timestamp | 14 | By design: review windows and deadlines are time-based |
 | missing-zero-check | 2 | Constructor arguments set by the factory or the deployer |
 | calls-loop | 1 | Factory constructor reads `decimals()` of each listed token, once |
-| return-bomb | 1 | The hook is chosen by the client for its own job, and is gas-limited |
+| return-bomb | 1 | The hook is chosen by the client for its own job, and is gas-limited. It ignores the hook's return data, so a hook that returns a very large payload could make that job's hooked calls run out of gas; the contracts are frozen, so this is left for the external auditor |
+
+**Re-run on 2026-10-14** (Slither 0.11.6, commit `df5e850`, `packages/contracts/slither.config.json`): the same 38 results (2 High, 15 Medium, 21 Low), each read again against the code. The two `arbitrary-send-erc20` results are in `OpusAgenticCommerce._fund` and `OptimisticEvaluator._pullDeposit`, and in both the money comes only from the caller (`_pullDeposit` is reached from `_postDeposit`, whose caller is the client or the provider, and from `_ensureClientDeposit`, which only `object` calls after it requires the client as caller). Every `reentrancy-no-eth` path starts at a `nonReentrant` entry point: `finalize`, `timeoutNoSubmission`, `resolveMissingDeposit`, `resolveByDefault`, `sweep`, and `complete` on the escrow.
+
+## Static analysis triage (Aderyn)
+
+To be added: the version, the date, the commit and the result of
+
+```bash
+cd packages/contracts
+aderyn . --src contracts --path-excludes mocks,experimental -o aderyn-report.md
+```
+
+with each finding read against the code, as for Slither above.
 
 ## Known risks that remain (by design or not fixable here)
 
