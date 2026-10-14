@@ -54,6 +54,7 @@ We state plainly that the AI-assisted review and the tools are **not** a substit
 ## 5. Known open points we hand to the auditors
 
 - **Hook return data.** `OpusAgenticCommerce._callHookWithSelector` caps the hook's gas but ignores its return data, so a hook returning a huge payload could make that job's hooked calls run out of gas. The hook is the client's choice for its own job. Left for the auditors to judge.
+- **Two points a second AI review raised**, both known and small for the OPUS flow: a client-chosen hook can block `complete` (the OPUS flow always uses the review contract as hook, and the SDK checks it), and `claimRefund` can race a very late escalation (a running keeper, and anyone can call `finalize`). A fix would touch ERC-8183 conformance, so we ask the auditors to judge them. Details: `docs/audit/SECURITY_REVIEW.md`.
 - **Risks that remain by design** are listed in `docs/audit/SECURITY_REVIEW.md` ("Known risks that remain"): for example `claimRefund` after expiry racing the evaluator unless a keeper runs, and the client's right to change terms before funding.
 - **Freeze not yet cut.** A few `PLACEHOLDER_` constants (platform fee ceiling, hook gas, job duration bounds) are settled and renamed before the audit tag is made. We will give the auditors that tag.
 
