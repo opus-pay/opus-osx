@@ -105,14 +105,20 @@ After the fixes Slither reports 38 results (39 before; the `erc20-interface` pai
 
 ## Static analysis triage (Aderyn)
 
-To be added: the version, the date, the commit and the result of
+Aderyn 0.6.8, run by the founder on 2026-10-14 on the contracts of this repository (10 files, 1,123 lines of code; `mocks/` and `experimental/` excluded). Aderyn needs OpenZeppelin inside its project folder: copy `packages/contracts/contracts` and `node_modules/@openzeppelin` to an empty folder, add `remappings.txt` with `@openzeppelin/=node_modules/@openzeppelin/`, then run `aderyn . --src contracts --path-excludes mocks,experimental -o aderyn-report.md`. It reports 2 High and 6 Low categories (the full report is not kept here). None is an open issue:
 
-```bash
-cd packages/contracts
-aderyn . --src contracts --path-excludes mocks,experimental -o aderyn-report.md
-```
+| Result | Count | Assessment |
+| :--- | :--- | :--- |
+| H-1 Contract locks Ether without a withdraw function (`OpusForwarder`) | 1 | False positive. `OpusForwarder` only inherits OpenZeppelin's `ERC2771Forwarder`, whose `payable` functions pass the value on to the target and require `msg.value` to equal the requests' value; unused value in a batch is refunded. The contract keeps no Ether and has no code of its own beyond the constructor |
+| H-2 State change after external call | 6 | Accepted. `OpusACPFactory` (2): the call is `decimals()` on a token the factory has listed itself, and a repeated instance for the same salt cannot be created (`InstanceExists`). `OptimisticEvaluator` `object`, `extendReview`, `sweep` (3): the call is `getJob` on the instance, which is a `view` (a static call cannot change state), and the entry points are `nonReentrant`. `OptimisticEvaluator.beforeAction(fund)` (1): the call is `getJobView`, also a `view`, and cases are stored per calling instance, so a fake instance only reaches its own cases (see C-1) |
+| L-1 Large numeric literal | 3 | Style. `300_000` and `10_000` are the hook gas limit and the basis-point base |
+| L-2 Literal instead of constant | 5 | Style. `6` and `18` (the two supported token decimals) and `1e18` |
+| L-3 State change without event (`beforeAction`, `afterAction`) | 2 | Accepted. The hooks only advance a case's phase after the instance has acted, and the instance emits the event for the action itself (`JobFunded`, `JobSubmitted`); the evaluator emits its own events for objections, extensions and rulings |
+| L-4 State variable could be immutable (`OpusACPFactory._stablecoins`) | 1 | False positive. A dynamic array cannot be `immutable` |
+| L-5 Unsafe ERC20 operation (`_pay` in both contracts) | 2 | By design. A plain `transfer` call whose success and return value are both checked; a failed payout is credited to `claimable` (I-1) so a token that blocks one address cannot lock the others. `SafeERC20` would revert instead. Same as `low-level-calls` in `SLITHER_BASELINE.md` |
+| L-6 Public function not used internally (`OpusACPFactory.instanceOf`) | 1 | Style. `external` would save a little gas; the contracts are frozen for the audit, so it is not changed |
 
-with each finding read against the code, as for Slither above.
+Nothing here changes what Slither and the review above found. The two tools agree on the same places (the reentrancy paths, the low-level `transfer`), and in both the paths are guarded.
 
 ## Known risks that remain (by design or not fixable here)
 
