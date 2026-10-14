@@ -40,6 +40,10 @@ Items 1 and 2 were done on 2026-10-03, together with the fixes in [`SECURITY_REV
 
 These are set per job by the SDK and the app, so they do not block the freeze: the evaluation fee and keeper tip (pilot: 0), the dispute deposit, and the default arbiter (D10).
 
+## Decided: not changed before the audit
+
+A second AI review (see `SECURITY_REVIEW.md`, "A second AI review (Gemini)") raised a hook that can block `complete` (SEC-01) and `claimRefund` racing a late escalation (SEC-02). Both are known risks, small for the OPUS flow, and a fix would touch ERC-8183 conformance. They are **not** changed before the freeze. The auditors are asked to judge them, with the SDK's hook check and a running keeper as the mitigations.
+
 ## After the audit
 
 Fix the findings, have the auditors re-check the fixes, publish the report, redeploy on Amoy, and rerun the eight recorded scenarios, including the dispute (`docs/grant/AMOY_EVIDENCE.md`).
