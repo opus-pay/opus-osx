@@ -2,10 +2,17 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 
 import { redactUrls } from "./redact";
 import type { ForwardRequest } from "@opus/sdk";
-import { getAddress, isAddress, type Address, type Hex } from "viem";
+import { getAddress, isAddress, type Address, type Hash, type Hex } from "viem";
 
 import { coins, METRICS_CONTENT_TYPE, renderMetrics, type Sample } from "./metrics";
-import { RelayPending, RelayRejected, RelayUnavailable, type RelayLog, type Relayer } from "./relayer";
+import {
+    RelayPending,
+    RelayRejected,
+    RelayUnavailable,
+    type PermitRequest,
+    type RelayLog,
+    type Relayer,
+} from "./relayer";
 
 /** Bodies larger than this are refused before they are read in full. A forward request is well under 2 KB. */
 export const MAX_BODY_BYTES = 64_000;
@@ -73,6 +80,41 @@ export function parseForwardRequest(value: unknown): ForwardRequest {
     };
 }
 
+/** Turns the JSON of a permit into a `PermitRequest`, or says what is wrong with it (400, never 500). */
+export function parsePermitRequest(value: unknown): PermitRequest {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        throw new RelayRejected("The permit is missing");
+    }
+    const item = value as Record<string, unknown>;
+    const { owner, spender, r, s } = item;
+    if (typeof owner !== "string" || !isAddress(owner) || typeof spender !== "string" || !isAddress(spender)) {
+        throw new RelayRejected("The permit has a bad address");
+    }
+    if (
+        typeof r !== "string" ||
+        !/^0x[0-9a-fA-F]{64}$/.test(r) ||
+        typeof s !== "string" ||
+        !/^0x[0-9a-fA-F]{64}$/.test(s)
+    ) {
+        throw new RelayRejected("The permit has a bad signature");
+    }
+    const v = Number(item.v);
+    if (!Number.isInteger(v) || ![0, 1, 27, 28].includes(v)) throw new RelayRejected("The permit has a bad signature");
+    const value_ = whole(item.value, "value");
+    const deadline = whole(item.deadline, "deadline");
+    if (deadline > BigInt(Number.MAX_SAFE_INTEGER)) throw new RelayRejected("The permit has a bad deadline");
+    return {
+        owner: getAddress(owner) as Address,
+        spender: getAddress(spender) as Address,
+        value: value_,
+        deadline: Number(deadline),
+        // The token wants 27 or 28; a wallet that reports the parity bit sends 0 or 1.
+        v: v < 27 ? v + 27 : v,
+        r: r as Hex,
+        s: s as Hex,
+    };
+}
+
 export type ServerOptions = {
     log?: RelayLog;
     /** How long a health answer may be reused. Default 10 s, so a monitor cannot flood the node. */
@@ -87,7 +129,7 @@ function send(res: ServerResponse, status: number, body: unknown): void {
 }
 
 /**
- * The HTTP face of the relayer: `GET /health` and `POST /relay`. `/health` is 200 only when the node answers
+ * The HTTP face of the relayer: `GET /health`, `POST /relay` and `POST /permit`. `/health` is 200 only when the node answers
  * and the gas wallet holds more than its minimum, so a monitor learns of an empty wallet before a user does.
  */
 export function createRelayerServer(relayer: Relayer, options: ServerOptions = {}): Server {
@@ -207,7 +249,7 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
         return renderMetrics(samples);
     }
 
-    async function relay(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    async function relay(req: IncomingMessage, res: ServerResponse, kind: "relay" | "permit"): Promise<void> {
         const started = now();
         let integratorId = "";
         let from: string | undefined;
@@ -220,7 +262,7 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
             seconds += (now() - started) / 1000;
             handled += 1;
             log({
-                event: "relay",
+                event: kind,
                 integrator: integratorId,
                 from,
                 status,
@@ -243,9 +285,16 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
             const header = req.headers.authorization ?? "";
             const bearer = header.startsWith("Bearer ") ? header.slice("Bearer ".length) : "";
             integratorId = typeof body.integratorId === "string" ? body.integratorId : "";
-            const request = parseForwardRequest(body.request);
-            from = request.from;
-            const hash = await relayer.submit(request, integratorId, bearer);
+            let hash: Hash;
+            if (kind === "permit") {
+                const permit = parsePermitRequest((body as { permit?: unknown }).permit);
+                from = permit.owner;
+                hash = await relayer.submitPermit(permit, integratorId, bearer);
+            } else {
+                const request = parseForwardRequest(body.request);
+                from = request.from;
+                hash = await relayer.submit(request, integratorId, bearer);
+            }
             finish(200, { hash });
         } catch (error) {
             if (error instanceof TooLarge) finish(413, { error: "The request body is too large" }, "too large");
@@ -279,7 +328,11 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
             return;
         }
         if (req.method === "POST" && req.url === "/relay") {
-            void relay(req, res);
+            void relay(req, res, "relay");
+            return;
+        }
+        if (req.method === "POST" && req.url === "/permit") {
+            void relay(req, res, "permit");
             return;
         }
         res.writeHead(404);

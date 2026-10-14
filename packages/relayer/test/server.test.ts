@@ -6,6 +6,7 @@ import {
     MAX_BODY_BYTES,
     parseForwardRequest,
     parseIntegrators,
+    parsePermitRequest,
     Relayer,
     RelayPending,
     RelayRejected,
@@ -241,6 +242,110 @@ describe("relayer public integrator (an app that cannot keep a secret)", () => {
     });
 });
 
+const permitWire = (over: Record<string, unknown> = {}) => ({
+    owner: SIGNER,
+    spender: addresses.evaluator,
+    value: "4000000",
+    deadline: 1_600,
+    v: 27,
+    r: `0x${"11".repeat(32)}`,
+    s: `0x${"22".repeat(32)}`,
+    ...over,
+});
+const permit = (over: Record<string, unknown> = {}) => parsePermitRequest(permitWire(over));
+
+describe("relayer permit (an approval signed, sent by the relayer)", () => {
+    const refusal = async (run: () => Promise<unknown>) => {
+        try {
+            await run();
+        } catch (error) {
+            expect(error).to.be.instanceOf(RelayRejected);
+            return (error as Error).message;
+        }
+        return "none";
+    };
+
+    it("reads a permit strictly and turns a parity bit into 27 or 28", () => {
+        expect(permit().value).to.equal(4_000_000n);
+        expect(permit({ v: 0 }).v).to.equal(27);
+        expect(permit({ v: 1 }).v).to.equal(28);
+        expect(() => parsePermitRequest(null)).to.throw(RelayRejected, "missing");
+        expect(() => permit({ owner: "nope" })).to.throw(RelayRejected, "bad address");
+        expect(() => permit({ r: "0x12" })).to.throw(RelayRejected, "bad signature");
+        expect(() => permit({ v: 5 })).to.throw(RelayRejected, "bad signature");
+        expect(() => permit({ value: "-1" })).to.throw(RelayRejected, "bad value");
+    });
+
+    it("sends a good permit to the token and charges the gas to the integrator", async () => {
+        const { relayer, fakes } = setup();
+        expect(await relayer.submitPermit(permit(), "errands", TOKEN)).to.equal(HASH);
+        expect(fakes.sends).to.equal(1);
+        expect(relayer.budgetsLeft().errands).to.equal(1_000_000n - 60_000n);
+    });
+
+    it("sends it to the token, not to the forwarder", async () => {
+        const sent: { to?: string }[] = [];
+        const { relayer } = setup();
+        (
+            relayer as unknown as { wallet: { sendTransaction: (tx: { to: string }) => Promise<Hash> } }
+        ).wallet.sendTransaction = async (tx) => {
+            sent.push(tx);
+            return HASH;
+        };
+        await relayer.submitPermit(permit(), "errands", TOKEN);
+        expect(sent[0].to).to.equal(addresses.usdc);
+    });
+
+    it("refuses a spender that is not an OPUS contract, an empty or big permit, and a bad or long deadline", async () => {
+        const { relayer, fakes } = setup({}, { maxPermitValue: 10_000_000n, maxPermitSeconds: 3600 });
+        const run = (over: Record<string, unknown>) =>
+            refusal(() => relayer.submitPermit(permit(over), "errands", TOKEN));
+        expect(await run({ spender: SIGNER })).to.contain("not a known OPUS contract");
+        expect(await run({ spender: addresses.usdc })).to.contain("not a known OPUS contract");
+        expect(await run({ value: "0" })).to.contain("opens nothing");
+        expect(await run({ value: "10000001" })).to.contain("more than the relayer allows");
+        expect(await run({ deadline: 999 })).to.contain("expired");
+        expect(await run({ deadline: 1_000 + 3601 })).to.contain("longer than the relayer allows");
+        expect(fakes.sends).to.equal(0);
+        expect(relayer.budgetsLeft().errands).to.equal(1_000_000n);
+    });
+
+    it("refuses an unknown integrator, a wrong token and a signer on the sanctions list", async () => {
+        const { relayer } = setup({}, { blocked: new Set<Address>([SIGNER]) });
+        expect(await refusal(() => relayer.submitPermit(permit(), "nobody", TOKEN))).to.contain("not allowed");
+        expect(await refusal(() => relayer.submitPermit(permit(), "errands", "wrong"))).to.contain("not allowed");
+        expect(await refusal(() => relayer.submitPermit(permit(), "errands", TOKEN))).to.contain("sanctions");
+    });
+
+    it("refuses a permit the token would reject, before holding any gas", async () => {
+        const { relayer, fakes } = setup();
+        (relayer as unknown as { publicClient: { estimateGas: () => Promise<bigint> } }).publicClient.estimateGas =
+            async () => {
+                throw new Error("execution reverted: ERC20Permit: invalid signature");
+            };
+        expect(await refusal(() => relayer.submitPermit(permit(), "errands", TOKEN))).to.contain("token rejected");
+        expect(fakes.sends).to.equal(0);
+        expect(relayer.budgetsLeft().errands).to.equal(1_000_000n);
+    });
+
+    it("counts the owner against the per-signer limit of a public integrator, only after the token accepted the permit", async () => {
+        const app = {
+            id: "app",
+            token: "",
+            public: true,
+            budgetWei: 1_000_000n,
+            maxRequests: 100,
+            windowSeconds: 60,
+            signer: { maxRequests: 1, windowSeconds: 3600, gasWei: 1_000_000n },
+        };
+        const { relayer } = setup({}, { integrators: [app] });
+        expect(await relayer.submitPermit(permit(), "app", "")).to.equal(HASH);
+        expect(await refusal(() => relayer.submitPermit(permit(), "app", ""))).to.equal(
+            "The signer rate limit is spent"
+        );
+    });
+});
+
 describe("relayer http", () => {
     async function serve(over: Partial<Fakes> = {}, options: Partial<ConstructorParameters<typeof Relayer>[3]> = {}) {
         const made = setup(over, options);
@@ -249,8 +354,37 @@ describe("relayer http", () => {
         const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
         const post = (body: string, token = TOKEN) =>
             fetch(`${url}/relay`, { method: "POST", headers: { authorization: `Bearer ${token}` }, body });
-        return { ...made, url, post, close: () => new Promise<void>((resolve) => server.close(() => resolve())) };
+        const postPermit = (body: string, token = TOKEN) =>
+            fetch(`${url}/permit`, { method: "POST", headers: { authorization: `Bearer ${token}` }, body });
+        return {
+            ...made,
+            url,
+            post,
+            postPermit,
+            close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+        };
     }
+
+    it("sends a permit on POST /permit, and says why when it refuses one", async () => {
+        const s = await serve();
+        try {
+            const ok = await s.postPermit(JSON.stringify({ integratorId: "errands", permit: permitWire() }));
+            expect(ok.status).to.equal(200);
+            expect(await ok.json()).to.deep.equal({ hash: HASH });
+            const bad = await s.postPermit(
+                JSON.stringify({ integratorId: "errands", permit: permitWire({ spender: SIGNER }) })
+            );
+            expect(bad.status).to.equal(400);
+            expect(((await bad.json()) as { error: string }).error).to.contain("not a known OPUS contract");
+            const wrong = await s.postPermit(JSON.stringify({ integratorId: "errands", permit: permitWire() }), "nope");
+            expect(wrong.status).to.equal(400);
+            const logged = s.logs.filter((e) => e.event === "permit");
+            expect(logged).to.have.length(3);
+            expect(JSON.stringify(logged)).to.not.contain(TOKEN);
+        } finally {
+            await s.close();
+        }
+    });
 
     it("relays a good request and logs it without the token", async () => {
         const s = await serve();
