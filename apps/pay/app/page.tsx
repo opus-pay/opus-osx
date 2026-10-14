@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { isAddress } from "viem";
+import { getAddress, isAddress } from "viem";
+import { useAccount, useConnect } from "wagmi";
 
 import { Stage, StageTab, fieldClass, primaryButtonClass, secondaryButtonClass } from "../src/components/stage";
 import { suggestCriteria, type CriteriaKind } from "../src/lib/criteria";
@@ -28,6 +29,11 @@ export default function DraftPage() {
     const [lock, setLock] = useState<1 | 2>(2);
     const [drafter, setDrafter] = useState<"client" | "provider">("client");
     const [link, setLink] = useState("");
+    // The wallet hooks need the wallet provider, which is there only once the page has mounted.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    const [fromTyped, setFromTyped] = useState(false);
+    const fillFrom = useCallback((address: string) => setFrom(address), []);
 
     function share() {
         try {
@@ -98,9 +104,13 @@ export default function DraftPage() {
                         <input
                             className={`${fieldClass} font-mono`}
                             value={from}
-                            onChange={(event) => setFrom(event.target.value.trim())}
+                            onChange={(event) => {
+                                setFromTyped(true);
+                                setFrom(event.target.value.trim());
+                            }}
                         />
                     </Field>
+                    {mounted && <WalletFill current={from} typed={fromTyped} onFill={fillFrom} />}
                     <Field label={t("draft.counterparty")}>
                         <input
                             className={`${fieldClass} font-mono`}
@@ -220,6 +230,50 @@ export default function DraftPage() {
                 </div>
             )}
         </Stage>
+    );
+}
+
+/**
+ * Puts the connected wallet's address in "Your address" when the field is still empty and the person has not typed
+ * in it, and offers a button for it (which also connects a wallet first when none is connected).
+ */
+function WalletFill({
+    current,
+    typed,
+    onFill,
+}: {
+    current: string;
+    typed: boolean;
+    onFill: (address: string) => void;
+}) {
+    const { t } = useLocale();
+    const { address, isConnected } = useAccount();
+    const { connect, connectors } = useConnect();
+    const [wanted, setWanted] = useState(false);
+    const mine = isConnected && address !== undefined ? getAddress(address) : undefined;
+
+    useEffect(() => {
+        if (mine === undefined) return;
+        if ((current === "" && !typed) || wanted) {
+            onFill(mine);
+            setWanted(false);
+        }
+    }, [mine, current, typed, wanted, onFill]);
+
+    if (mine !== undefined && current === mine) return null;
+    return (
+        <button
+            className={`${secondaryButtonClass} -mt-2 self-start`}
+            type="button"
+            onClick={() => {
+                if (mine !== undefined) return onFill(mine);
+                if (connectors[0] === undefined) return void toast.error(t("job.connect"));
+                setWanted(true);
+                connect({ connector: connectors[0] });
+            }}
+        >
+            {mine === undefined ? t("draft.connectAndUse") : t("draft.useWallet")}
+        </button>
     );
 }
 

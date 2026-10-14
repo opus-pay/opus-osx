@@ -50,13 +50,16 @@ export class Opus {
         return new Opus(this.publicClient, this.addresses, walletClient);
     }
 
-    async createJob(input: {
-        provider?: Address;
-        evaluator?: Address;
-        expiredAt: bigint;
-        description: string;
-        hook?: Address;
-    }): Promise<bigint> {
+    async createJob(
+        input: {
+            provider?: Address;
+            evaluator?: Address;
+            expiredAt: bigint;
+            description: string;
+            hook?: Address;
+        },
+        onSent?: (hash: Hash) => void
+    ): Promise<bigint> {
         const hash = await this.write(this.addresses.instance, coreAbi, "createJob", [
             input.provider ?? zeroAddress,
             input.evaluator ?? this.addresses.evaluator,
@@ -64,6 +67,8 @@ export class Opus {
             descriptionOf(input.description),
             input.hook ?? this.addresses.evaluator,
         ]);
+        // Lets a screen tell "waiting for the signature" from "waiting for the block".
+        onSent?.(hash);
         const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
         return jobIdFromReceipt(receipt.logs);
     }

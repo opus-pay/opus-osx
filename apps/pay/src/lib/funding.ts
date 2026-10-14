@@ -12,7 +12,7 @@ import { type Address, type Hash } from "viem";
 
 import { parties, type Draft } from "./draft";
 import { translate, type Locale } from "./i18n";
-import { confirmed } from "./tx";
+import { sendAndConfirm, type TxPhase } from "./tx";
 
 export type FundingAction = "create" | "quote" | "configure" | "fund";
 
@@ -110,31 +110,36 @@ export async function fundingView(
 export async function runFundingStep(
     opus: Opus,
     action: FundingAction,
-    input: { draft: Draft; jobId?: bigint; now: bigint; operator: Address }
+    input: { draft: Draft; jobId?: bigint; now: bigint; operator: Address },
+    /** Told when the wallet is asked to sign and when the signed transaction waits for its block. */
+    onPhase?: (phase: TxPhase, hash?: Hash) => void
 ): Promise<{ jobId: bigint; hash?: Hash }> {
     const config = configForDraft(input.draft, input.operator);
     const amount = amountForDraft(input.draft);
     if (action === "create") {
         const { provider } = parties(input.draft);
-        const jobId = await opus.createJob({
-            provider,
-            evaluator: opus.addresses.evaluator,
-            expiredAt: minimumExpiredAt(input.now + 3600n, config),
-            description: input.draft.agreement,
-            hook: opus.addresses.evaluator,
-        });
+        onPhase?.("signing");
+        const jobId = await opus.createJob(
+            {
+                provider,
+                evaluator: opus.addresses.evaluator,
+                expiredAt: minimumExpiredAt(input.now + 3600n, config),
+                description: input.draft.agreement,
+                hook: opus.addresses.evaluator,
+            },
+            (hash) => onPhase?.("confirming", hash)
+        );
         return { jobId };
     }
     const jobId = input.jobId;
     if (jobId === undefined) throw new Error("The job has not been created");
-    let sent: Hash;
-    if (action === "quote") {
-        sent = await opus.quote(jobId, amount);
-    } else if (action === "configure") {
-        const pull = config.evaluationFee + (config.autoCompleteOnSilence ? 0n : config.disputeDeposit);
-        sent = pull > 0n ? await opus.configureWithPermit(jobId, config) : await opus.configure(jobId, config);
-    } else {
-        sent = await opus.fundWithPermit(jobId, amount);
-    }
-    return { jobId, hash: await confirmed(opus.publicClient, sent) };
+    const send = (): Promise<Hash> => {
+        if (action === "quote") return opus.quote(jobId, amount);
+        if (action === "configure") {
+            const pull = config.evaluationFee + (config.autoCompleteOnSilence ? 0n : config.disputeDeposit);
+            return pull > 0n ? opus.configureWithPermit(jobId, config) : opus.configure(jobId, config);
+        }
+        return opus.fundWithPermit(jobId, amount);
+    };
+    return { jobId, hash: await sendAndConfirm(opus.publicClient, send, onPhase) };
 }

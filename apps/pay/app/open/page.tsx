@@ -28,6 +28,7 @@ import { dateTime, plainTerms, presetLabel, usdcText } from "../../src/lib/terms
 import { explorerTx } from "../../src/lib/tx";
 import { addresses } from "../../src/lib/wagmi";
 import { useLocale } from "../../src/components/locale";
+import { useTxFeedback } from "../../src/components/tx-feedback";
 import { localizeError } from "../../src/lib/i18n";
 
 function OpenLink({ token }: { token: string }) {
@@ -36,6 +37,7 @@ function OpenLink({ token }: { token: string }) {
     const [jobText, setJobText] = useState(params.get("job") ?? "");
     const [funded, setFunded] = useState(false);
     const [busy, setBusy] = useState(false);
+    const feedback = useTxFeedback();
     const [next, setNext] = useState<FundingStep | undefined>(undefined);
     const [done, setDone] = useState<{ action: FundingAction; hash?: `0x${string}` }[]>([]);
     const [tick, setTick] = useState(0);
@@ -121,19 +123,25 @@ function OpenLink({ token }: { token: string }) {
         }
         setBusy(true);
         try {
-            const result = await runFundingStep(opus, step.action, {
-                draft: terms,
-                jobId,
-                now: BigInt(Math.floor(Date.now() / 1000)),
-                operator: addresses.factory,
-            });
+            const result = await runFundingStep(
+                opus,
+                step.action,
+                {
+                    draft: terms,
+                    jobId,
+                    now: BigInt(Math.floor(Date.now() / 1000)),
+                    operator: addresses.factory,
+                },
+                feedback.onPhase
+            );
             setJobText(result.jobId.toString());
             setDone((list) => [...list, { action: step.action, hash: result.hash }]);
             if (step.action === "fund") setFunded(true);
             toast.success(t("done", { what: stepLabel(step.action, locale) }));
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : t("tx.failed"));
+            toast.error(feedback.failure(error));
         } finally {
+            feedback.finish();
             setBusy(false);
             setTick((value) => value + 1);
         }
@@ -164,7 +172,7 @@ function OpenLink({ token }: { token: string }) {
                     ) : isConnected ? (
                         <button className={primaryButtonClass} type="button" disabled={busy} onClick={() => void act()}>
                             {busy
-                                ? t("button.busy")
+                                ? feedback.label(t("button.busy"))
                                 : waitingOnOther
                                 ? t("open.checkAgain")
                                 : next === undefined

@@ -22,9 +22,13 @@ import {
 import { dueNotices, notify } from "../../../src/lib/notices";
 import { proofHash, textHash } from "../../../src/lib/proof";
 import { actionLabel, escrowFor, roleGuide, statusFacts, type Role } from "../../../src/lib/status-text";
-import { confirmed, explorerTx } from "../../../src/lib/tx";
+import { explorerTx, sendAndConfirm } from "../../../src/lib/tx";
 import { addresses } from "../../../src/lib/wagmi";
 import { useLocale } from "../../../src/components/locale";
+import { ResultCheck, ResultShare } from "../../../src/components/result-check";
+import { useTxFeedback } from "../../../src/components/tx-feedback";
+import type { LogReader } from "../../../src/lib/deliverable";
+import { parseResultUrl, resultFromHash, resultLinkFor } from "../../../src/lib/result-link";
 
 /** Buttons each tab may show. Keeper calls (finalize, timeouts) are left to the keeper. */
 const ROLE_ACTIONS: Record<Role, Set<JobAction>> = {
@@ -78,6 +82,11 @@ function JobScreen({ id }: { id: string }) {
     const [extension, setExtension] = useState("3600");
     const [webhook, setWebhook] = useState("");
     const [busy, setBusy] = useState(false);
+    const feedback = useTxFeedback();
+    // The deliverable link: the provider types it before submitting or afterwards; the client gets it in the address.
+    const [resultInput, setResultInput] = useState("");
+    const [linkFromAddress, setLinkFromAddress] = useState<string | undefined>(undefined);
+    useEffect(() => setLinkFromAddress(resultFromHash(window.location.hash)), []);
     const [lastTx, setLastTx] = useState<{ action: JobAction; url?: string } | undefined>(undefined);
 
     const load = useCallback(async (): Promise<JobView | undefined> => {
@@ -167,42 +176,55 @@ function JobScreen({ id }: { id: string }) {
         setBusy(true);
         try {
             const opus = new Opus(publicClient, addresses, walletClient);
-            // Each call waits for its block, so the refreshed screen no longer offers the same button.
+            // Each call waits for its block, so the refreshed screen no longer offers the same button. The screen says
+            // whether it waits for the wallet's signature or for the network to confirm.
+            const send = (call: () => Promise<`0x${string}`>) => sendAndConfirm(publicClient, call, feedback.onPhase);
             const sent: `0x${string}`[] = [];
+            let shared: string | undefined;
             if (action === "submit") {
                 const file = (document.getElementById("proof") as HTMLInputElement | null)?.files?.[0];
                 if (file === undefined) throw new Error(t("job.chooseFile"));
+                if (resultInput !== "" && parseResultUrl(resultInput) === undefined)
+                    throw new Error(t("job.resultBad"));
                 const hash = proofHash(new Uint8Array(await file.arrayBuffer()));
-                sent.push(
-                    await confirmed(publicClient, await opus.submit(jobId, hash, (await opus.job(jobId)).budget))
-                );
+                sent.push(await send(async () => opus.submit(jobId, hash, (await opus.job(jobId)).budget)));
+                if (resultInput !== "") shared = resultLinkFor(window.location.origin, jobId, resultInput);
             } else if (action === "approve") {
-                sent.push(await confirmed(publicClient, await opus.approve(jobId)));
+                sent.push(await send(() => opus.approve(jobId)));
             } else if (action === "object") {
-                sent.push(await confirmed(publicClient, await opus.object(jobId, textHash(objection))));
+                sent.push(await send(() => opus.object(jobId, textHash(objection))));
             } else if (action === "extendReview") {
-                sent.push(await confirmed(publicClient, await opus.extendReview(jobId, Number(extension))));
+                sent.push(await send(() => opus.extendReview(jobId, Number(extension))));
             } else if (action === "postDeposit") {
-                sent.push(await confirmed(publicClient, await opus.postDepositWithPermit(jobId)));
+                sent.push(await send(() => opus.postDepositWithPermit(jobId)));
             } else if (action === "claimRefund") {
-                sent.push(await confirmed(publicClient, await opus.claimRefund(jobId)));
+                sent.push(await send(() => opus.claimRefund(jobId)));
             } else if (action === "withdraw") {
                 const who = walletClient.account?.address;
                 if (who === undefined) throw new Error(t("job.connect"));
                 if ((await opus.claimableOnInstance(who)) > 0n) {
-                    sent.push(await confirmed(publicClient, await opus.withdrawFromInstance()));
+                    sent.push(await send(() => opus.withdrawFromInstance()));
                 }
                 if ((await opus.claimableOnEvaluator(addresses.usdc, who)) > 0n) {
-                    sent.push(await confirmed(publicClient, await opus.withdrawFromEvaluator(addresses.usdc)));
+                    sent.push(await send(() => opus.withdrawFromEvaluator(addresses.usdc)));
                 }
             }
             const last = sent.at(-1);
             setLastTx({ action, url: last === undefined ? undefined : explorerTx(addresses.chainId, last) });
+            feedback.finish();
             toast.success(t("done", { what: actionLabel(action, locale) }));
+            if (shared !== undefined) {
+                // The client needs this link: copy it for the provider to send.
+                void navigator.clipboard.writeText(shared).then(
+                    () => toast.success(t("result.share.copied")),
+                    () => undefined
+                );
+            }
             await load();
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : t("tx.failed"));
+            toast.error(feedback.failure(error));
         } finally {
+            feedback.finish();
             setBusy(false);
         }
     }
@@ -248,7 +270,7 @@ function JobScreen({ id }: { id: string }) {
                                 disabled={busy || !canAct}
                                 onClick={() => void run(action)}
                             >
-                                {busy ? t("button.busy") : actionLabel(action, locale)}
+                                {busy ? feedback.label(t("button.busy")) : actionLabel(action, locale)}
                             </button>
                         ))}
                         <button
@@ -313,6 +335,32 @@ function JobScreen({ id }: { id: string }) {
                                 type="file"
                             />
                         </label>
+                    )}
+                    {shownRole === "provider" && actions.includes("submit") && (
+                        <label className="block">
+                            <SectionLabel>{t("job.resultUrl")}</SectionLabel>
+                            <input
+                                className={fieldClass}
+                                value={resultInput}
+                                onChange={(event) => setResultInput(event.target.value.trim())}
+                                placeholder="https://"
+                            />
+                            <span className="mt-1 block text-[14px] text-muted">{t("job.resultUrlHint")}</span>
+                            {resultInput !== "" && parseResultUrl(resultInput) === undefined && (
+                                <span className="mt-1 block text-[14.5px] text-amber">{t("job.resultBad")}</span>
+                            )}
+                        </label>
+                    )}
+                    {shownRole === "provider" && job.status === "Submitted" && !actions.includes("submit") && (
+                        <ResultShare jobId={jobId} url={resultInput} onUrl={setResultInput} />
+                    )}
+                    {shownRole === "client" && job.status === "Submitted" && (
+                        <ResultCheck
+                            jobId={jobId}
+                            instance={addresses.instance}
+                            reader={publicClient as unknown as LogReader | undefined}
+                            linkFromAddress={linkFromAddress}
+                        />
                     )}
                     {shownRole === "client" && actions.includes("object") && (
                         <label className="block">

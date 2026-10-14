@@ -20,3 +20,31 @@ export async function confirmed(publicClient: PublicClient, hash: Hash): Promise
     if (receipt.status !== "success") throw new Error("The transaction was reverted");
     return hash;
 }
+
+/** Where a transaction is: the wallet is asking for a signature, or the network has the signed transaction. */
+export type TxPhase = "idle" | "signing" | "confirming";
+
+/**
+ * Sends a transaction and waits for its block, telling the screen which of the two waits it is in: `signing` while the
+ * wallet is asked (and until it returns the hash), `confirming` once there is a hash and the network has to confirm it.
+ */
+export async function sendAndConfirm(
+    publicClient: PublicClient,
+    send: () => Promise<Hash>,
+    onPhase?: (phase: TxPhase, hash?: Hash) => void
+): Promise<Hash> {
+    onPhase?.("signing");
+    const hash = await send();
+    onPhase?.("confirming", hash);
+    return confirmed(publicClient, hash);
+}
+
+/** Whether an error means the person cancelled in the wallet (wallets word it differently). */
+export function isRejection(error: unknown): boolean {
+    const code = (error as { code?: unknown } | undefined)?.code;
+    const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
+    return (
+        code === 4001 ||
+        /user (rejected|denied|cancel)|rejected the request|denied transaction|request rejected/i.test(message)
+    );
+}
