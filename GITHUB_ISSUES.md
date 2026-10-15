@@ -616,7 +616,8 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 * **Acceptance:** A user with no crypto experience completes a job without seeing a token name other than the currency.
 
 * **해결 내용 (일부):**
-  - **진행 (2026-10-07):** `opus-pay/opus-app`(Expo)이 앱 안 지갑을 만든다(복구 문구, 기기 보안 저장소, 개인키 가져오기·내보내기). 이메일 로그인 지갑은 아니다(D27의 비수탁, 표준 지갑). OPUS 계약 호출은 relayer의 토큰 없는 연동사로 보내 POL 없이 되지만, 거래소 등 다른 주소로 USDC를 보내는 일반 전송은 POL이 필요하다. 실제 기기·relayer 운영 시험은 아직 못 했다.
+  - **없앰 (2026-10-15, 대표 결정):** 네이티브 앱을 만들지 않고 웹앱으로 가므로 **앱 안 지갑은 없다.** 오직 MetaMask 같은 외부 지갑만 쓴다(D27 변경). 아래 2026-10-07의 `opus-app`(Expo) 항목은 더 이상 진행하지 않는다.
+  - ~~**진행 (2026-10-07):** `opus-pay/opus-app`(Expo)이 앱 안 지갑을 만든다(복구 문구, 기기 보안 저장소, 개인키 가져오기·내보내기). 이메일 로그인 지갑은 아니다(D27의 비수탁, 표준 지갑). OPUS 계약 호출은 relayer의 토큰 없는 연동사로 보내 POL 없이 되지만, 거래소 등 다른 주소로 USDC를 보내는 일반 전송은 POL이 필요하다. 실제 기기·relayer 운영 시험은 아직 못 했다.~~
 
 #### [Issue #74] Support, dispute operations, default arbiter
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #53, #54, D10

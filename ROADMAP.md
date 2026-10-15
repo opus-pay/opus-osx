@@ -82,7 +82,7 @@ No role grants. No post-deploy configuration calls.
 * **Q12. Test runner isolation (M13).** Container sandbox vs hosted CI; what the signed result contains; how anyone can reproduce it.
 * **Q22. First corridor.** Cross-border (for example United States → Korea) or domestic, between a Korean region and a large city (for example a provincial city ↔ Seoul). A domestic corridor removes currency exchange and cross-border rules and can start sooner; it still needs a won ↔ USDC on/off-ramp and a reason for users to prefer stablecoin escrow over won payments. Decides on/off-ramp partners, provider recruiting, and legal review. → **D25**
 * **Q23. On- and off-ramp partners.** Card/bank to USDC for clients; USDC to local currency for providers; licensed in the corridor's countries. Funded by equity investment (D29). → **D26**
-* **Q24. Wallet onboarding.** Email-login embedded wallets, smart accounts, or plain wallets plus relayer. → **D27**
+* **Q24. Wallet onboarding.** Email-login embedded wallets, smart accounts, or plain wallets plus relayer. → **D27** (changed 2026-10-15: external wallets only)
 * **Q25. Request schema.** Fields for each request type (filming, purchasing, later care), completion criteria, required proof; versioning.
 
 ## B.4 OPUS Court (M11)
@@ -338,7 +338,7 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D24 | Portal role | **Decided: directory of services only; no matching, no custody, no special rights.** The team's platform app (non-custodial wallet, push, SDK, on-ramp links, per-service instances) is a separate product outside this repository, not the OPUS Portal (D32) | — |
 | D25 | First errand corridor | **Decided (2026-10-05): Korea–Japan.** The errand service opens countries by a setting; local checks and shipping only, buying stays closed until arbiters exist (#74) | #67 |
 | D26 | On- and off-ramp partners | Open | #72 |
-| D27 | Wallet onboarding approach | **Direction (2026-10-05): non-custodial embedded wallets** from a proven provider, exposed through the standard EIP-1193 / EIP-6963 provider so one web app works in browsers, wallet apps and the platform app. No team-held keys | #73 |
+| D27 | Wallet onboarding approach | ~~**Direction (2026-10-05): non-custodial embedded wallets** from a proven provider, exposed through the standard EIP-1193 / EIP-6963 provider so one web app works in browsers, wallet apps and the platform app. No team-held keys~~ **Changed (2026-10-15):** no native app and no wallet of our own. Services are web apps and users bring an external wallet (MetaMask and the like) through the standard EIP-1193 / EIP-6963 provider, or a phone wallet over WalletConnect. No team-held keys, no embedded wallet | #73 |
 | D28 | Business focus | **Decided: cross-border errands first; AI assistants as the growth path on the same standard** | — |
 | D29 | Money in and out | **Decided: OPUS and its services never hold licences for card, bank, or exchange flows. Equity funding pays for integrations with licensed partners (card/bank on-ramps, exchanges for cash-out, later won stablecoin issuers and payment gateways). Until then, pilots use users who already buy USDC on exchanges** | #43, #72, D26 |
 | D30 | Payment-link draft custody | **Decided: the unsigned draft is the URL fragment. No server stores it. The chain stores only the description hash** | #27 |
