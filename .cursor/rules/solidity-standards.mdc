@@ -9,7 +9,7 @@ alwaysApply: false
 ## 버전 및 임포트
 
 ```solidity
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;   // 범위(^)가 아닌 고정 버전
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";   // named import 사용

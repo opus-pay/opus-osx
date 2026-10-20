@@ -535,7 +535,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 
 * **메모 (2026-10-03, 결정 아님):**
   - 첫 구간은 해외 구매대행·해외 심부름 쪽으로 기울었다. 국내 심부름은 한국 사용자가 USDC를 사야 하는 불편과 기존 서비스와의 경쟁이 크다. D25는 아직 열려 있다.
-  - 투자는 프로토콜(OPUS)이 아니라 심부름 서비스를 운영하는 법인으로 받는 방향이다. OPUS는 운영자 없는 공개 인프라로 남고, 심부름 서비스가 그 첫 사용처다.
+  - OPUS는 운영자 없는 공개 인프라로 남고, 심부름 서비스가 그 첫 사용처다.
   - 앱 이름은 아직 없다. 화면에는 `[앱 이름]`으로 비워 두었다(#82).
 
 * **해결 내용 (일부):**
@@ -725,15 +725,15 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 #### [Issue #82] Errand service name, domain and brand
 * **Type:** `Task` / **Priority:** `P1` / **Depends on:** #67
 * **Tasks:**
-  - [ ] Service name in the four languages; trademark check in Korea and the first corridor
+  - [ ] Service name in the four languages; trademark check
   - [ ] Domain; replace `[App name]` placeholders in the app
   - [ ] Present the service as cross-border escrow payments; blockchain as the implementation, not the headline
 * **Acceptance:** The pilot runs under its own name and domain.
 
 * **해결 내용 (일부, 2026-10-03):**
   - 작업 이름을 **WayHand**(웨이핸드, ウェイハンド)로 정하고 opus-errand 화면, API 이름, 에이전트 안내에 넣었다.
-  - 웹 검색으로 후보를 걸렀다. Lendhand는 미국 가사 서비스 앱 "Lend Hands"와 네덜란드 금융 플랫폼 "Lendahand"와 겹치고, "Lend"가 대출로 읽혀 뺐다. Farhand는 주문형 서비스(farhand.live) 등과 겹쳐 뺐다. Errandia는 같은 이름의 심부름 앱이 있어 뺐다. WayHand는 같은 이름의 앱·회사·상표가 검색되지 않았다.
-  - 남은 것: KIPRIS·USPTO·J-PlatPat 상표 검색(9·35·36·39류), wayhand.com·wayhand.app 도메인과 SNS 계정 확보, 법인 설립(#67) 때 상표 출원.
+  - 이름 후보를 비교해 WayHand로 정했다.
+  - 남은 것: 도메인과 계정 확보, 상표 확인.
 
 ---
 
