@@ -725,7 +725,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
 #### [Issue #82] Errand service name, domain and brand
 * **Type:** `Task` / **Priority:** `P1` / **Depends on:** #67
 * **Tasks:**
-  - [ ] Service name in the four languages; trademark check in Korea and the first corridor
+  - [ ] Service name in the four languages; trademark check
   - [ ] Domain; replace `[App name]` placeholders in the app
   - [ ] Present the service as cross-border escrow payments; blockchain as the implementation, not the headline
 * **Acceptance:** The pilot runs under its own name and domain.
