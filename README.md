@@ -29,7 +29,7 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. These are
 | Document | Contents |
 | :--- | :--- |
 | [`WHITEPAPER.md`](./WHITEPAPER.md) / [`WHITEPAPER.ko.md`](./WHITEPAPER.ko.md) | Design, evaluation, security model, products, risks (English / Korean; kept in sync) |
-| [`docs/grant/`](./docs/grant/README.md) | Polygon grant pack: application, forum post, Amoy evidence |
+| [`docs/grant/`](./docs/grant/README.md) | Amoy evidence: every test transaction and how to check it |
 | [`ROADMAP.md`](./ROADMAP.md) | Components, open questions, milestones, week plan, decisions D1–D33 |
 | [`GITHUB_ISSUES.md`](./GITHUB_ISSUES.md) | Issues #1–#82 with tasks and acceptance criteria |
 | [`.cursor/AGENTS.md`](./.cursor/AGENTS.md) | Context for AI coding agents: invariants I-1–I-9, rules, decisions |
@@ -51,7 +51,7 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. These are
 | `packages/relayer` | Gasless relaying (ERC-2771) | M4 | Written; ran on Amoy |
 | `packages/indexer` | Job and instance index for status pages | M4 | Written |
 | `apps/pay` | Escrow payment links | M5 | Written; ran on Amoy |
-| `wayhand` (separate private repository) | WayHand, the cross-border errand service, trial | M6 | In progress |
+| `wayhand` (separate repository) | WayHand, the cross-border errand service, trial | M6 | In progress |
 | `apps/portal` | OPUS Portal: directory of services built on OPUS | M12 | Planned |
 
 Apps use `@opus/sdk` only. Contract types come from typechain output; never copy ABIs by hand.
@@ -110,4 +110,4 @@ One issue, one branch, one pull request. Pull requests that touch `packages/cont
 
 ## License
 
-MIT (see `LICENSE.md`), decision D7. Solidity files still carry `SPDX-License-Identifier: BUSL-1.1` because changing the header changes the metadata of the contracts already verified on Amoy; they switch to `MIT` with the next deployment.
+MIT (see `LICENSE.md`), decision D7. Solidity files carry `SPDX-License-Identifier: MIT`. The Amoy test deployment was verified from an earlier source with `BUSL-1.1` headers, so its verified source differs from this one in that line only.

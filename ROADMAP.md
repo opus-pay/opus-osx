@@ -29,7 +29,7 @@
 | `packages/keeper` | Calls permissionless deadline triggers | Hosted | M4 |
 | `packages/relayer` | ERC-2771 relay and gas sponsorship | Hosted | M4 |
 | `packages/indexer` | Job and instance index for apps and the keeper | Hosted | M4 |
-| `wayhand` (separate private repository) | Cross-border errand service (team-run service platform); uses the SDK and contract addresses from this repository by reference only | Hosted | M6 |
+| `wayhand` (separate repository) | Cross-border errand service (team-run service platform); uses the SDK and contract addresses from this repository by reference only | Hosted | M6 |
 | `packages/verifier` | Isolated test runner for `TestRunnerEvaluator` | Hosted | M13 |
 | `apps/pay` | Escrow payment link web app | Hosted | M5 |
 | `apps/portal` | OPUS Portal: service directory, on-chain stats, my jobs | Hosted (open source) | M12 |
