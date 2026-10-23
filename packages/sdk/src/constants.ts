@@ -1,4 +1,4 @@
-import { defineChain, zeroAddress, type Address } from "viem";
+import { defineChain, zeroAddress, type Address, type Chain } from "viem";
 
 /** D3 placeholders. Match `OptimisticEvaluator` / `OpusAgenticCommerce`. */
 export const PLACEHOLDER_MIN_WINDOW = 3600;
@@ -37,9 +37,29 @@ export const amoy = defineChain({
     blockExplorers: { default: { name: "Polygonscan", url: "https://amoy.polygonscan.com" } },
 });
 
+export const polygon = defineChain({
+    id: 137,
+    name: "Polygon",
+    nativeCurrency: { name: "POL", symbol: "POL", decimals: 18 },
+    // polygon-rpc.com answers 403 since 2026-10. Mainnet services should set their own paid node anyway.
+    rpcUrls: { default: { http: ["https://polygon-bor-rpc.publicnode.com"] } },
+    blockExplorers: { default: { name: "Polygonscan", url: "https://polygonscan.com" } },
+});
+
 export const localHardhat = defineChain({
     id: 31337,
     name: "Hardhat",
     nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
     rpcUrls: { default: { http: ["http://127.0.0.1:8545"] } },
 });
+
+/**
+ * The chain of an addresses file: Polygon (137), Amoy (80002) or a local Hardhat node (31337). Any other id is an
+ * error, so a service never signs for one chain while talking to another.
+ */
+export function chainForId(chainId: number): Chain {
+    if (chainId === polygon.id) return polygon;
+    if (chainId === amoy.id) return amoy;
+    if (chainId === localHardhat.id) return localHardhat;
+    throw new Error(`Unknown chain id ${chainId}: expected 137 (Polygon), 80002 (Amoy) or 31337 (local Hardhat)`);
+}

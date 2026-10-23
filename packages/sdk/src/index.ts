@@ -19,10 +19,12 @@ export {
     PLACEHOLDER_MIN_WINDOW,
     PLACEHOLDER_SAFETY_MARGIN,
     amoy,
+    chainForId,
     localHardhat,
+    polygon,
 } from "./constants";
 export { minimumExpiredAt } from "./deadlines";
-export { AMOY_MIN_TIP, amoyGasPrice } from "./gas";
+export { AMOY_MIN_TIP, amoyGasPrice, usesTipFloor } from "./gas";
 export { assertDescription, descriptionOf } from "./description";
 export { decodeOpusError } from "./errors";
 export { decodeOpusLog, jobIdFromReceipt } from "./events";

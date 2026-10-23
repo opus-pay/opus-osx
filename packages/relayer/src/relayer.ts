@@ -4,6 +4,7 @@ import {
     forwarderAbi,
     type ForwardRequest,
     type ProtocolAddresses,
+    usesTipFloor,
 } from "@opus/sdk";
 import {
     encodeFunctionData,
@@ -335,7 +336,7 @@ export class Relayer {
     }
 
     private async gasPrice(): Promise<bigint> {
-        if (this.addresses.chainId === 80002) return amoyGasPrice(this.publicClient);
+        if (usesTipFloor(this.addresses.chainId)) return amoyGasPrice(this.publicClient);
         return this.publicClient.getGasPrice();
     }
 }

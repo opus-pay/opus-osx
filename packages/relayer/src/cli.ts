@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 
-import { amoy, loadAddresses, localHardhat } from "@opus/sdk";
+import { chainForId, loadAddresses } from "@opus/sdk";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -22,7 +22,7 @@ async function main(): Promise<void> {
     if (integratorsJson === undefined || integratorsJson === "") throw new Error("RELAYER_INTEGRATORS is required");
     const addresses = loadAddresses(readFileSync(path, "utf8"));
     const blocked = parseSanctionsList(readFileSync(sanctionsPath, "utf8"));
-    const chain = addresses.chainId === 80002 ? amoy : localHardhat;
+    const chain = chainForId(addresses.chainId);
     const rpc = process.env.RELAYER_RPC_URL?.trim() || chain.rpcUrls.default.http[0];
     const transport = http(rpc);
     const signer = privateKeyToAccount(account.privateKey);

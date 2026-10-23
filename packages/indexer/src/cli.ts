@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 
 import { redactUrls } from "./redact";
 
-import { amoy, loadAddresses, localHardhat } from "@opus/sdk";
+import { chainForId, loadAddresses } from "@opus/sdk";
 import { createPublicClient, http } from "viem";
 
 import { Indexer } from "./indexer";
@@ -55,7 +55,7 @@ async function main(): Promise<void> {
     const path = process.env.INDEXER_ADDRESSES?.trim();
     if (path === undefined || path === "") throw new Error("INDEXER_ADDRESSES is required");
     const addresses = loadAddresses(readFileSync(path, "utf8"));
-    const chain = addresses.chainId === 80002 ? amoy : localHardhat;
+    const chain = chainForId(addresses.chainId);
     const rpc = process.env.INDEXER_RPC_URL?.trim() || chain.rpcUrls.default.http[0];
     // A block can be replaced shortly after it appears. On a public chain stay a few blocks behind the head.
     const confirmations = BigInt(whole("INDEXER_CONFIRMATIONS") ?? (addresses.chainId === 80002 ? 5 : 0));

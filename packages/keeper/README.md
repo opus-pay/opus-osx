@@ -2,7 +2,7 @@
 
 기한이 된 평가자 처리를 호출하고 팁을 받는 프로세스입니다. 이슈 #24.
 
-매 주기마다 인스턴스의 작업을 읽고, SDK `Opus.status`가 이 지갑에게 허용한 기한 처리만 보냅니다. Amoy 가스 가격은 SDK가 정합니다(`amoyGasPrice`). 최신 기본 수수료에 25% 여유와 팁 30 gwei를 더합니다. 2026-10-08 전에는 25 gwei로 고정해, 기본 수수료가 오르자 거래가 들어가지 않았습니다.
+매 주기마다 인스턴스의 작업을 읽고, SDK `Opus.status`가 이 지갑에게 허용한 기한 처리만 보냅니다. Amoy와 Polygon 메인넷의 가스 가격은 SDK가 정합니다(`amoyGasPrice`, 두 네트워크 모두 팁 하한 25 gwei). 최신 기본 수수료에 25% 여유와 팁 30 gwei를 더합니다. 2026-10-08 전에는 25 gwei로 고정해, 기본 수수료가 오르자 거래가 들어가지 않았습니다.
 
 ## 지갑
 
@@ -68,7 +68,7 @@ docker compose stop keeper
 | `KEEPER_PRIVATE_KEY`                                                   | 예                     | `0x`와 64자리 hex. 프로세스 환경에만 둔다                          |
 | `DEPLOYER_ADDRESS`                                                     | 예, 배포자와 구분할 때 | 키에서 나온 주소와 같으면 시작 거부                                |
 | `KEEPER_ADDRESSES`                                                     | 예                     | `addresses.json`. 샘플은 `../contracts/deploy/amoy/addresses.json` |
-| `KEEPER_RPC_URL`                                                       | 아니오                 | 비우면 체인 기본 RPC. `chainId`가 80002이면 Amoy                   |
+| `KEEPER_RPC_URL`                                                       | 아니오                 | 비우면 체인 기본 RPC. `chainId` 137은 Polygon, 80002는 Amoy, 31337은 로컬. 메인넷은 전용 RPC를 넣으세요 |
 | `KEEPER_LOW_BALANCE_WEI`                                               | 아니오                 | 경고 기준. 비우면 `50000000000000000` (0.05 POL)                   |
 | `KEEPER_EXPIRY_MARGIN_SECONDS`                                         | 아니오                 | 만료 경고 여유. 비우면 3600                                        |
 | `KEEPER_POLL_MS`                                                       | 아니오                 | 주기. 비우면 30000                                                 |

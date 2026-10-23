@@ -1,6 +1,6 @@
 import type { PublicClient } from "viem";
 
-/** Amoy mines a transaction only when its tip is at least 25 gwei above the base fee. */
+/** Amoy (and Polygon mainnet) mine a transaction only when its tip is at least 25 gwei above the base fee. */
 export const AMOY_MIN_TIP = 25_000_000_000n;
 
 /** Tip added on top of the minimum, so a price read a block ago still clears. */
@@ -17,4 +17,12 @@ export async function amoyGasPrice(client: Pick<PublicClient, "getBlock">): Prom
     const block = await client.getBlock({ blockTag: "latest" });
     const base = block.baseFeePerGas ?? 0n;
     return base + base / 4n + AMOY_MIN_TIP + AMOY_TIP_MARGIN;
+}
+
+/**
+ * Whether a chain needs `amoyGasPrice`: Amoy and Polygon mainnet both refuse a tip under 25 gwei, and an RPC's own
+ * quote can be far off. Other chains (a local Hardhat node) use the node's quote.
+ */
+export function usesTipFloor(chainId: number): boolean {
+    return chainId === 80002 || chainId === 137;
 }
