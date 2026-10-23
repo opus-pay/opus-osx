@@ -134,6 +134,13 @@ const config = {
         polygon: {
             url: process.env.POLYGON_URL || "https://polygon-rpc.com",
             chainId: 137,
+            // Unset: the node's quote is used. Public nodes refuse a transaction whose fee (gas x price) is above 1 POL, and
+            // the review contract needs about 4.8 million gas, so while the price is above ~200 gwei it cannot be sent.
+            // POLYGON_GAS_PRICE_GWEI=200 sends it at that price: the transaction waits in the pool until the base fee is
+            // at or under it, and it then pays exactly that price.
+            ...(process.env.POLYGON_GAS_PRICE_GWEI?.trim()
+                ? { gasPrice: gweiFromEnv("POLYGON_GAS_PRICE_GWEI", 1) }
+                : {}),
             ...liveNetworkAccounts(),
         },
     },
