@@ -1,7 +1,7 @@
 # OPUS Whitepaper
 > **Escrow for cross-border errands, built on the ERC-8183 standard so that AI assistants can use it tomorrow**
 >
-> Version 1.0 · Draft
+> Version 1.1 · Draft · updated 2026-10-23
 
 ---
 
@@ -41,7 +41,9 @@ On top of the standard, OPUS adds:
 * **Fair evaluation.** Review windows, objections, arbitration, and defaults written as rules, with evaluators paid the same whichever side wins.
 * **Protection for people.** When one side goes silent, the default favours the person who did the work or the person who is waiting, never the side that simply stopped responding.
 
-The first service built on OPUS is a **cross-border errand service**, starting with one corridor (cross-border, or between a region and a large city within one country) and simple, checkable tasks (filming a place, buying and shipping an item). **OPUS Portal** gathers every service built on OPUS in one place. The protocol issues no payment token, takes no protocol fee, and limits each job to 1–1,000 USD.
+The first service built on OPUS is a **cross-border errand service**, starting with one corridor (cross-border, or between a region and a large city within one country) and simple, checkable tasks (filming a place, buying and shipping an item). **OPUS Portal** lists the services built on OPUS in one place. The protocol issues no payment token, takes no protocol fee, and limits each job to 1–1,000 USD (100 USD in the current deployment, until the external audit).
+
+**Where it stands (October 2026).** The contracts are deployed and verified on Polygon mainnet (2026-10-23) and on the Polygon Amoy test network, where the main paths (approval, silence, expiry, gasless payment, a dispute decided by an arbiter) have run with real transactions. They are not externally audited; the pilot is capped and says so (§10.2, §10.6). The first service has been built and ran as a trial on Amoy; its pilot with real money is planned to start on mainnet in November 2026, between Korea and Japan (§11.1, §14).
 
 ---
 
@@ -139,7 +141,7 @@ The standard is deliberately minimal. Its motivation is that many use cases need
 * **Relayer.** Submits transactions on behalf of users without gas, using the ERC-2771 pattern the standard names.
 * **Keeper.** Calls permissionless deadline triggers before expiry. If it stops, anyone can make the same calls.
 * **Service platforms.** Identity checks, matching, evidence collection, notifications, and support belong to the services built on OPUS, including those the team runs.
-* **OPUS Portal.** A website that gathers every service built on OPUS in one place, with statistics computed from on-chain data (§11.3). It introduces services; it does not match parties or hold funds.
+* **OPUS Portal.** A website that lists the services built on OPUS, with statistics computed from on-chain data (§11.3). It introduces services; it does not match parties or hold funds.
 
 ---
 
@@ -357,7 +359,7 @@ OPUS does not change the standard interface. Every item below is either an imple
 | 6 | Budget changes | Client or provider may change while Open | Optional budget lock per job; SDK funding check | Hook + SDK |
 | 7 | Admin | Who sets fees is unspecified | No admin; fee and recipient immutable per instance | Core |
 | 8 | Frozen addresses | Not addressed | Deferred payout, withdrawable to another address | Core |
-| 9 | Gas | ERC-2771 named as optional | Relayer using the ERC-2771 pattern (planned, decision pending) | Core + relayer |
+| 9 | Gas | ERC-2771 named as optional | Relayer using the ERC-2771 pattern, plus USDC permit funding (`fundWithPermit`) and relayed token permits, so a person needs no POL (built) | Core + relayer |
 | 10 | Hooks | Gas limits recommended | Fixed gas cap; tests with hostile hooks; refund path verified | Core |
 | 11 | Description | On-chain string | SDK sends only a hash or URI and warns that it is public | SDK |
 | 12 | Evaluator = client | Allowed | Allowed; SDK and indexer warn the provider | SDK + indexer |
@@ -383,8 +385,8 @@ OPUS intends to submit items 1 and 2 as feedback to the ERC-8183 discussion.
 * **No protocol fee.** No fee goes to the OPUS team or a foundation from the core, the factory, or any evaluator, and there is no fee switch to turn on later. Three reasons: taking no cut of payment flows strengthens the neutrality argument; the standard's fee calculation stays unchanged; and there is no incentive for others to fork a fee-free copy.
 * **Service fees.** A service platform creates its own instance through the factory and sets its fee rate and recipient. They are immutable and capped by `MAX_PLATFORM_FEE_BP`. As the standard requires, fees apply only on completion, never on refunds.
 * **Evaluation fees are not protocol fees.** The flat evaluation fee, keeper tips, and dispute deposits (§7.6) pay whoever does the evaluation work. The client chooses the evaluator, anyone may operate one, and the amounts do not depend on the outcome or on a percentage of the payment.
-* **How the OPUS team earns.** Mainly from the service fee of the cross-border errand service it runs, set through that service's own instance like any other integrator. Also from services around the contracts, which are harder to copy than the contracts themselves: evaluation fees as one evaluation operator among others, SDK and API plans for integrators, relaying and gas sponsorship, indexing and webhooks.
-* **Early operation.** Grants, equity investment, and revenue from team-run services (§14).
+* **How the OPUS team earns.** Mainly from the service fee of the cross-border errand service it runs, set through that service's own instance like any other integrator (5% on completion only). Also from services around the contracts, which are harder to copy than the contracts themselves: evaluation fees as one evaluation operator among others, SDK and API plans for integrators, relaying and gas sponsorship, indexing and webhooks.
+* **Early operation.** Equity investment and revenue from team-run services (§14).
 
 ---
 
@@ -406,7 +408,7 @@ OPUS intends to submit items 1 and 2 as feedback to the ERC-8183 discussion.
 
 ### 10.2 Budget range
 
-Every job's budget must be **at least 1 USD and at most 1,000 USD** (in USDC or USDT). The range is a constant in the core and applies from deployment; no one can change it. Until the external audit the deployed code caps each job at 100 USD; the deployment after the audit raises it to 1,000 USD. A different range requires a new deployment that users choose to move to.
+Every job's budget must be **at least 1 USD and at most 1,000 USD** (in USDC or USDT). The range is a constant in the core and applies from deployment; no one can change it. The mainnet deployment of 2026-10-23 caps each job at 100 USD until the external audit; the deployment after the audit raises it to 1,000 USD. A different range requires a new deployment that users choose to move to.
 
 * **Why a maximum.** With no emergency stop, a bug or a wrong ruling can cost at most 1,000 USD per job. It keeps OPUS focused on the small, frequent work where agents trade most, keeps the stake an evaluator needs small, and keeps the regulatory profile of each payment small.
 * **Why a minimum.** Below 1 USD, gas and evaluation costs outweigh the payment, and dust jobs could be used to spam evaluators.
@@ -422,11 +424,11 @@ Hooks are supported as the standard defines. Hook calls have a fixed gas cap, an
 
 ### 10.5 Upgrades and standard changes
 
-There are no upgrades. A new version is a new deployment that users move to by choice. Because ERC-8183 is a draft, mainnet deployment waits until its interface is stable.
+There are no upgrades. A new version is a new deployment that users move to by choice. ERC-8183 is a draft, so its interface may still change; if it does, the answer is a new deployment. The mainnet deployment of 2026-10-23 is a pilot made before the external audit (§10.6): each job is capped at 100 USD, services limit the total value funded at once, invite their users and state that the contracts are not externally audited, and indexer alerts and a prepared move to a new deployment cover a serious finding.
 
 ### 10.6 Assurance
 
-Before mainnet: external audit, invariant fuzzing, the conformance suite, and a public bug bounty.
+Done: invariant fuzzing, the public conformance suite, static analysis (Slither, Aderyn), AI-assisted reviews with a published report (`docs/audit/SECURITY_REVIEW.md`, which says plainly that it is not an external audit), and recorded end-to-end runs on Amoy. Not yet done: the **external audit and a public bug bounty**. The decision (D33, 2026-10-05) is to run the capped mainnet pilot first, to commission the audit once there is revenue or investment, and to raise the 100 USD cap only after it.
 
 ---
 
@@ -435,6 +437,8 @@ Before mainnet: external audit, invariant fuzzing, the conformance suite, and a 
 ### 11.1 First service: cross-border errands
 
 A client in one country posts a request; a verified local provider in another country does it and is paid on completion. The service is one ordinary integrator of OPUS: it uses the public SDK, runs its own instance, and has no special rights.
+
+**As built (October 2026).** The service is WayHand. It serves Korea and Japan with three kinds of errand: local checks, documents and shipping, and buying and shipping an item. It runs its own instance with a 5% fee on completion, shared through a fee-splitting contract. Errands are public; providers apply and the client chooses one. Proof is photos, receipts and tracking numbers, and buying adds a one-take video of opening the parcel with a code of the day. An objection goes to a single arbiter, an administrator wallet of the service, with both sides posting a deposit. People use a wallet they already have; payment steps are relayed so no one needs POL. The first pilot is capped and says that the contracts are not externally audited (§10.6).
 
 **Start narrow.** A two-sided service needs clients and providers in the same place. The service starts with **one corridor** and **two categories whose results are easy to check**, then widens. The corridor may cross a border (for example, people in the United States with family in Korea) or stay within one country, between distant regions (for example, someone outside Seoul asking for a purchase in Seoul, or a child in Seoul asking someone to check on parents in the provinces). A domestic corridor avoids currency exchange and cross-border rules, so a pilot can start sooner, but it must show users who are used to paying in won why stablecoin escrow is better. The contracts and flow are the same either way.
 
@@ -459,8 +463,8 @@ Client posts a request (structured: type, place, deadline, completion criteria, 
 
 **What makes it usable by ordinary people.**
 
-* **Card in, local currency out.** Clients buy USDC with a card or bank transfer through a licensed on-ramp partner; providers convert USDC to local currency through an off-ramp partner. Without this, few people will use the service.
-* **No gas, no crypto vocabulary.** Transactions are relayed so no one buys POL. Wallets can be created at sign-up (for example with email login), and the interface talks about requests, quotes, and payments, not tokens.
+* **Card in, local currency out.** Clients buy USDC with a card or bank transfer through a licensed on-ramp partner; providers convert USDC to local currency through an off-ramp partner. Without this, few people will use the service. Until partners are integrated, pilots run with people who already buy USDC on exchanges (§14).
+* **No gas, no crypto vocabulary.** Transactions are relayed so no one buys POL. People use a wallet they already have (a browser wallet, or a phone wallet over WalletConnect); the service holds no keys and offers no wallet of its own. The interface talks about requests, quotes, and payments, not tokens.
 * **Verified providers.** Identity checks by region, reputation from completed jobs, and a clear record of disputes.
 * **Notifications and support.** Parties are notified on funding, submission, approaching deadlines, and before auto-completion, and can reach a person when something goes wrong.
 
@@ -474,7 +478,7 @@ Two people who have already agreed elsewhere (in a chat, a community, or another
 
 | Feature | What it shows | Source |
 | :--- | :--- | :--- |
-| Service directory | Name, description, category, link, fee rate | Metadata each service registers, plus instance-creation events from the factory |
+| Service directory | Name, description, category, link, fee rate | Metadata the Portal operator enters after agreeing terms with the service, plus the service's on-chain instance events |
 | Service statistics | Jobs, volume, completion rate, dispute rate, average time to settle | On-chain events only, so no service can inflate its numbers |
 | My jobs | Every job a wallet has commissioned or taken on, across all services; withdrawal of deferred payouts | On-chain events |
 | Evaluators and arbiters | Available evaluators, their fees, and their ruling records | Evaluator events |
@@ -482,7 +486,7 @@ Two people who have already agreed elsewhere (in a chat, a community, or another
 
 Principles:
 
-* **Anyone can be listed.** A service that creates an instance through the factory appears automatically; it registers its own name and description. No approval by the Portal operator is needed.
+* **Listed by agreement.** A service is added after the operator has spoken with its team and agreed terms, and the entry is added by hand. A registry that anyone can write to cannot stop spam, copies of real services and scams, and one that only an admin can write to is a curated list anyway, so the Portal does not pretend otherwise (D23). On-chain statistics are computed for listed services.
 * **Ranking by record.** The default order uses on-chain results: volume, completion rate, dispute rate. Team-run services are not pinned to the top.
 * **No special rights.** The Portal only displays public on-chain data. Its code is open, and anyone can run another portal.
 * **Display policy.** The Portal may hide a fraudulent or illegal service **from its own pages** under a published policy. It cannot stop that service's contracts or payments.
@@ -580,15 +584,15 @@ Legal review is planned before the first third-party service integrates and befo
 
 ## 14. Roadmap and Funding
 
-* **Phase 1 — Core (month 1).** ERC-8183 core, factory, deferred payouts, hooks, budget range (1–1,000 USD), `OptimisticEvaluator` with fees and deposits, invariant and conformance tests, testnet deployment.
-* **Phase 2 — Foundations for people (month 2).** SDK, relayer (gasless), keeper, escrow payment links.
-* **Phase 3 — Cross-border errands, stage 1 (months 3–4).** One corridor, filming and purchasing, provider verification, on- and off-ramp partners, pilot with real users.
-* **Phase 4 — Audit and mainnet.** External audit, bug bounty, mainnet once the standard is stable; OPUS Portal with the team's services.
+* **Phase 1 — Core (month 1). Done.** ERC-8183 core, factory, deferred payouts, hooks, budget range (1–1,000 USD), `OptimisticEvaluator` with fees and deposits, invariant and conformance tests, deployment on Amoy (second deployment 2026-10-08, with the security fixes) and on Polygon mainnet (2026-10-23).
+* **Phase 2 — Foundations for people (month 2). Done.** SDK, relayer (gasless, with token permits), keeper, indexer, escrow payment links.
+* **Phase 3 — Cross-border errands, stage 1 (months 3–4). In progress.** The service is built and ran as a trial; the corridor is Korea–Japan, with local checks, documents and shipping, and buying. Provider verification and on- and off-ramp partners are not done. The pilot with real users on mainnet is planned from November 2026.
+* **Phase 4 — Mainnet and audit.** In the order decided in D33: the capped mainnet pilot first (contracts deployed 2026-10-23, 100 USD per job), with OPUS Portal listing the team's service; then the external audit and bug bounty once there is revenue or investment; then the higher cap.
 * **Phase 5 — Stage 2 and more corridors.** Care of parents after a safety and legal review; additional corridors.
 * **Phase 6 — AI assistants.** Assistant tool, ERC-8004 reputation, agent-to-agent work with automatic evaluators.
 * **Phase 7 — OPUS Court and OPG (conditional).** Staked evaluators vote on disputes, first with USDC; OPG only after the Court works and after legal review.
 
-**Funding.** Polygon ecosystem grants, equity investment (with token warrants where appropriate), and revenue from the errand service. The main use of investment is integration with licensed payment partners and exchanges: paying in by card or bank and cashing out in local currency are built on their licences, while OPUS and its services never hold or exchange funds. Until then, pilots run with users who already buy USDC on exchanges.
+**Funding.** Equity investment (with token warrants where appropriate) and revenue from the errand service. The main use of investment is integration with licensed payment partners and exchanges: paying in by card or bank and cashing out in local currency are built on their licences, while OPUS and its services never hold or exchange funds. Until then, pilots run with users who already buy USDC on exchanges.
 
 ---
 

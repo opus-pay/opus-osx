@@ -11,7 +11,7 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 * No protocol fee; evaluators are paid the same whatever the outcome
 * No token at launch
 
-> Status: the contracts are deployed and verified on Polygon Amoy. On the first deployment eight test jobs ran end to end, including a dispute decided by an arbiter. The second deployment (2026-10-08, with the 2026-10-03 security fixes) has passed approval, keeper finalize and timeout, a gasless run, the expiry refund and a dispute decided by an arbiter ([evidence](./docs/grant/AMOY_EVIDENCE.md)). The SDK, keeper, relayer and payment-link app were used in those runs, and the indexer is written. The same contracts are deployed and verified on Polygon mainnet (2026-10-23); no job has run there yet. Not yet audited. ERC-8183 is a draft standard.
+> Status: the contracts are deployed and verified on Polygon Amoy. On the first deployment eight test jobs ran end to end, including a dispute decided by an arbiter. The second deployment (2026-10-08, with the 2026-10-03 security fixes) has passed approval, keeper finalize and timeout, a gasless run, the expiry refund and a dispute decided by an arbiter ([evidence](./docs/grant/AMOY_EVIDENCE.md)). The SDK, keeper, relayer and payment-link app were used in those runs, and the indexer is written. The same contracts are deployed and verified on Polygon mainnet (2026-10-23); no job has run there yet. The keeper, relayer and indexer can run against mainnet. The first service, WayHand, ran as a trial on Amoy; its pilot with real money, capped at 100 USD per job, is planned for November 2026. Not externally audited (decision D33: capped pilot first, audit after revenue or investment). ERC-8183 is a draft standard.
 
 ## Polygon mainnet (2026-10-23)
 
@@ -56,14 +56,14 @@ Addresses are also in `packages/contracts/deploy/amoy/addresses.json`. These are
 
 | Path | Purpose | Milestone | Status |
 | :--- | :--- | :--- | :--- |
-| `packages/contracts` | ERC-8183 core, factory, `OptimisticEvaluator`, forwarder | M1–M3 | Deployed on Amoy; audit pending |
+| `packages/contracts` | ERC-8183 core, factory, `OptimisticEvaluator`, forwarder | M1–M3 | Deployed on Amoy and Polygon mainnet; not externally audited |
 | `packages/sdk` | TypeScript SDK (viem) | M4 | Written |
-| `packages/keeper` | Calls deadline triggers; earns tips | M4 | Written; ran on Amoy |
-| `packages/relayer` | Gasless relaying (ERC-2771) | M4 | Written; ran on Amoy |
-| `packages/indexer` | Job and instance index for status pages | M4 | Written |
+| `packages/keeper` | Calls deadline triggers; earns tips | M4 | Ran on Amoy; supports Polygon mainnet |
+| `packages/relayer` | Gasless relaying (ERC-2771) and token permits | M4 | Ran on Amoy; supports Polygon mainnet |
+| `packages/indexer` | Job and instance index for status pages | M4 | Written; supports Polygon mainnet |
 | `apps/pay` | Escrow payment links | M5 | Written; ran on Amoy |
-| `wayhand` (separate repository) | WayHand, the cross-border errand service, trial | M6 | In progress |
-| `apps/portal` | OPUS Portal: directory of services built on OPUS | M12 | Planned |
+| `wayhand` (separate repository) | WayHand, the cross-border errand service (Korea–Japan) | M6 | Trial on Amoy; mainnet pilot planned for November 2026 |
+| `opus-portal` (separate repository) | OPUS Portal: directory of services built on OPUS | M12 | Built; lists services by agreement (D23) |
 
 Apps use `@opus/sdk` only. Contract types come from typechain output; never copy ABIs by hand.
 
