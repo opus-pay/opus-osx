@@ -37,3 +37,7 @@ docs/grant/*.mp4
 *.db
 *.db-wal
 *.db-shm
+
+# Local editor and agent settings. Kept on disk, not in the public history.
+.cursor/
+.vscode/
