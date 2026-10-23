@@ -151,6 +151,15 @@ const config = {
                     browserURL: "https://amoy.polygonscan.com",
                 },
             },
+            {
+                // The old Polygonscan API this plugin knows is gone: Etherscan's one API (V2) serves every chain.
+                network: "polygon",
+                chainId: 137,
+                urls: {
+                    apiURL: "https://api.etherscan.io/v2/api?chainid=137",
+                    browserURL: "https://polygonscan.com",
+                },
+            },
         ],
     },
     gasReporter: {
