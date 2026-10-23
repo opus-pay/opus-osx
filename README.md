@@ -11,7 +11,18 @@ OPUS implements **ERC-8183 (Agentic Commerce)** unchanged. The standard does not
 * No protocol fee; evaluators are paid the same whatever the outcome
 * No token at launch
 
-> Status: the contracts are deployed and verified on Polygon Amoy. On the first deployment eight test jobs ran end to end, including a dispute decided by an arbiter. The second deployment (2026-10-08, with the 2026-10-03 security fixes) has passed approval, keeper finalize and timeout, a gasless run, the expiry refund and a dispute decided by an arbiter ([evidence](./docs/grant/AMOY_EVIDENCE.md)). The SDK, keeper, relayer and payment-link app were used in those runs, and the indexer is written. Not yet audited; no mainnet deployment. ERC-8183 is a draft standard.
+> Status: the contracts are deployed and verified on Polygon Amoy. On the first deployment eight test jobs ran end to end, including a dispute decided by an arbiter. The second deployment (2026-10-08, with the 2026-10-03 security fixes) has passed approval, keeper finalize and timeout, a gasless run, the expiry refund and a dispute decided by an arbiter ([evidence](./docs/grant/AMOY_EVIDENCE.md)). The SDK, keeper, relayer and payment-link app were used in those runs, and the indexer is written. The same contracts are deployed and verified on Polygon mainnet (2026-10-23); no job has run there yet. Not yet audited. ERC-8183 is a draft standard.
+
+## Polygon mainnet (2026-10-23)
+
+Addresses are also in `packages/contracts/deploy/polygon/addresses.json`. Same code and deploy steps as the second Amoy deployment, signed with a Ledger. The reference instance lists Circle USDC `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` (not the bridged USDC.e), with treasury `0` and fee `0`. No admin roles are granted after deploy. Not audited: 100 USD per job until the external audit.
+
+| Contract | Address |
+| :--- | :--- |
+| `OpusForwarder` | [`0x819e1e7e5779B24430125C529830B41Ed7F769d0`](https://polygonscan.com/address/0x819e1e7e5779B24430125C529830B41Ed7F769d0#code) |
+| `OpusACPFactory` | [`0xf564509aF5e8846087a7d3b5e4fEe5cd53cD3AA5`](https://polygonscan.com/address/0xf564509aF5e8846087a7d3b5e4fEe5cd53cD3AA5#code) |
+| Reference USDC instance | [`0xd293959476CBeb5a4271Fab6cE991Be5e51aAbf7`](https://polygonscan.com/address/0xd293959476CBeb5a4271Fab6cE991Be5e51aAbf7#code) |
+| `OptimisticEvaluator` | [`0x33A27198F5920dFbfD6512506F06B60e28e2Eb04`](https://polygonscan.com/address/0x33A27198F5920dFbfD6512506F06B60e28e2Eb04#code) |
 
 ## Amoy (issue #22)
 

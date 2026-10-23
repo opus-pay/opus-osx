@@ -1,0 +1,9 @@
+{
+    "network": "polygon",
+    "chainId": 137,
+    "forwarder": "0x819e1e7e5779B24430125C529830B41Ed7F769d0",
+    "factory": "0xf564509aF5e8846087a7d3b5e4fEe5cd53cD3AA5",
+    "usdc": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    "instance": "0xd293959476CBeb5a4271Fab6cE991Be5e51aAbf7",
+    "evaluator": "0x33A27198F5920dFbfD6512506F06B60e28e2Eb04"
+}
