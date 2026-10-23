@@ -1,9 +1,11 @@
 # OPUS Development Roadmap & Backlog
-> **Whitepaper v1.0 / GitHub Projects issue tracker**
+> **Whitepaper v1.1 / GitHub Projects issue tracker**
 >
 > OPUS is escrow for **cross-border errands**, built on ERC-8183 (Agentic Commerce) so that AI assistants can use it later without a redesign. Payments are USDC/USDT only, 1–1,000 USD per job. No admin, no protocol fee. Evaluators are paid flat fees whatever the outcome. No token at launch; OPG is planned later as evaluator stake and reward.
 >
-> Order of work: core → foundations for people (SDK, gasless relayer, payment links) → cross-border errand service in one corridor → audit and mainnet with OPUS Portal → care of parents and more corridors → AI assistants → OPUS Court and OPG.
+> Order of work: core → foundations for people (SDK, gasless relayer, payment links) → cross-border errand service in one corridor → capped mainnet pilot with OPUS Portal, then the external audit (D33) → care of parents and more corridors → AI assistants → OPUS Court and OPG.
+>
+> Status (2026-10-23): the contracts are deployed and verified on Amoy and on Polygon mainnet (capped at 100 USD per job, not externally audited). The SDK, keeper, relayer, indexer and payment-link app are written and ran on Amoy. The first errand service (WayHand, Korea–Japan) ran as a trial and plans its capped mainnet pilot for November 2026. OPUS Portal exists as its own repository.
 >
 > Issue numbers here are the same as in `GITHUB_ISSUES.md`. Plan assumes **one developer using Cursor**: about **9 weeks** to payment links on testnet and about **13 weeks** to an errand pilot in the first corridor.
 
@@ -32,7 +34,7 @@
 | `wayhand` (separate repository) | Cross-border errand service (team-run service platform); uses the SDK and contract addresses from this repository by reference only | Hosted | M6 |
 | `packages/verifier` | Isolated test runner for `TestRunnerEvaluator` | Hosted | M13 |
 | `apps/pay` | Escrow payment link web app | Hosted | M5 |
-| `apps/portal` | OPUS Portal: service directory, on-chain stats, my jobs | Hosted (open source) | M12 |
+| `opus-portal` (separate repository) | OPUS Portal: service directory, on-chain stats, my jobs | Hosted (open source) | M12 |
 | `apps/docs` | Developer docs and demo | Hosted | M7 |
 
 ## A.2 Contracts
@@ -80,9 +82,9 @@ No role grants. No post-deploy configuration calls.
 * **Q10. Payment link custody of drafts.** Where unsigned link drafts live (local only vs a small server). → **D30**
 * **Q11. Notifications.** Email, Telegram, or webhook first. → **D31**
 * **Q12. Test runner isolation (M13).** Container sandbox vs hosted CI; what the signed result contains; how anyone can reproduce it.
-* **Q22. First corridor.** Cross-border (for example United States → Korea) or domestic, between a Korean region and a large city (for example a provincial city ↔ Seoul). A domestic corridor removes currency exchange and cross-border rules and can start sooner; it still needs a won ↔ USDC on/off-ramp and a reason for users to prefer stablecoin escrow over won payments. Decides on/off-ramp partners, provider recruiting, and legal review. → **D25**
+* **Q22. First corridor.** Cross-border (for example United States → Korea) or domestic, between a Korean region and a large city (for example a provincial city ↔ Seoul). A domestic corridor removes currency exchange and cross-border rules and can start sooner; it still needs a won ↔ USDC on/off-ramp and a reason for users to prefer stablecoin escrow over won payments. Decides on/off-ramp partners, provider recruiting, and legal review. → **D25** (decided: Korea–Japan)
 * **Q23. On- and off-ramp partners.** Card/bank to USDC for clients; USDC to local currency for providers; licensed in the corridor's countries. Funded by equity investment (D29). → **D26**
-* **Q24. Wallet onboarding.** Email-login embedded wallets, smart accounts, or plain wallets plus relayer. → **D27**
+* **Q24. Wallet onboarding.** Email-login embedded wallets, smart accounts, or plain wallets plus relayer. → **D27** (decided: users bring their own wallet; relayer for gas)
 * **Q25. Request schema.** Fields for each request type (filming, purchasing, later care), completion criteria, required proof; versioning.
 
 ## B.4 OPUS Court (M11)
@@ -195,11 +197,11 @@ Priority: `P0` required for the milestone, `P1` should have, `P2` later.
 | :--- | :--- | :--- | :--- |
 | **#34** | `Docs` | P0 | Docs site and demo |
 | **#35** | `Task` | P0 | Errand pilot in the first corridor |
-| **#36** | `Task` | P0 | Polygon grant application |
+| **#36** | `Task` | P0 | Polygon grant application (not pursued: direction changed, 2026-10) |
 | **#37** | `Task` | P1 | ERC-8183 feedback submission |
 | **#38** | `Docs` | P1 | Traction metrics |
 
-## M8. Audit and mainnet (after M7)
+## M8. Mainnet pilot and audit (mainnet pilot first, audit after revenue or investment: D33)
 
 | # | Type | P | Title |
 | :--- | :--- | :--- | :--- |
@@ -283,7 +285,7 @@ Priority: `P0` required for the milestone, `P1` should have, `P2` later.
                                            proof, on/off-ramp, onboarding, support)
                                                     │
                                                     ▼
-                         #34 demo ─▶ #35 corridor pilot ─▶ #36 grant ─▶ #39 audit pack ─▶ #40 audit ─▶ #42 mainnet
+                         #34 demo ─▶ #35 corridor pilot ─▶ #42 capped mainnet pilot ─▶ #39 audit pack ─▶ #40 audit
 ```
 
 ## D.2 Week plan (one developer)
@@ -298,7 +300,7 @@ Priority: `P0` required for the milestone, `P1` should have, `P2` later.
 | 6–7 | Deploy, SDK, keeper, relayer | #22–#25, (#26) | Amoy deployment; SDK runs full flow; keeper earns a tip; a wallet with no POL completes a job |
 | 7–9 | Payment links | #27–#30 | Two people complete a real paid job on Amoy |
 | 9–13 | Errand service, stage 1 | #67–#74 | In one corridor, a real filming or purchasing errand is paid through card on-ramp and cashed out locally |
-| 13–16 | Validation, Portal | #34–#38, #62–#64 | Corridor pilot; grant submitted; Portal lists the team's services |
+| 13–16 | Validation, Portal | #34–#38, #62–#64 | Corridor pilot; Portal lists the team's services |
 
 Weeks overlap slightly; parentheses mark P1 items that can slip.
 
@@ -315,13 +317,13 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | # | Decision | Status | Blocks |
 | :--- | :--- | :--- | :--- |
 | D1 | EVM target and OZ version | **Decided: Solidity 0.8.24, `evmVersion` `cancun`, OpenZeppelin 5.6.1** | — |
-| D2 | `MAX_PLATFORM_FEE_BP`, `HOOK_GAS_LIMIT` | **Proposed (2026-10-05): fee cap 1,000 (10%)** as a user-protection ceiling; each service picks its own rate below it (WayHand: 5% on completion only). Confirm with `HOOK_GAS_LIMIT` before #42 | #7, #9, #42 |
-| D3 | Job duration bounds; evaluator window bounds; safety margin | Open | #6, #14 |
+| D2 | `MAX_PLATFORM_FEE_BP`, `HOOK_GAS_LIMIT` | **Deployed (2026-10-23): fee cap 1,000 (10%), hook gas limit 300,000.** The fee cap is a user-protection ceiling; each service picks its own rate below it (WayHand: 5% on completion only). The constants keep the `PLACEHOLDER_` prefix in code, since renaming them would change the deployed bytecode | #7, #9, #42 |
+| D3 | Job duration bounds; evaluator window bounds; safety margin | **Deployed (2026-10-23): job duration 1 hour–180 days, evaluator windows 1 hour–180 days, safety margin 1 day** (constants keep the `PLACEHOLDER_` prefix) | #6, #14 |
 | D4 | Budget range | **Decided: 1–1,000 USD per job, fixed constant.** The deployment before the external audit caps it at 100 USD (D33) | — |
 | D5 | Foundry for invariant tests | Open | #19 |
-| D7 | License (MIT vs BSL) | **Decided: MIT.** Solidity SPDX headers switch at the next deployment | #45 |
+| D7 | License (MIT vs BSL) | **Decided: MIT.** Solidity headers are MIT; the Amoy test deployment was verified from an earlier source with BUSL-1.1 headers | #45 |
 | D8 | Stablecoins in the factory list | **Decided: constructor list, no hardcoded addresses** | — |
-| D10 | Default arbiter recommended by the SDK | Open | #23 |
+| D10 | Default arbiter recommended by the SDK | Open. WayHand uses an administrator wallet of the service as its single arbiter | #23 |
 | D11 | `fund` signature per current EIP text | **Decided: `fund(jobId, expectedBudget, optParams)`** | — |
 | D12 | Submit feedback to ERC-8183 | Open | #37 |
 | D13 | Protocol fee | **Decided: none** | — |
@@ -336,15 +338,15 @@ Weeks overlap slightly; parentheses mark P1 items that can slip.
 | D22 | Client deposit in confirmation mode | **Decided: posted up front at configuration, returned if no dispute** | #53 |
 | D23 | Service metadata registration method | **Decided (2026-10-07): by contact and agreement, not on-chain.** A listing registry that anyone can write to cannot stop abuse (spam, copies of real services, scams), and one that only an admin can write to is the same as a curated list. So the Portal lists a service only after the operator has talked with the team behind it and agreed terms; the entry is added by hand to a public file in the Portal repository. On-chain data is still used for the statistics of listed services (#63). Reverse this only when an on-chain way exists that abuse cannot defeat | #62 |
 | D24 | Portal role | **Decided: directory of services only; no matching, no custody, no special rights.** The team's platform app (non-custodial wallet, push, SDK, on-ramp links, per-service instances) is a separate product outside this repository, not the OPUS Portal (D32) | — |
-| D25 | First errand corridor | **Decided (2026-10-05): Korea–Japan.** The errand service opens countries by a setting; local checks and shipping only, buying stays closed until arbiters exist (#74) | #67 |
+| D25 | First errand corridor | **Decided (2026-10-05): Korea–Japan.** The errand service opens countries by a setting; local checks and shipping at first; buying was opened later (2026-10-19) with a single arbiter wallet and fixed goods rules (#74) | #67 |
 | D26 | On- and off-ramp partners | Open | #72 |
-| D27 | Wallet onboarding approach | **Direction (2026-10-05): non-custodial embedded wallets** from a proven provider, exposed through the standard EIP-1193 / EIP-6963 provider so one web app works in browsers, wallet apps and the platform app. No team-held keys | #73 |
+| D27 | Wallet onboarding approach | ~~**Direction (2026-10-05): non-custodial embedded wallets** from a proven provider, exposed through the standard EIP-1193 / EIP-6963 provider so one web app works in browsers, wallet apps and the platform app. No team-held keys~~ **Changed (2026-10-15):** no native app and no wallet of our own. Services are web apps and users bring an external wallet (MetaMask and the like) through the standard EIP-1193 / EIP-6963 provider, or a phone wallet over WalletConnect. No team-held keys, no embedded wallet | #73 |
 | D28 | Business focus | **Decided: cross-border errands first; AI assistants as the growth path on the same standard** | — |
 | D29 | Money in and out | **Decided: OPUS and its services never hold licences for card, bank, or exchange flows. Equity funding pays for integrations with licensed partners (card/bank on-ramps, exchanges for cash-out, later won stablecoin issuers and payment gateways). Until then, pilots use users who already buy USDC on exchanges** | #43, #72, D26 |
 | D30 | Payment-link draft custody | **Decided: the unsigned draft is the URL fragment. No server stores it. The chain stores only the description hash** | #27 |
 | D31 | Pilot notification channel | **Decided: HTTPS webhook first. Email and Telegram wait** | #29 |
 | D32 | Where new ideas attach | **Decided (2026-10-05): the core stays frozen.** Platform fees and fee splitting (instance treasury → a splitter), platform arbitration (evaluator or arbiter address), cross-service reputation (indexer), policy checks (hooks) all attach to the factory, evaluators and hooks. Splitters, platform evaluators and policy hooks are periphery contracts kept outside this repository; this repository's deployments keep a 0% fee. A core v2 is considered only when pilots show a need the existing pieces cannot meet (top-up after funding, deadline extension, partial release) | — |
-| D33 | Audit timing | **Decided (2026-10-05): mainnet pilot before the external audit.** Before it: AI deep review (independent reviewers, attack tests, fuzzing, published report); 100 USD per-job cap kept; services cap the total funded value at once, invite users and state that the contracts are not externally audited; indexer alerts; a prepared move to a new deployment. External audit (#40) after revenue or investment, then the cap rises to 1,000 USD | #40, #42 |
+| D33 | Audit timing | **Decided (2026-10-05): mainnet pilot before the external audit.** Before it: AI deep review (independent reviewers, attack tests, fuzzing, published report); 100 USD per-job cap kept; services cap the total funded value at once, invite users and state that the contracts are not externally audited; indexer alerts; a prepared move to a new deployment. External audit (#40) after revenue or investment, then the cap rises to 1,000 USD. **Status (2026-10-23): contracts deployed on Polygon mainnet at the 100 USD cap; the services' pilot is planned for November 2026** | #40, #42 |
 
 ---
 

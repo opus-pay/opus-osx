@@ -754,7 +754,7 @@ A team-run service platform on OPUS (whitepaper §11.1). It uses the public SDK 
   - [ ] Interview each user: current workaround, trust concerns, price they would pay, friction with money in and out
 * **Acceptance:** Written findings; backlog re-prioritized.
 
-#### [Issue #36] Polygon grant application
+#### [Issue #36] Polygon grant application (not pursued: direction changed, 2026-10)
 * **Type:** `Task` / **Priority:** `P0` / **Depends on:** #22, #34
 * **Tasks:**
   - [ ] Milestones tied to #22 (Amoy, done: verified addresses in README), #35 (pilot), #42 (mainnet)
