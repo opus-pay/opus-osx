@@ -217,6 +217,12 @@ export function createRelayerServer(relayer: Relayer, options: ServerOptions = {
         } catch {
             // The node is down: `opus_relayer_rpc_up` already says so.
         }
+        samples.push({
+            name: "opus_relayer_state_write_failing",
+            help: "1 while the budgets cannot be written to the state file (they live in memory only), else 0.",
+            type: "gauge",
+            value: relayer.stateWriteFailing() ? 1 : 0,
+        });
         const left = relayer.budgetsLeft();
         const given = relayer.budgetsConfigured();
         for (const [integrator, wei] of Object.entries(left)) {

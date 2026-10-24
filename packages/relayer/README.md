@@ -147,7 +147,7 @@ USDC 같은 서명 승인(EIP-2612 `permit`)을 지원하는 토큰은 **승인*
 | `maxRequests`   | `windowSeconds` 안의 최대 요청 수. 1 이상의 정수                   |
 | `windowSeconds` | 그 창의 길이(초). 1 이상의 정수                                    |
 
-예산은 예상 가스(`estimateGas * gasPrice`)를 먼저 잡고, 영수증의 `gasUsed * effectiveGasPrice`로 정산합니다. 호출이 되돌아가면 실제 가스를 정산합니다. 전송 자체가 실패하면 잡아 둔 예산을 돌려줍니다. 횟수와 예산은 프로세스 메모리에만 있습니다. 재시작하면 초기 예산으로 돌아갑니다.
+예산은 예상 가스(`estimateGas * gasPrice`)를 먼저 잡고, 영수증의 `gasUsed * effectiveGasPrice`로 정산합니다. 호출이 되돌아가면 실제 가스를 정산합니다. 전송 자체가 실패하면 잡아 둔 예산을 돌려줍니다. 횟수와 예산은 프로세스 메모리에만 있습니다. 재시작하면 초기 예산으로 돌아갑니다. `RELAYER_STATE_FILE`을 주면 남은 예산을 그 파일에 적어 재시작해도 이어 갑니다. 파일에 쓰지 못해도(폴더 권한 등) 요청은 처리합니다. 대신 예산은 메모리에만 남고, 로그에 `state-write-failed`가 한 번 찍히며 `/metrics`의 `opus_relayer_state_write_failing`이 1이 됩니다. 이 값이 1이면 재시작 전에 폴더 권한을 고치세요.
 
 요청은 한 줄로 처리합니다. nonce는 대기 중인 개수에서 읽고, 성공하면 1을 더합니다. 실패하면 다음 요청이 체인에서 다시 읽습니다.
 
