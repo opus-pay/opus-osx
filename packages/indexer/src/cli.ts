@@ -3,8 +3,8 @@ import { readFileSync } from "fs";
 
 import { redactUrls } from "./redact";
 
-import { chainForId, loadAddresses } from "@opus/sdk";
-import { createPublicClient, http } from "viem";
+import { chainForId, loadAddresses, rpcTransport, rpcUrlsFrom } from "@opus/sdk";
+import { createPublicClient } from "viem";
 
 import { Indexer } from "./indexer";
 import { createIndexerServer, type IndexerStatus, type ServerOptions } from "./server";
@@ -56,7 +56,7 @@ async function main(): Promise<void> {
     if (path === undefined || path === "") throw new Error("INDEXER_ADDRESSES is required");
     const addresses = loadAddresses(readFileSync(path, "utf8"));
     const chain = chainForId(addresses.chainId);
-    const rpc = process.env.INDEXER_RPC_URL?.trim() || chain.rpcUrls.default.http[0];
+    const rpcs = rpcUrlsFrom(process.env.INDEXER_RPC_URL, chain.rpcUrls.default.http[0]);
     // A block can be replaced shortly after it appears. On a public chain stay a few blocks behind the head.
     const confirmations = BigInt(whole("INDEXER_CONFIRMATIONS") ?? (addresses.chainId === 80002 ? 5 : 0));
     const key = `${addresses.chainId}:${addresses.factory}:${addresses.instance}:${addresses.evaluator}`;
@@ -68,7 +68,7 @@ async function main(): Promise<void> {
     }
     await ledger.setMeta("key", key);
     const indexer = new Indexer(
-        createPublicClient({ chain, transport: http(rpc) }),
+        createPublicClient({ chain, transport: rpcTransport(rpcs) }),
         addresses,
         fromBlock(addresses.chainId),
         {

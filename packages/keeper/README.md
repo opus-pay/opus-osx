@@ -68,7 +68,7 @@ docker compose stop keeper
 | `KEEPER_PRIVATE_KEY`                                                   | 예                     | `0x`와 64자리 hex. 프로세스 환경에만 둔다                          |
 | `DEPLOYER_ADDRESS`                                                     | 예, 배포자와 구분할 때 | 키에서 나온 주소와 같으면 시작 거부                                |
 | `KEEPER_ADDRESSES`                                                     | 예                     | `addresses.json`. 샘플은 `../contracts/deploy/amoy/addresses.json` |
-| `KEEPER_RPC_URL`                                                       | 아니오                 | 비우면 체인 기본 RPC. `chainId` 137은 Polygon, 80002는 Amoy, 31337은 로컬. 메인넷은 전용 RPC를 넣으세요 |
+| `KEEPER_RPC_URL`                                                       | 아니오                 | 비우면 체인 기본 RPC. `chainId` 137은 Polygon, 80002는 Amoy, 31337은 로컬. 메인넷은 전용 RPC를 넣으세요. 쉼표로 여러 개를 주면 실패한 호출을 다음 노드로 보냅니다 |
 | `KEEPER_LOW_BALANCE_WEI`                                               | 아니오                 | 경고 기준. 비우면 `50000000000000000` (0.05 POL)                   |
 | `KEEPER_EXPIRY_MARGIN_SECONDS`                                         | 아니오                 | 만료 경고 여유. 비우면 3600                                        |
 | `KEEPER_POLL_MS`                                                       | 아니오                 | 주기. 비우면 30000                                                 |

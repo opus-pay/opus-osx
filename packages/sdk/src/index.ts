@@ -24,6 +24,7 @@ export {
     polygon,
 } from "./constants";
 export { minimumExpiredAt } from "./deadlines";
+export { rpcTransport, rpcUrlsFrom } from "./transport";
 export { AMOY_MIN_TIP, amoyGasPrice, usesTipFloor } from "./gas";
 export { assertDescription, descriptionOf } from "./description";
 export { decodeOpusError } from "./errors";

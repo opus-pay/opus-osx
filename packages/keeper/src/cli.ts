@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 
-import { chainForId, loadAddresses, Opus } from "@opus/sdk";
-import { createPublicClient, createWalletClient, http } from "viem";
+import { chainForId, loadAddresses, rpcTransport, rpcUrlsFrom, Opus } from "@opus/sdk";
+import { createPublicClient, createWalletClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 import { createHealthServer, type KeeperStatus } from "./health";
@@ -40,8 +40,9 @@ async function main(): Promise<void> {
     if (path === undefined || path === "") throw new Error("KEEPER_ADDRESSES is required");
     const addresses = loadAddresses(readFileSync(path, "utf8"));
     const chain = chainForId(addresses.chainId);
-    const rpc = process.env.KEEPER_RPC_URL?.trim() || chain.rpcUrls.default.http[0];
-    const transport = http(rpc);
+    // One node, or several separated by commas: a call that fails on one is tried on the next.
+    const rpcs = rpcUrlsFrom(process.env.KEEPER_RPC_URL, chain.rpcUrls.default.http[0]);
+    const transport = rpcTransport(rpcs);
     const signer = privateKeyToAccount(account.privateKey);
     const publicClient = createPublicClient({ chain, transport });
     const walletClient = createWalletClient({ account: signer, chain, transport });
@@ -97,7 +98,7 @@ async function main(): Promise<void> {
     console.log(`wallet ${account.address}`);
     console.log(`network ${addresses.network} chain ${chain.id} ${chain.name}`);
     // Provider URLs often carry the API key in the path or the query: log the host only.
-    console.log(`rpc ${rpcHost(rpc)}`);
+    console.log(`rpc ${rpcs.map(rpcHost).join(", ")}`);
     console.log(`instance ${addresses.instance}`);
     console.log(`evaluator ${addresses.evaluator}`);
     console.log(`forwarder ${addresses.forwarder}`);

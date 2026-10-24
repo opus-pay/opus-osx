@@ -162,7 +162,7 @@ Amoy(`chainId` 80002)와 Polygon 메인넷(137)에서는 SDK의 `amoyGasPrice`�
 | `RELAYER_ADDRESSES`      | 예                     | 샘플은 `../contracts/deploy/amoy/addresses.json` |
 | `RELAYER_SANCTIONS_FILE` | 예                     | 샘플은 `env/sanctions.txt`                       |
 | `RELAYER_INTEGRATORS`    | 예                     | 연동사 JSON 배열                                 |
-| `RELAYER_RPC_URL`        | 아니오                 | 비우면 체인 기본 RPC                             |
+| `RELAYER_RPC_URL`        | 아니오                 | 비우면 체인 기본 RPC. 쉼표로 여러 개를 주면 한 노드가 거절(요청 한도 등)할 때 다음 노드로 보냅니다 |
 | `RELAYER_HOST`           | 아니오                 | 비우면 `127.0.0.1`                               |
 | `RELAYER_PORT`           | 아니오                 | 비우면 `8787`                                    |
 

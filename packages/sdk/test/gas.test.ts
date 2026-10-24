@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { AMOY_MIN_TIP, amoyGasPrice, chainForId, usesTipFloor } from "../src";
+import { AMOY_MIN_TIP, amoyGasPrice, chainForId, rpcTransport, rpcUrlsFrom, usesTipFloor } from "../src";
 
 const gwei = (n: number) => BigInt(n) * 1_000_000_000n;
 const client = (baseFeePerGas: bigint | null) => ({ getBlock: async () => ({ baseFeePerGas }) } as never);
@@ -32,5 +32,19 @@ describe("chains", () => {
         expect(usesTipFloor(137)).to.equal(true);
         expect(usesTipFloor(80002)).to.equal(true);
         expect(usesTipFloor(31337)).to.equal(false);
+    });
+});
+
+describe("node settings", () => {
+    it("reads one node or several separated by commas, and falls back to the chain's own", () => {
+        expect(rpcUrlsFrom("https://a.example/key", "https://d")).to.deep.equal(["https://a.example/key"]);
+        expect(rpcUrlsFrom(" https://a , https://b ,", "https://d")).to.deep.equal(["https://a", "https://b"]);
+        expect(rpcUrlsFrom("", "https://d")).to.deep.equal(["https://d"]);
+        expect(rpcUrlsFrom(undefined, "https://d")).to.deep.equal(["https://d"]);
+    });
+
+    it("makes one transport for one node and a fallback for several", () => {
+        expect(rpcTransport(["https://a"])({}).config.type).to.equal("http");
+        expect(rpcTransport(["https://a", "https://b"])({}).config.type).to.equal("fallback");
     });
 });
