@@ -124,6 +124,26 @@ describe("relayer safety", () => {
         expect(budgets.length).to.be.greaterThan(1);
     });
 
+    it("still serves a request when the budgets cannot be written, says so once, and recovers", async () => {
+        let broken = true;
+        const { relayer, logs } = setup(
+            {},
+            {
+                onBudgets: () => {
+                    if (broken) throw new Error("EACCES: permission denied, open '/state/budgets.json.tmp'");
+                },
+            }
+        );
+        const done = await relayer.submit(request(), "errands", TOKEN);
+        expect(done).to.match(/^0x/);
+        expect(relayer.budgetsLeft().errands).to.equal(1_000_000n - 60_000n);
+        expect(relayer.stateWriteFailing()).to.equal(true);
+        expect(logs.filter((l) => l.event === "state-write-failed")).to.have.length(1);
+        broken = false;
+        await relayer.submit(request({ nonce: "1" }), "errands", TOKEN);
+        expect(relayer.stateWriteFailing()).to.equal(false);
+    });
+
     it("keeps the gas held when a sent transaction is not confirmed in time", async () => {
         const { relayer } = setup({ receipt: "timeout" });
         let failure: unknown;

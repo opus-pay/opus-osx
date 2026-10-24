@@ -104,6 +104,7 @@ export class Relayer {
     private readonly minBalanceWei: bigint;
     private readonly onBudgets: ((remaining: Record<string, bigint>) => void) | undefined;
     private readonly log: RelayLog;
+    private stateFailing = false;
 
     constructor(
         private readonly publicClient: PublicClient,
@@ -307,8 +308,29 @@ export class Relayer {
         return Object.fromEntries([...this.integrators].map(([id, integrator]) => [id, integrator.budgetWei]));
     }
 
+    /**
+     * Keeps the budgets across restarts. Failing to write them (a folder the process may not write to) must not fail a
+     * request that is fine: the budgets go on in memory, the first failure is logged and `stateWriteFailing()` says it
+     * for the metrics, so someone fixes the folder before a restart hands out full budgets again.
+     */
     private changed(): void {
-        this.onBudgets?.(this.budgetsLeft());
+        if (this.onBudgets === undefined) return;
+        try {
+            this.onBudgets(this.budgetsLeft());
+            this.stateFailing = false;
+        } catch (error) {
+            if (!this.stateFailing)
+                this.log({
+                    event: "state-write-failed",
+                    reason: error instanceof Error ? error.message.split("\n")[0] : String(error),
+                });
+            this.stateFailing = true;
+        }
+    }
+
+    /** Whether the budgets could not be written the last time: they only live in memory until this is false again. */
+    stateWriteFailing(): boolean {
+        return this.stateFailing;
     }
 
     /** Resolves when every request already accepted has finished. Used to stop without cutting one off. */
